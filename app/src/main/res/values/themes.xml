@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      App window theme (XML) used by the Activity before Compose renders.
+      We set a dark window background so edge-to-edge system bars never show white "cut off" areas.
+    -->
+    <style name="Theme.Xpenze" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+
+        <!-- System bars -->
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

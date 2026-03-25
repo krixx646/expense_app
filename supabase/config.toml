@@ -1,0 +1,7 @@
+project_id = "dglblftmgakhryfthxbh"
+
+[functions.verify-play-subscription]
+verify_jwt = false
+
+[functions.refresh-play-subscription]
+verify_jwt = false

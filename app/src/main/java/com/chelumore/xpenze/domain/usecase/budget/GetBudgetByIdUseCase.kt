@@ -1,0 +1,17 @@
+package com.chelumore.xpenze.domain.usecase.budget
+
+import com.chelumore.xpenze.domain.model.Budget
+import com.chelumore.xpenze.domain.repository.BudgetRepository
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+class GetBudgetByIdUseCase @Inject constructor(
+    private val budgetRepository: BudgetRepository
+) {
+    operator fun invoke(id: String): Flow<Budget?> {
+        require(id.isNotBlank()) { "id is required" }
+        return budgetRepository.getById(id)
+    }
+}
+
+

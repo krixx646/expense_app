@@ -1,0 +1,16 @@
+# Merge these blocks into your existing Firestore rules.
+# Keep your current user-data validators; add these specific entitlement guards.
+
+match /users/{uid}/entitlements/{docId} {
+  allow read: if request.auth != null && request.auth.uid == uid;
+  allow write: if false; // Server-only writes via Cloud Functions Admin SDK
+}
+
+match /purchase_tokens/{tokenHash} {
+  allow read, write: if false; // Server-only token binding store
+}
+
+match /server_private_play_tokens/{uid} {
+  allow read, write: if false; // Server-only raw token store
+}
+
