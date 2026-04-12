@@ -53,6 +53,9 @@ import com.chelumore.xpenze.core.ui.components.layout.ConfirmationDialog
 import com.chelumore.xpenze.core.ui.util.hasNotificationListenerAccess
 import com.chelumore.xpenze.core.ui.util.openNotificationListenerSettings
 import com.chelumore.xpenze.domain.repository.AccountCardStyle
+import com.chelumore.xpenze.feature.autocapture.NotificationCaptureAppFilterCard
+import com.chelumore.xpenze.feature.autocapture.NotificationCaptureAppSelectionSheet
+import com.chelumore.xpenze.feature.autocapture.rememberNotificationCaptureAppOptions
 import com.chelumore.xpenze.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -84,11 +87,13 @@ fun SettingsScreen(
     var confirmSignOut by remember { mutableStateOf(false) }
     var confirmContact by remember { mutableStateOf(false) }
     var showEditProfile by remember { mutableStateOf(false) }
+    var showNotificationAppPicker by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
     var notificationPermissionTarget by remember { mutableStateOf<NotificationPermissionTarget?>(null) }
     var showNotificationListenerDialog by remember { mutableStateOf(false) }
     var pendingNotificationListenerEnable by rememberSaveable { mutableStateOf(false) }
     var hasNotificationListenerAccess by remember { mutableStateOf(context.hasNotificationListenerAccess()) }
+    val installedNotificationApps = rememberNotificationCaptureAppOptions()
     val lifecycleOwner = LocalLifecycleOwner.current
     val autoCaptureNotificationEnabled by rememberUpdatedState(uiState.autoCaptureNotificationEnabled)
 
@@ -398,6 +403,18 @@ fun SettingsScreen(
                             }
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                        NotificationCaptureAppFilterCard(
+                            languageTag = uiState.appLanguageTag,
+                            selectedPackages = uiState.autoCaptureNotificationAllowedPackages,
+                            installedApps = installedNotificationApps,
+                            enabled = uiState.autoCaptureEnabled,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                            onChooseApps = { showNotificationAppPicker = true },
+                            onClearSelection = {
+                                viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
+                            }
+                        )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                         SwitchSettingsItem(
                             label = stringResource(R.string.auto_capture_merchant_toggle),
                             subtitle = stringResource(R.string.auto_capture_merchant_subtitle),
@@ -554,6 +571,19 @@ fun SettingsScreen(
         )
     }
 
+    if (showNotificationAppPicker) {
+        NotificationCaptureAppSelectionSheet(
+            languageTag = uiState.appLanguageTag,
+            installedApps = installedNotificationApps,
+            initialSelection = uiState.autoCaptureNotificationAllowedPackages,
+            onDismiss = { showNotificationAppPicker = false },
+            onSaveSelection = { packageNames ->
+                viewModel.setAutoCaptureNotificationAllowedPackages(packageNames)
+                showNotificationAppPicker = false
+            }
+        )
+    }
+
     if (confirmClearData) {
         AlertDialog(
             onDismissRequest = { confirmClearData = false },
@@ -691,13 +721,27 @@ private fun ProfileCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    if (state.isPremium) {
-                        Text(
-                            text = stringResource(R.string.settings_premium_badge),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = YellowPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
+                    if (state.isPremium || state.hasFounderReward) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (state.isPremium) {
+                                ProfileBadgeChip(
+                                    text = stringResource(R.string.settings_premium_badge),
+                                    containerColor = YellowPrimary.copy(alpha = 0.18f),
+                                    contentColor = YellowPrimary
+                                )
+                            }
+                            if (state.hasFounderReward) {
+                                ProfileBadgeChip(
+                                    text = stringResource(R.string.settings_founder_badge),
+                                    containerColor = YellowPrimary.copy(alpha = 0.18f),
+                                    contentColor = YellowPrimary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                     Text(
                         text = state.userName,
@@ -755,6 +799,36 @@ private fun ProfileCard(
                     Text(stringResource(R.string.common_sign_out), fontWeight = FontWeight.Bold)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProfileBadgeChip(
+    text: String,
+    containerColor: Color,
+    contentColor: Color
+) {
+    Surface(
+        color = containerColor,
+        contentColor = contentColor,
+        shape = RoundedCornerShape(100)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

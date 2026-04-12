@@ -28,26 +28,29 @@ class CaptureNotificationToDraftUseCase @Inject constructor(
         postedAt: Long,
         accountId: String?,
         fallbackCurrency: String
-    ): Boolean {
+    ): AutoCaptureDraft? {
         val title = notificationTitle.orEmpty().trim()
         val body = notificationText.orEmpty().trim()
         val combined = listOf(title, body)
             .filter { it.isNotBlank() }
             .joinToString(" ")
             .trim()
-        if (combined.isBlank()) return false
+        if (combined.isBlank()) return null
 
         val normalized = normalizeCaptureText(combined)
         val normalizedPackage = normalizeCaptureText(packageName)
-        if (blockedKeywords.any { normalized.contains(it) }) return false
+        val normalizedAppLabel = normalizeCaptureText(appLabel.orEmpty())
+        if (hardBlockedKeywords.any { normalized.contains(it) }) return null
 
         val moneyCandidates = extractMoneyCandidates(combined, fallbackCurrency)
-        val primaryAmount = selectBestMoneyCandidate(combined, moneyCandidates) ?: return false
+        val primaryAmount = selectBestMoneyCandidate(combined, moneyCandidates) ?: return null
         val transactionKeywordHits = countMatches(normalized, transactionSignalKeywords)
         val accountContextHits = countMatches(normalized, accountContextKeywords)
-        val hasFinancePackageHint = financePackageHints.any { normalizedPackage.contains(it) }
-        if (transactionKeywordHits == 0) return false
-        if (!hasFinancePackageHint && transactionKeywordHits < 2 && accountContextHits == 0) return false
+        val hasFinancePackageHint = financePackageHints.any {
+            normalizedPackage.contains(it) || normalizedAppLabel.contains(it)
+        }
+        if (transactionKeywordHits == 0) return null
+        if (!hasFinancePackageHint && transactionKeywordHits < 2 && accountContextHits == 0) return null
 
         val suggestedType = when {
             transferKeywords.any { normalized.contains(it) } -> TransactionType.TRANSFER
@@ -100,7 +103,7 @@ class CaptureNotificationToDraftUseCase @Inject constructor(
             createdAt = now,
             updatedAt = now
         )
-        return autoCaptureDraftRepository.addOrIgnore(draft)
+        return if (autoCaptureDraftRepository.addOrIgnore(draft)) draft else null
     }
 
     private fun extractBestTitle(
@@ -217,15 +220,32 @@ class CaptureNotificationToDraftUseCase @Inject constructor(
             "转账",
             "提现",
             "存入",
-            "退款"
+            "退款",
+            "debit",
+            "credit",
+            "transaction",
+            "txn",
+            "trx",
+            "withdrawal",
+            "withdraw",
+            "purchase at",
+            "payment of",
+            "successful",
+            "successfully",
+            "credited with",
+            "debited with",
+            "debited from",
+            "credited to",
+            "pos",
+            "atm",
+            "dr",
+            "cr"
         )
-        val blockedKeywords = setOf(
+        val hardBlockedKeywords = setOf(
             "otp",
             "verification code",
             "one time password",
             "login",
-            "available balance",
-            "credit limit",
             "promo",
             "offer",
             "reward points",
@@ -234,30 +254,18 @@ class CaptureNotificationToDraftUseCase @Inject constructor(
             "statement ready",
             "password",
             "codigo de verificacion",
-            "saldo disponible",
-            "limite de credito",
             "promocao",
-            "saldo disponivel",
             "codigo de verificacao",
-            "solde disponible",
-            "limite de credit",
             "verifizierungscode",
-            "verfugbares guthaben",
-            "kreditlimit",
             "رمز التحقق",
-            "الرصيد المتاح",
-            "حد الائتمان",
             "सत्यापन कोड",
-            "उपलब्ध शेष",
-            "क्रेडिट सीमा",
             "認証コード",
-            "利用可能残高",
-            "利用枠",
             "msimbo wa uthibitisho",
-            "salio lililopo",
             "验证码",
-            "可用余额",
-            "信用额度"
+            "failed",
+            "declined",
+            "unsuccessful",
+            "failure"
         )
         val accountContextKeywords = setOf(
             "account",
@@ -303,7 +311,8 @@ class CaptureNotificationToDraftUseCase @Inject constructor(
             "gcash",
             "paytm",
             "alipay",
-            "wechat"
+            "wechat",
+            "vending"
         )
         val incomeKeywords = setOf(
             "credited",

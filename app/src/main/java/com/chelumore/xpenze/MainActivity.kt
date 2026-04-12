@@ -128,11 +128,15 @@ class MainActivity : AppCompatActivity() {
 
     private var lastForegroundSyncAtMs: Long = 0L
     private var externalMochiPrompt by mutableStateOf<String?>(null)
+    private var externalReviewDraftId by mutableStateOf<String?>(null)
+    private var externalReviewDraftType by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         externalMochiPrompt = intent?.getStringExtra(EXTRA_MOCHI_PROMPT)
+        externalReviewDraftId = intent?.getStringExtra(EXTRA_REVIEW_DRAFT_ID)
+        externalReviewDraftType = intent?.getStringExtra(EXTRA_REVIEW_DRAFT_TYPE)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK)
@@ -225,6 +229,12 @@ class MainActivity : AppCompatActivity() {
                     externalMochiPrompt = externalMochiPrompt,
                     onExternalMochiPromptConsumed = {
                         externalMochiPrompt = null
+                    },
+                    externalReviewDraftId = externalReviewDraftId,
+                    externalReviewDraftType = externalReviewDraftType,
+                    onExternalReviewDraftConsumed = {
+                        externalReviewDraftId = null
+                        externalReviewDraftType = null
                     }
                 )
             }
@@ -235,6 +245,8 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         externalMochiPrompt = intent.getStringExtra(EXTRA_MOCHI_PROMPT)
+        externalReviewDraftId = intent.getStringExtra(EXTRA_REVIEW_DRAFT_ID)
+        externalReviewDraftType = intent.getStringExtra(EXTRA_REVIEW_DRAFT_TYPE)
     }
 
     override fun onStart() {
@@ -259,6 +271,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val FOREGROUND_SYNC_THROTTLE_MS = 30_000L
         const val EXTRA_MOCHI_PROMPT = "extra_mochi_prompt"
+        const val EXTRA_REVIEW_DRAFT_ID = "extra_review_draft_id"
+        const val EXTRA_REVIEW_DRAFT_TYPE = "extra_review_draft_type"
     }
 }
 
@@ -288,7 +302,10 @@ fun XpenzeApp(
     onAiCtaImpression: (String?, Boolean) -> Unit,
     onAiCtaClick: (String?, Boolean) -> Unit,
     externalMochiPrompt: String?,
-    onExternalMochiPromptConsumed: () -> Unit
+    onExternalMochiPromptConsumed: () -> Unit,
+    externalReviewDraftId: String?,
+    externalReviewDraftType: String?,
+    onExternalReviewDraftConsumed: () -> Unit
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -342,7 +359,6 @@ fun XpenzeApp(
         val shouldPrompt = !isAuthScreen &&
             !userId.isNullOrBlank() &&
             isOnboardingComplete &&
-            notificationsEnabled &&
             !hasNotificationsPermissionEnabled
 
         if (!shouldPrompt) {
@@ -368,6 +384,22 @@ fun XpenzeApp(
             launchSingleTop = true
         }
         onExternalMochiPromptConsumed()
+    }
+
+    LaunchedEffect(externalReviewDraftId, externalReviewDraftType, userId, isAuthScreen) {
+        val draftId = externalReviewDraftId?.trim().orEmpty()
+        if (draftId.isBlank()) return@LaunchedEffect
+        if (userId.isNullOrBlank() || isAuthScreen) return@LaunchedEffect
+
+        navController.navigate(
+            Screen.ReviewDraft(
+                draftId = draftId,
+                type = externalReviewDraftType?.takeIf { it.isNotBlank() } ?: "EXPENSE"
+            )
+        ) {
+            launchSingleTop = true
+        }
+        onExternalReviewDraftConsumed()
     }
 
     LaunchedEffect(
@@ -712,6 +744,7 @@ private fun GrowthBottomActionRow(
 
     val dualCtas = shouldShowPremium && shouldShowAi
     val aiOnly = shouldShowAi && !shouldShowPremium
+    val compactDualCtaHeight = 50.dp
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -727,6 +760,7 @@ private fun GrowthBottomActionRow(
                 containerColor = com.chelumore.xpenze.ui.theme.YellowPrimary,
                 contentColor = com.chelumore.xpenze.ui.theme.BlackBackground,
                 modifier = (if (dualCtas) Modifier.weight(1f) else Modifier)
+                    .then(if (dualCtas) Modifier.height(compactDualCtaHeight) else Modifier)
                     .scale(premiumPulseScale),
                 icon = {
                     Icon(
@@ -755,7 +789,9 @@ private fun GrowthBottomActionRow(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurface,
                 modifier = when {
-                    dualCtas -> Modifier.weight(1f)
+                    dualCtas -> Modifier
+                        .weight(1f)
+                        .height(compactDualCtaHeight)
                     aiOnly -> Modifier.fillMaxWidth()
                     else -> Modifier
                 },

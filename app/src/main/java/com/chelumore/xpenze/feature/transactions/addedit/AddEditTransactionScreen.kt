@@ -59,6 +59,7 @@ import com.chelumore.xpenze.core.ui.components.input.ExpenseTextField
 import com.chelumore.xpenze.core.ui.components.input.TimePickerField
 import com.chelumore.xpenze.core.ui.components.layout.ConfirmationDialog
 import com.chelumore.xpenze.core.ui.components.layout.XpenzeTopAppBar
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.RecurringFrequency
 import com.chelumore.xpenze.domain.model.TransactionType
 import com.chelumore.xpenze.ui.theme.BlackBackground
@@ -81,6 +82,13 @@ fun AddEditTransactionScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showAdvancedFields by rememberSaveable(transactionId, draftId) {
         mutableStateOf(transactionId != null || draftId != null)
+    }
+    val selectableCategories = remember(uiState.categories, uiState.type) {
+        when (uiState.type) {
+            TransactionType.EXPENSE -> uiState.categories.filter { it.type == CategoryType.EXPENSE }
+            TransactionType.INCOME -> uiState.categories.filter { it.type == CategoryType.INCOME }
+            TransactionType.TRANSFER -> emptyList()
+        }
     }
 
     val pickReceipt = rememberLauncherForActivityResult(
@@ -214,7 +222,7 @@ fun AddEditTransactionScreen(
                         R.string.common_optional_format,
                         stringResource(R.string.transaction_form_category_label)
                     ),
-                    categories = uiState.categories,
+                    categories = selectableCategories,
                     selectedCategoryId = uiState.selectedCategoryId,
                     onSelected = viewModel::setCategoryId,
                     placeholder = stringResource(R.string.transaction_form_category_placeholder),

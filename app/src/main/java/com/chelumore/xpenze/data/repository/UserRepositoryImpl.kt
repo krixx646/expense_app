@@ -106,6 +106,22 @@ class UserRepositoryImpl @Inject constructor(
         preferencesDataStore.clearTrialState()
     }
 
+    override suspend fun setFounderRewardState(
+        hasFounderReward: Boolean,
+        founderTrialActivated: Boolean,
+        founderRewardProductId: String?
+    ) {
+        preferencesDataStore.setFounderRewardState(
+            hasFounderReward = hasFounderReward,
+            founderTrialActivated = founderTrialActivated,
+            founderRewardProductId = founderRewardProductId
+        )
+    }
+
+    override suspend fun clearFounderRewardState() {
+        preferencesDataStore.clearFounderRewardState()
+    }
+
     override suspend fun clearUserData() {
         preferencesDataStore.clearUserData()
     }

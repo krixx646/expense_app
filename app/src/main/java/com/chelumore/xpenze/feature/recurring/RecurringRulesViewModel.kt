@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.chelumore.xpenze.core.work.RecurringRuleScheduler
 import com.chelumore.xpenze.domain.model.Account
 import com.chelumore.xpenze.domain.model.Category
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.Money
 import com.chelumore.xpenze.domain.model.RecurringFrequency
 import com.chelumore.xpenze.domain.model.RecurringRule
@@ -141,11 +142,19 @@ class RecurringRulesViewModel @Inject constructor(
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val id = existingId ?: UUID.randomUUID().toString()
+            val categoryType = when (type) {
+                TransactionType.EXPENSE -> CategoryType.EXPENSE
+                TransactionType.INCOME -> CategoryType.INCOME
+                TransactionType.TRANSFER -> null
+            }
+            val resolvedCategoryId = categoryId?.takeIf { selectedId ->
+                categoryType != null && uiState.value.categories.any { it.id == selectedId && it.type == categoryType }
+            }
             val rule = RecurringRule(
                 id = id,
                 accountId = accountId,
                 toAccountId = if (type == TransactionType.TRANSFER) toAccountId else null,
-                categoryId = if (type == TransactionType.TRANSFER) null else categoryId,
+                categoryId = resolvedCategoryId,
                 money = Money(amountCents = amountCents, currency = currency),
                 type = type,
                 title = title,

@@ -3,12 +3,16 @@ package com.chelumore.xpenze.domain.usecase.transaction
 import com.chelumore.xpenze.domain.model.Money
 import com.chelumore.xpenze.domain.model.Transaction
 import com.chelumore.xpenze.domain.model.TransactionType
+import com.chelumore.xpenze.domain.model.resolveCategorySelectionForTransactionType
+import com.chelumore.xpenze.domain.repository.CategoryRepository
 import com.chelumore.xpenze.domain.repository.TransactionRepository
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 import javax.inject.Inject
 
 class AddTransactionUseCase @Inject constructor(
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val categoryRepository: CategoryRepository
 ) {
     /**
      * Creates and persists a new [Transaction].
@@ -43,12 +47,21 @@ class AddTransactionUseCase @Inject constructor(
 
         val now = System.currentTimeMillis()
         val resolvedId = id ?: UUID.randomUUID().toString()
+        val resolvedCategoryId = if (type == TransactionType.TRANSFER || categoryId.isNullOrBlank()) {
+            null
+        } else {
+            resolveCategorySelectionForTransactionType(
+                categoryId = categoryId,
+                transactionType = type,
+                categories = categoryRepository.getAll().first()
+            )
+        }
 
         val transaction = Transaction(
             id = resolvedId,
             accountId = accountId,
             toAccountId = if (type == TransactionType.TRANSFER) toAccountId else null,
-            categoryId = if (type == TransactionType.TRANSFER) null else categoryId,
+            categoryId = resolvedCategoryId,
             money = Money(amountCents = amountCents, currency = currency),
             type = type,
             title = title,

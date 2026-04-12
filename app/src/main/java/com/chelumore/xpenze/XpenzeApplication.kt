@@ -12,11 +12,14 @@ import com.chelumore.xpenze.core.database.dao.CategoryDao
 import com.chelumore.xpenze.core.database.dao.RecurringRuleDao
 import com.chelumore.xpenze.core.database.dao.TransactionDao
 import com.chelumore.xpenze.core.database.entity.CategoryEntity
+import com.chelumore.xpenze.core.database.entity.CategoryType
 import com.chelumore.xpenze.core.database.entity.TransactionEntity
 import com.chelumore.xpenze.core.database.entity.TransactionType
+import com.chelumore.xpenze.core.autocapture.NotificationCaptureListenerService
 import com.chelumore.xpenze.core.datastore.PreferencesDataStore
 import com.chelumore.xpenze.core.notifications.NotificationChannels
 import com.chelumore.xpenze.core.work.BudgetAlertScheduler
+import com.chelumore.xpenze.core.work.BudgetLifecycleScheduler
 import com.chelumore.xpenze.core.work.DailySummaryScheduler
 import com.chelumore.xpenze.core.work.SyncScheduler
 import com.chelumore.xpenze.core.work.WeeklySavingsAlertScheduler
@@ -43,6 +46,9 @@ class XpenzeApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var budgetAlertScheduler: BudgetAlertScheduler
+
+    @Inject
+    lateinit var budgetLifecycleScheduler: BudgetLifecycleScheduler
 
     @Inject
     lateinit var syncScheduler: SyncScheduler
@@ -110,12 +116,17 @@ class XpenzeApplication : Application(), Configuration.Provider {
                 .getOrDefault(false)
             val didDedupeCategories = runCatching { dedupeCategoryDuplicates() }
                 .getOrDefault(false)
+            val didRepairCategoryLinks = runCatching { repairInvalidCategoryLinksAndScopes() }
+                .getOrDefault(false)
 
-            // Self-heal cached balances from source-of-truth transactions.
-            runCatching { reconcileLocalAccountBalances() }
+            // Preserve the user-visible tracked balance by rebasing the stored opening balance.
+            val didRebaseBalances = runCatching { rebaseLocalAccountBalances() }
+                .getOrDefault(false)
 
             val prefs = preferencesDataStore.userPreferences.first()
             NotificationChannels.ensureCreated(this@XpenzeApplication, prefs.appLanguageTag)
+            budgetLifecycleScheduler.scheduleDaily()
+            budgetLifecycleScheduler.scheduleNow()
             if (prefs.notificationsEnabled && prefs.budgetAlertEnabled) {
                 budgetAlertScheduler.scheduleDaily()
             } else {
@@ -134,10 +145,14 @@ class XpenzeApplication : Application(), Configuration.Provider {
                 weeklySavingsAlertScheduler.cancelAll()
             }
 
+            if (prefs.autoCaptureEnabled && prefs.autoCaptureNotificationEnabled) {
+                NotificationCaptureListenerService.requestRebindIfAllowed(this@XpenzeApplication)
+            }
+
             // Cloud sync only when logged in.
             if (!prefs.userId.isNullOrBlank()) {
                 syncScheduler.schedulePeriodic()
-                if (didDedupeRecurring || didDedupeCategories) {
+                if (didDedupeRecurring || didDedupeCategories || didRepairCategoryLinks || didRebaseBalances) {
                     syncScheduler.scheduleNow()
                 }
             } else {
@@ -229,10 +244,10 @@ class XpenzeApplication : Application(), Configuration.Provider {
         return changedAny
     }
 
-    private suspend fun reconcileLocalAccountBalances() {
-        appDatabase.withTransaction {
+    private suspend fun rebaseLocalAccountBalances(): Boolean {
+        return appDatabase.withTransaction {
             val accounts = accountDao.getAllAliveOnce()
-            if (accounts.isEmpty()) return@withTransaction
+            if (accounts.isEmpty()) return@withTransaction false
 
             val deltas = mutableMapOf<String, Long>()
             fun add(accountId: String?, delta: Long) {
@@ -251,13 +266,148 @@ class XpenzeApplication : Application(), Configuration.Provider {
                 }
             }
 
+            var changed = false
+            val now = System.currentTimeMillis()
             accounts.forEach { account ->
-                val expectedBalance = account.initialBalance + (deltas[account.id] ?: 0L)
-                if (expectedBalance != account.currentBalance) {
-                    accountDao.updateBalance(account.id, expectedBalance)
+                val effectiveInitialBalance = account.currentBalance - (deltas[account.id] ?: 0L)
+                if (effectiveInitialBalance != account.initialBalance) {
+                    accountDao.rebaseBalanceState(
+                        id = account.id,
+                        initialBalance = effectiveInitialBalance,
+                        currentBalance = account.currentBalance,
+                        updatedAt = maxOf(now, account.updatedAt + 1L)
+                    )
+                    changed = true
                 }
             }
+            changed
         }
+    }
+
+    private suspend fun repairInvalidCategoryLinksAndScopes(): Boolean {
+        return appDatabase.withTransaction {
+            val categories = categoryDao.getAllAliveOnce()
+            if (categories.isEmpty()) return@withTransaction false
+
+            val categoriesById = categories.associateBy { it.id }
+            val expenseCategoriesByName = categories
+                .filter { it.type == CategoryType.EXPENSE }
+                .groupBy { normalizeCategoryName(it.name) }
+            val incomeCategoriesByName = categories
+                .filter { it.type == CategoryType.INCOME }
+                .groupBy { normalizeCategoryName(it.name) }
+
+            var changed = false
+            val now = System.currentTimeMillis()
+            transactionDao.getAllAliveOnce().forEach { tx ->
+                val repairedCategoryId = resolveTransactionCategoryId(
+                    tx = tx,
+                    categoriesById = categoriesById,
+                    expenseCategoriesByName = expenseCategoriesByName,
+                    incomeCategoriesByName = incomeCategoriesByName
+                )
+                if (tx.categoryId != repairedCategoryId) {
+                    transactionDao.update(
+                        tx.copy(
+                            categoryId = repairedCategoryId,
+                            synced = false,
+                            updatedAt = maxOf(now, tx.updatedAt + 1L)
+                        )
+                    )
+                    changed = true
+                }
+            }
+
+            budgetDao.getAllAliveOnce().forEach { budget ->
+                val repairedCategoryId = resolveScopedExpenseCategoryId(
+                    currentCategoryId = budget.categoryId,
+                    categoriesById = categoriesById,
+                    expenseCategoriesByName = expenseCategoriesByName
+                )
+                if (budget.categoryId != repairedCategoryId) {
+                    budgetDao.update(
+                        budget.copy(
+                            categoryId = repairedCategoryId,
+                            synced = false,
+                            updatedAt = maxOf(now, budget.updatedAt + 1L)
+                        )
+                    )
+                    changed = true
+                }
+            }
+
+            recurringRuleDao.getAllAliveOnce().forEach { rule ->
+                val repairedCategoryId = when (rule.type) {
+                    TransactionType.EXPENSE -> resolveScopedExpenseCategoryId(
+                        currentCategoryId = rule.categoryId,
+                        categoriesById = categoriesById,
+                        expenseCategoriesByName = expenseCategoriesByName
+                    )
+                    TransactionType.INCOME -> resolveScopedIncomeCategoryId(
+                        currentCategoryId = rule.categoryId,
+                        categoriesById = categoriesById,
+                        incomeCategoriesByName = incomeCategoriesByName
+                    )
+                    TransactionType.TRANSFER -> null
+                }
+                if (rule.categoryId != repairedCategoryId) {
+                    recurringRuleDao.update(
+                        rule.copy(
+                            categoryId = repairedCategoryId,
+                            synced = false,
+                            updatedAt = maxOf(now, rule.updatedAt + 1L)
+                        )
+                    )
+                    changed = true
+                }
+            }
+            changed
+        }
+    }
+
+    private fun resolveTransactionCategoryId(
+        tx: TransactionEntity,
+        categoriesById: Map<String, CategoryEntity>,
+        expenseCategoriesByName: Map<String, List<CategoryEntity>>,
+        incomeCategoriesByName: Map<String, List<CategoryEntity>>
+    ): String? {
+        return when (tx.type) {
+            TransactionType.EXPENSE -> {
+                val currentCategory = tx.categoryId?.let(categoriesById::get)
+                when {
+                    currentCategory?.type == CategoryType.EXPENSE -> currentCategory.id
+                    else -> expenseCategoriesByName[normalizeCategoryName(tx.title)].orEmpty().singleOrNull()?.id
+                }
+            }
+            TransactionType.INCOME -> {
+                val currentCategory = tx.categoryId?.let(categoriesById::get)
+                when {
+                    currentCategory?.type == CategoryType.INCOME -> currentCategory.id
+                    else -> incomeCategoriesByName[normalizeCategoryName(tx.title)].orEmpty().singleOrNull()?.id
+                }
+            }
+            TransactionType.TRANSFER -> null
+        }
+    }
+
+    private fun resolveScopedExpenseCategoryId(
+        currentCategoryId: String?,
+        categoriesById: Map<String, CategoryEntity>,
+        expenseCategoriesByName: Map<String, List<CategoryEntity>>
+    ): String? {
+        val currentCategory = currentCategoryId?.let(categoriesById::get) ?: return null
+        if (currentCategory.type == CategoryType.EXPENSE) return currentCategory.id
+        return expenseCategoriesByName[normalizeCategoryName(currentCategory.name)].orEmpty().singleOrNull()?.id
+    }
+
+    private fun resolveScopedIncomeCategoryId(
+        currentCategoryId: String?,
+        categoriesById: Map<String, CategoryEntity>,
+        incomeCategoriesByName: Map<String, List<CategoryEntity>>
+    ): String? {
+        val currentCategory = currentCategoryId?.let(categoriesById::get) ?: return null
+        if (currentCategory.type == CategoryType.INCOME) return currentCategory.id
+        return incomeCategoriesByName[normalizeCategoryName(currentCategory.name)].orEmpty().singleOrNull()?.id
     }
 
     private data class RecurringDuplicateKey(

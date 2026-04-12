@@ -20,7 +20,9 @@ fun BudgetEntity.toDomain(): Budget {
         synced = synced,
         deleted = deleted,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        isRecurring = isRecurring,
+        seriesId = seriesId
     )
 }
 
@@ -39,8 +41,8 @@ fun Budget.toEntity(): BudgetEntity {
         synced = synced,
         deleted = deleted,
         createdAt = createdAt,
-        updatedAt = updatedAt
+        updatedAt = updatedAt,
+        isRecurring = isRecurring,
+        seriesId = seriesId
     )
 }
-
-

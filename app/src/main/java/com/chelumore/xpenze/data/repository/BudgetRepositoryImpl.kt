@@ -1,6 +1,7 @@
 package com.chelumore.xpenze.data.repository
 
 import com.chelumore.xpenze.core.common.currentTimeMillis
+import com.chelumore.xpenze.core.database.dao.CategoryDao
 import com.chelumore.xpenze.core.database.dao.TransactionDao
 import com.chelumore.xpenze.core.database.entity.TransactionType as EntityTransactionType
 import com.chelumore.xpenze.core.database.dao.BudgetDao
@@ -11,6 +12,7 @@ import com.chelumore.xpenze.data.mapper.toEntity
 import com.chelumore.xpenze.domain.model.Budget
 import com.chelumore.xpenze.domain.model.BudgetWithProgress
 import com.chelumore.xpenze.domain.model.currentPeriodWindow
+import com.chelumore.xpenze.domain.model.matchesBudgetScope
 import com.chelumore.xpenze.domain.repository.BudgetRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +25,7 @@ import javax.inject.Singleton
 @Singleton
 class BudgetRepositoryImpl @Inject constructor(
     private val budgetDao: BudgetDao,
+    private val categoryDao: CategoryDao,
     private val transactionDao: TransactionDao,
     private val syncScheduler: SyncScheduler,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
@@ -80,10 +83,12 @@ class BudgetRepositoryImpl @Inject constructor(
     private fun budgetsWithProgressFlow(budgetsFlow: Flow<List<Budget>>): Flow<List<BudgetWithProgress>> {
         return combine(
             budgetsFlow,
-            transactionDao.getAll()
-        ) { budgets, transactions ->
+            transactionDao.getAll(),
+            categoryDao.getAll()
+        ) { budgets, transactions, categories ->
             val now = currentTimeMillis()
             val expenseTx = transactions.filter { it.type == EntityTransactionType.EXPENSE }
+            val categoryDomains = categories.map { it.toDomain() }
 
             budgets.map { budget ->
                 val window = budget.currentPeriodWindow(now)
@@ -92,8 +97,7 @@ class BudgetRepositoryImpl @Inject constructor(
                 } else {
                     expenseTx.asSequence()
                         .filter { it.dateTime in window.spentRange.startMillis..window.spentRange.endMillis }
-                        .filter { budget.categoryId == null || it.categoryId == budget.categoryId }
-                        .filter { budget.accountId == null || it.accountId == budget.accountId }
+                        .filter { it.toDomain().matchesBudgetScope(budget, categoryDomains) }
                         .sumOf { it.amount }
                 }
 

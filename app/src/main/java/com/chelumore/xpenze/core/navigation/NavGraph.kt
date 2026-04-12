@@ -222,8 +222,8 @@ fun XpenzeNavGraph(
 
             composable<Screen.Budgets> {
                 com.chelumore.xpenze.feature.budgets.BudgetsScreen(
-                    onNavigateToAddBudget = {
-                        navController.navigate(Screen.AddBudget)
+                    onNavigateToAddBudget = { cloneFromBudgetId ->
+                        navController.navigate(Screen.AddBudget(cloneFromBudgetId = cloneFromBudgetId))
                     },
                     onNavigateToBudgetDetail = { id ->
                         navController.navigate(Screen.BudgetDetail(id))
@@ -326,6 +326,7 @@ fun XpenzeNavGraph(
                 DraftInboxScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToSubscription = { navController.navigate(Screen.Subscription) },
+                    onNavigateToAutoCaptureSetup = { navController.navigate(Screen.AutoCaptureSetup) },
                     onNavigateToReviewDraft = { draftId, type ->
                         navController.navigate(Screen.ReviewDraft(draftId = draftId, type = type))
                     }
@@ -428,10 +429,13 @@ fun XpenzeNavGraph(
             }
 
             // Budget screens
-            composable<Screen.AddBudget> {
+            composable<Screen.AddBudget> { backStackEntry ->
+                val args = backStackEntry.toRoute<Screen.AddBudget>()
                 AddEditBudgetScreen(
                     budgetId = null,
-                    onNavigateBack = { navController.popBackStack() }
+                    cloneFromBudgetId = args.cloneFromBudgetId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToSubscription = { navController.navigate(Screen.Subscription) }
                 )
             }
 
@@ -439,7 +443,8 @@ fun XpenzeNavGraph(
                 val args = backStackEntry.toRoute<Screen.EditBudget>()
                 AddEditBudgetScreen(
                     budgetId = args.budgetId,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToSubscription = { navController.navigate(Screen.Subscription) }
                 )
             }
 
@@ -452,7 +457,8 @@ fun XpenzeNavGraph(
                 BudgetDetailScreen(
                     budgetId = args.budgetId,
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToEdit = { id -> navController.navigate(Screen.EditBudget(id)) }
+                    onNavigateToEdit = { id -> navController.navigate(Screen.EditBudget(id)) },
+                    onNavigateToAddBudget = { id -> navController.navigate(Screen.AddBudget(cloneFromBudgetId = id)) }
                 )
             }
 

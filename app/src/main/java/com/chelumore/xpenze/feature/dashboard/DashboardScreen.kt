@@ -50,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -357,6 +358,10 @@ private fun HeaderSection(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            if (state.hasFounderReward) {
+                Spacer(modifier = Modifier.height(8.dp))
+                DashboardFounderBadge()
+            }
         }
         
         Row(
@@ -446,6 +451,32 @@ private fun HeaderSection(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DashboardFounderBadge() {
+    Surface(
+        color = YellowPrimary.copy(alpha = 0.16f),
+        contentColor = YellowPrimary,
+        shape = RoundedCornerShape(100)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.AutoAwesome,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = stringResource(R.string.settings_founder_badge),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

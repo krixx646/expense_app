@@ -17,7 +17,7 @@ class CaptureNotificationToDraftUseCaseTest {
         val repo = InMemoryAutoCaptureDraftRepository()
         val useCase = CaptureNotificationToDraftUseCase(repo)
 
-        val added = useCase(
+        val draft = useCase(
             packageName = "com.google.android.apps.messaging",
             appLabel = "Messages",
             notificationTitle = "Debit alert",
@@ -27,14 +27,14 @@ class CaptureNotificationToDraftUseCaseTest {
             fallbackCurrency = "NGN"
         )
 
-        assertTrue(added)
+        assertTrue(draft != null)
         val drafts = repo.getPending().first()
         assertEquals(1, drafts.size)
-        val draft = drafts.first()
-        assertEquals(AutoCaptureDraftStatus.PENDING, draft.status)
-        assertEquals(TransactionType.EXPENSE, draft.suggestedType)
-        assertEquals(120000L, draft.amountCents)
-        assertEquals("wallet", draft.accountId)
+        val storedDraft = drafts.first()
+        assertEquals(AutoCaptureDraftStatus.PENDING, storedDraft.status)
+        assertEquals(TransactionType.EXPENSE, storedDraft.suggestedType)
+        assertEquals(120000L, storedDraft.amountCents)
+        assertEquals("wallet", storedDraft.accountId)
     }
 
     @Test
@@ -42,7 +42,7 @@ class CaptureNotificationToDraftUseCaseTest {
         val repo = InMemoryAutoCaptureDraftRepository()
         val useCase = CaptureNotificationToDraftUseCase(repo)
 
-        val added = useCase(
+        val draft = useCase(
             packageName = "com.google.android.apps.messaging",
             appLabel = "Messages",
             notificationTitle = "OTP",
@@ -52,7 +52,7 @@ class CaptureNotificationToDraftUseCaseTest {
             fallbackCurrency = "USD"
         )
 
-        assertFalse(added)
+        assertFalse(draft != null)
         assertEquals(0, repo.getPending().first().size)
     }
 
@@ -61,7 +61,7 @@ class CaptureNotificationToDraftUseCaseTest {
         val repo = InMemoryAutoCaptureDraftRepository()
         val useCase = CaptureNotificationToDraftUseCase(repo)
 
-        val added = useCase(
+        val draft = useCase(
             packageName = "com.google.android.apps.messaging",
             appLabel = "Messages",
             notificationTitle = "Alerta de pago",
@@ -71,10 +71,32 @@ class CaptureNotificationToDraftUseCaseTest {
             fallbackCurrency = "MXN"
         )
 
-        assertTrue(added)
-        val draft = repo.getPending().first().first()
-        assertEquals(AutoCaptureDraftStatus.NEEDS_REVIEW, draft.status)
-        assertEquals(TransactionType.TRANSFER, draft.suggestedType)
-        assertEquals(20000L, draft.amountCents)
+        assertTrue(draft != null)
+        val storedDraft = repo.getPending().first().first()
+        assertEquals(AutoCaptureDraftStatus.NEEDS_REVIEW, storedDraft.status)
+        assertEquals(TransactionType.TRANSFER, storedDraft.suggestedType)
+        assertEquals(20000L, storedDraft.amountCents)
+    }
+
+    @Test
+    fun `captures debit notification even when available balance is present`() = runTest {
+        val repo = InMemoryAutoCaptureDraftRepository()
+        val useCase = CaptureNotificationToDraftUseCase(repo)
+
+        val draft = useCase(
+            packageName = "com.acme.mobile",
+            appLabel = "Acme Bank",
+            notificationTitle = "Debit alert",
+            notificationText = "Acct 1234 debited with NGN 1200.00 at POS. Available balance NGN 9800.00",
+            postedAt = 9876L,
+            accountId = "wallet",
+            fallbackCurrency = "NGN"
+        )
+
+        assertTrue(draft != null)
+        val storedDraft = repo.getPending().first().first()
+        assertEquals(AutoCaptureDraftStatus.PENDING, storedDraft.status)
+        assertEquals(TransactionType.EXPENSE, storedDraft.suggestedType)
+        assertEquals(120000L, storedDraft.amountCents)
     }
 }

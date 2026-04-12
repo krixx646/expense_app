@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.refresh-play-subscription]
 verify_jwt = false
+
+[functions.verify-play-founder-reward]
+verify_jwt = false
+
+[functions.refresh-founder-reward]
+verify_jwt = false
+
+[functions.claim-founder-reward]
+verify_jwt = false
+
+[functions.ask-mochi]
+verify_jwt = false

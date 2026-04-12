@@ -11,6 +11,8 @@ import com.chelumore.xpenze.core.premium.PremiumEntitlementTracker
 import com.chelumore.xpenze.core.work.BudgetAlertScheduler
 import com.chelumore.xpenze.domain.model.Transaction
 import com.chelumore.xpenze.domain.model.TransactionType
+import com.chelumore.xpenze.domain.model.resolvedCategory
+import com.chelumore.xpenze.domain.model.resolvedCategoryId
 import com.chelumore.xpenze.domain.usecase.account.GetAccountsUseCase
 import com.chelumore.xpenze.domain.usecase.category.GetCategoriesUseCase
 import com.chelumore.xpenze.domain.usecase.transaction.AddTransactionUseCase
@@ -84,7 +86,7 @@ class TransactionsViewModel @Inject constructor(
 
         // Filter by Category
         filter.categoryId?.let { categoryId ->
-            filteredList = filteredList.filter { it.categoryId == categoryId }
+            filteredList = filteredList.filter { it.resolvedCategoryId(categories) == categoryId }
         }
         
         // Filter by Type
@@ -120,7 +122,7 @@ class TransactionsViewModel @Inject constructor(
 
         // 2. Map to UI Model
         val uiItems = filteredList.map { tx ->
-            val category = categories.find { it.id == tx.categoryId }
+            val category = tx.resolvedCategory(categories)
             val account = accounts.find { it.id == tx.accountId }
             val toAccount = if (tx.type == TransactionType.TRANSFER) {
                 accounts.find { it.id == tx.toAccountId }
@@ -134,7 +136,7 @@ class TransactionsViewModel @Inject constructor(
                 type = tx.type,
                 accountId = tx.accountId,
                 toAccountId = tx.toAccountId,
-                categoryId = tx.categoryId,
+                categoryId = category?.id ?: tx.categoryId,
                 categoryName = category?.name ?: localizedUncategorized(),
                 categoryIcon = category?.iconName ?: "help",
                 accountName = account?.name ?: localizedUnknown(),
@@ -169,7 +171,7 @@ class TransactionsViewModel @Inject constructor(
                 prevList = prevList.filter { it.accountId == accountId || it.toAccountId == accountId }
             }
             filter.categoryId?.let { categoryId ->
-                prevList = prevList.filter { it.categoryId == categoryId }
+                prevList = prevList.filter { it.resolvedCategoryId(categories) == categoryId }
             }
             if (filter.type != TransactionFilterType.ALL) {
                 val typeEnum = when (filter.type) {

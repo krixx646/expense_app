@@ -17,8 +17,8 @@ android {
         applicationId = "com.chelumore.xpenze"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "1.0.11"
+        versionCode = 15
+        versionName = "1.0.14"
         fun String.escapeForBuildConfig(): String = replace("\\", "\\\\").replace("\"", "\\\"")
 
         val geminiApiKey = (project.findProperty("GEMINI_API_KEY") as String?)

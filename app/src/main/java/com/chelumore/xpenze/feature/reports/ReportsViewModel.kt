@@ -12,6 +12,7 @@ import com.chelumore.xpenze.core.premium.PremiumEntitlementTracker
 import com.chelumore.xpenze.domain.model.DateRange
 import com.chelumore.xpenze.domain.model.TransactionType
 import com.chelumore.xpenze.domain.model.CategoryType
+import com.chelumore.xpenze.domain.model.resolvedCategoryId
 import com.chelumore.xpenze.domain.usecase.analytics.GetIncomeVsExpenseUseCase
 import com.chelumore.xpenze.domain.usecase.analytics.GetSpendingByCategoryUseCase
 import com.chelumore.xpenze.domain.usecase.analytics.GetTrendDataUseCase
@@ -387,14 +388,14 @@ class ReportsViewModel @Inject constructor(
             .filter { it.type == TransactionType.EXPENSE }
             .filter { it.money.currency == currencyCode }
             .filter { it.dateTime in currentStart..currentEnd }
-            .groupBy { it.categoryId }
+            .groupBy { it.resolvedCategoryId(categories) }
             .mapValues { (_, list) -> list.sumOf { it.money.amountCents } }
 
         val previous = transactions.asSequence()
             .filter { it.type == TransactionType.EXPENSE }
             .filter { it.money.currency == currencyCode }
             .filter { it.dateTime in prevStart..prevEnd }
-            .groupBy { it.categoryId }
+            .groupBy { it.resolvedCategoryId(categories) }
             .mapValues { (_, list) -> list.sumOf { it.money.amountCents } }
 
         val allKeys = current.keys + previous.keys
@@ -435,7 +436,7 @@ class ReportsViewModel @Inject constructor(
                 .filter { it.type == TransactionType.EXPENSE }
                 .filter { it.money.currency == currencyCode }
                 .filter { it.dateTime in start..end }
-                .groupBy { it.categoryId }
+                .groupBy { it.resolvedCategoryId(categories) }
                 .mapValues { (_, list) -> list.sumOf { it.money.amountCents } }
 
             for ((categoryId, amount) in monthTotals) {

@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ContentCopy
@@ -54,12 +61,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -73,6 +88,8 @@ import com.chelumore.xpenze.ui.theme.BlackBackground
 import com.chelumore.xpenze.ui.theme.InfoBlue
 import com.chelumore.xpenze.ui.theme.YellowPrimary
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.sin
 
 @Composable
 fun FinanceAiChatScreen(
@@ -202,38 +219,66 @@ fun FinanceAiChatScreen(
                     }
                 }
 
-                OutlinedTextField(
-                    value = uiState.inputText,
-                    onValueChange = viewModel::setInput,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    placeholder = { Text(stringResource(R.string.ai_chat_placeholder)) },
-                    minLines = 1,
-                    maxLines = 5,
-                    shape = RoundedCornerShape(32.dp),
-                    enabled = !uiState.isSending,
-                    trailingIcon = {
-                        IconButton(
-                            onClick = viewModel::sendMessage,
-                            enabled = uiState.inputText.isNotBlank() && !uiState.isSending
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = stringResource(R.string.ai_chat_send),
-                                tint = if (uiState.inputText.isNotBlank() && !uiState.isSending) {
-                                    YellowPrimary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                        }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = YellowPrimary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                val inputShape = RoundedCornerShape(32.dp)
+                val inputInteractionSource = remember { MutableInteractionSource() }
+                val isInputFocused by inputInteractionSource.collectIsFocusedAsState()
+                val inputRingTransition = rememberInfiniteTransition(label = "mochiInputRing")
+                val inputRingProgress by inputRingTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(
+                            durationMillis = 1400,
+                            easing = LinearEasing
+                        )
                     )
                 )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .mochiFocusRing(
+                            visible = isInputFocused && !uiState.isSending,
+                            color = YellowPrimary,
+                            progress = inputRingProgress,
+                            cornerRadius = 32.dp,
+                            strokeWidth = 2.dp
+                        )
+                ) {
+                    OutlinedTextField(
+                        value = uiState.inputText,
+                        onValueChange = viewModel::setInput,
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text(stringResource(R.string.ai_chat_placeholder)) },
+                        minLines = 1,
+                        maxLines = 5,
+                        shape = inputShape,
+                        enabled = !uiState.isSending,
+                        interactionSource = inputInteractionSource,
+                        trailingIcon = {
+                            IconButton(
+                                onClick = viewModel::sendMessage,
+                                enabled = uiState.inputText.isNotBlank() && !uiState.isSending
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = stringResource(R.string.ai_chat_send),
+                                    tint = if (uiState.inputText.isNotBlank() && !uiState.isSending) {
+                                        YellowPrimary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                )
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                            disabledBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                            cursorColor = YellowPrimary
+                        )
+                    )
+                }
             }
         }
     }
@@ -432,6 +477,68 @@ private fun MessageBubble(
                     }
                 }
             }
+        }
+    }
+}
+
+private fun Modifier.mochiFocusRing(
+    visible: Boolean,
+    color: Color,
+    progress: Float,
+    cornerRadius: Dp,
+    strokeWidth: Dp
+): Modifier {
+    if (!visible) return this
+    return drawWithContent {
+        drawContent()
+        val strokeWidthPx = strokeWidth.toPx()
+        val inset = strokeWidthPx / 2f
+        val cornerRadiusPx = cornerRadius.toPx()
+        val rectSize = Size(
+            width = size.width - strokeWidthPx,
+            height = size.height - strokeWidthPx
+        )
+        val straightPerimeter = 2f * (
+            rectSize.width + rectSize.height - (4f * cornerRadiusPx)
+        ).coerceAtLeast(0f)
+        val arcPerimeter = (2f * Math.PI.toFloat() * cornerRadiusPx).coerceAtLeast(0f)
+        val perimeter = (straightPerimeter + arcPerimeter).coerceAtLeast(1f)
+        val pulseLength = perimeter * 0.20f
+        val segmentCount = 16
+        val dashLength = pulseLength / segmentCount * 1.18f
+        val spacing = pulseLength / segmentCount
+        val basePhase = (perimeter + dashLength) * (1f - progress.coerceIn(0f, 1f))
+
+        repeat(segmentCount) { index ->
+            val t = if (segmentCount == 1) 1f else index / (segmentCount - 1f)
+            val fade = sin(t * PI).toFloat().coerceIn(0f, 1f)
+            if (fade <= 0f) return@repeat
+            val phase = basePhase + (t * pulseLength)
+            val dashEffect = PathEffect.dashPathEffect(
+                intervals = floatArrayOf(dashLength, perimeter),
+                phase = phase
+            )
+
+            drawRoundRect(
+                color = color.copy(alpha = 0.10f * fade),
+                topLeft = Offset(inset, inset),
+                size = rectSize,
+                cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
+                style = Stroke(
+                    width = strokeWidthPx * 2.4f,
+                    pathEffect = dashEffect
+                )
+            )
+            drawRoundRect(
+                color = color.copy(alpha = fade),
+                topLeft = Offset(inset, inset),
+                size = rectSize,
+                cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
+                style = Stroke(
+                    width = strokeWidthPx,
+                    pathEffect = dashEffect
+                )
+            )
         }
     }
 }

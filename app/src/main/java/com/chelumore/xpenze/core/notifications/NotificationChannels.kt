@@ -13,6 +13,7 @@ object NotificationChannels {
     const val BUDGET_ALERTS_ID: String = "budget_alerts_v4"
     const val DAILY_SUMMARY_ID: String = "daily_summary_v4"
     const val MOCHI_SAVINGS_ID: String = "mochi_insights_v2"
+    const val AUTO_CAPTURE_DRAFTS_ID: String = "auto_capture_drafts_v1"
 
     fun ensureCreated(context: Context, appLanguageTag: String? = null) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -67,6 +68,23 @@ object NotificationChannels {
                 MOCHI_SAVINGS_ID,
                 copy.name,
                 NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = copy.description
+                setSound(soundUri, audioAttributes)
+                enableVibration(true)
+            }
+            manager.createNotificationChannel(channel)
+        }
+
+        if (manager.getNotificationChannel(AUTO_CAPTURE_DRAFTS_ID) == null) {
+            val copy = notificationChannelCopy(
+                kind = NotificationChannelKind.AUTO_CAPTURE,
+                languageTag = appLanguageTag.orEmpty()
+            )
+            val channel = NotificationChannel(
+                AUTO_CAPTURE_DRAFTS_ID,
+                copy.name,
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = copy.description
                 setSound(soundUri, audioAttributes)

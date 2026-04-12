@@ -54,6 +54,7 @@ class DataSeeder @Inject constructor(
     private suspend fun seedAccountsIfOnboardingComplete() {
         val prefs = userRepository.userPreferences.first()
         if (!prefs.isOnboardingComplete) return
+        if (!prefs.userId.isNullOrBlank()) return
 
         val existing = accountRepository.getAll().firstOrNull()
         if (existing.isNullOrEmpty()) {

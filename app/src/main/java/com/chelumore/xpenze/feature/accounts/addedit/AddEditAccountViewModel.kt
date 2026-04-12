@@ -3,6 +3,7 @@ package com.chelumore.xpenze.feature.accounts.addedit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chelumore.xpenze.core.common.Constants
+import com.chelumore.xpenze.core.common.toCents
 import com.chelumore.xpenze.domain.model.Account
 import com.chelumore.xpenze.domain.model.AccountType
 import com.chelumore.xpenze.domain.usecase.account.AddAccountUseCase
@@ -52,7 +53,7 @@ class AddEditAccountViewModel @Inject constructor(
                         name = account.name,
                         type = account.type,
                         currency = account.currency,
-                        initialBalanceText = (account.initialBalanceCents / 100.0).toString(),
+                        initialBalanceText = (account.currentBalanceCents / 100.0).toString(),
                         colorHex = account.colorHex,
                         iconName = account.iconName,
                         isDefault = account.isDefault,
@@ -87,14 +88,14 @@ class AddEditAccountViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(isSaving = true, error = null) }
+                val enteredBalanceCents = (state.initialBalanceText.toDoubleOrNull() ?: 0.0).toCents()
 
                 if (!state.isEdit) {
-                    val initialCents = ((state.initialBalanceText.toDoubleOrNull() ?: 0.0) * 100).toLong()
                     addAccountUseCase(
                         name = state.name.trim(),
                         type = state.type,
                         currency = state.currency.trim().uppercase(),
-                        initialBalanceCents = initialCents,
+                        initialBalanceCents = enteredBalanceCents,
                         colorHex = state.colorHex,
                         iconName = state.iconName,
                         isDefault = state.isDefault,
@@ -102,10 +103,13 @@ class AddEditAccountViewModel @Inject constructor(
                     )
                 } else {
                     val existing = state.existingAccount ?: throw IllegalStateException("Missing existing account")
+                    val netTrackedDelta = existing.currentBalanceCents - existing.initialBalanceCents
                     val updated = existing.copy(
                         name = state.name.trim(),
                         type = state.type,
                         currency = state.currency.trim().uppercase(),
+                        initialBalanceCents = enteredBalanceCents - netTrackedDelta,
+                        currentBalanceCents = enteredBalanceCents,
                         colorHex = state.colorHex,
                         iconName = state.iconName,
                         isDefault = state.isDefault,

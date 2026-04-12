@@ -21,6 +21,7 @@ data class UserPreferences(
     val appLanguageTag: String = "en",
     val accountCardStyle: AccountCardStyle = AccountCardStyle.MATTE,
     val accountCardStyleOverrides: Map<String, AccountCardStyle> = emptyMap(),
+    val accountCardStyleUpdatedAt: Long = 0L,
     val areBalancesHidden: Boolean = false,
     val hasSeenAiCoachCta: Boolean = false,
     // Paid premium entitlement (separate from free trial).
@@ -28,10 +29,14 @@ data class UserPreferences(
     val trialStartedAt: Long = 0L,
     val trialExpiresAt: Long = 0L,
     val trialConsumed: Boolean = false,
+    val hasFounderReward: Boolean = false,
+    val founderTrialActivated: Boolean = false,
+    val founderRewardProductId: String? = null,
     val autoCaptureEnabled: Boolean = false,
     val autoCaptureStatementImportEnabled: Boolean = false,
     val autoCaptureOcrEnabled: Boolean = false,
     val autoCaptureNotificationEnabled: Boolean = false,
+    val autoCaptureNotificationAllowedPackages: Set<String> = emptySet(),
     val autoCaptureMerchantMemoryEnabled: Boolean = false,
     val autoCaptureRecurringSuggestionsEnabled: Boolean = false,
     val autoCaptureDisclosureAccepted: Boolean = false

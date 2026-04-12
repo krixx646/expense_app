@@ -7,6 +7,7 @@ import { google } from "googleapis";
 admin.initializeApp();
 
 const PLAY_SERVICE_ACCOUNT_JSON = defineSecret("PLAY_SERVICE_ACCOUNT_JSON");
+const MOCHI_GEMINI_API_KEY = defineSecret("MOCHI_GEMINI_API_KEY");
 const PLAY_PACKAGE_NAME = defineString("PLAY_PACKAGE_NAME");
 const PLAY_ALLOWED_PRODUCTS = defineString("PLAY_ALLOWED_PRODUCTS");
 
@@ -18,6 +19,7 @@ const ENTITLEMENT_DOC_SUBSCRIPTION = "subscription_state";
 const TOKEN_BINDINGS_COLLECTION = "purchase_tokens";
 const PRIVATE_TOKENS_COLLECTION = "server_private_play_tokens";
 const SOURCE = "play_api_server";
+const MOCHI_MODEL = "gemini-2.5-flash";
 
 type VerifyPayload = {
   productId: string;
@@ -35,6 +37,17 @@ type EntitlementResponse = {
   purchaseTokenHash: string;
   source: string;
   message: string;
+};
+
+type MochiPromptPayload = {
+  systemPrompt: string;
+  userPrompt: string;
+  maxOutputTokens: number;
+};
+
+type MochiPromptResponse = {
+  text: string;
+  finishReason: string | null;
 };
 
 export const verifyPlaySubscriptionPurchase = onCall(
@@ -144,6 +157,92 @@ export const refreshPlaySubscriptionEntitlement = onCall(
       purchaseToken: storedPurchaseToken,
       packageName: configuredPackage
     });
+  }
+);
+
+export const askMochi = onCall(
+  {
+    region: FUNCTION_REGION,
+    enforceAppCheck: true,
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    secrets: [MOCHI_GEMINI_API_KEY]
+  },
+  async (request): Promise<MochiPromptResponse> => {
+    const uid = request.auth?.uid;
+    if (!uid) {
+      throw new HttpsError("unauthenticated", "Sign in is required.");
+    }
+
+    const payload = parseMochiPayload(request.data);
+    const apiKey = MOCHI_GEMINI_API_KEY.value().trim();
+    if (!apiKey) {
+      throw new HttpsError("failed-precondition", "MOCHI_GEMINI_API_KEY is not configured.");
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MOCHI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: payload.systemPrompt }]
+          },
+          contents: [
+            {
+              parts: [{ text: payload.userPrompt }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: payload.maxOutputTokens
+          }
+        })
+      }
+    );
+
+    const rawBody = await response.text();
+    if (!response.ok) {
+      throw new HttpsError(
+        "internal",
+        parseGeminiError(rawBody) ?? `Gemini request failed with HTTP ${response.status}.`
+      );
+    }
+
+    let parsed: GeminiGenerateContentResponse;
+    try {
+      parsed = JSON.parse(rawBody) as GeminiGenerateContentResponse;
+    } catch {
+      throw new HttpsError("internal", "Unable to parse Gemini response.");
+    }
+
+    const candidates = parsed.candidates ?? [];
+    const bestCandidate = candidates.reduce<GeminiCandidate | null>((best, candidate) => {
+      const currentLength = candidate.content?.parts
+        ?.map((part) => part.text?.trim() ?? "")
+        .join("\n")
+        .trim()
+        .length ?? 0;
+      const bestLength = best?.content?.parts
+        ?.map((part) => part.text?.trim() ?? "")
+        .join("\n")
+        .trim()
+        .length ?? 0;
+      return currentLength > bestLength ? candidate : best;
+    }, null);
+
+    const text = bestCandidate?.content?.parts
+      ?.map((part) => part.text?.trim() ?? "")
+      .join("\n")
+      .trim() ?? "";
+
+    return {
+      text,
+      finishReason: asString(bestCandidate?.finishReason) ?? null
+    };
   }
 );
 
@@ -296,6 +395,34 @@ function parseVerifyPayload(raw: unknown): VerifyPayload {
   return { productId, purchaseToken, packageName };
 }
 
+function parseMochiPayload(raw: unknown): MochiPromptPayload {
+  if (typeof raw != "object" || raw == null) {
+    throw new HttpsError("invalid-argument", "Request payload is invalid.");
+  }
+
+  const obj = raw as Record<string, unknown>;
+  const systemPrompt = asString(obj.systemPrompt);
+  const userPrompt = asString(obj.userPrompt);
+  const maxOutputTokens = asNumber(obj.maxOutputTokens);
+  if (!systemPrompt || !userPrompt || maxOutputTokens == null) {
+    throw new HttpsError(
+      "invalid-argument",
+      "systemPrompt, userPrompt, and maxOutputTokens are required."
+    );
+  }
+  if (systemPrompt.length > 40_000 || userPrompt.length > 40_000) {
+    throw new HttpsError("invalid-argument", "Prompt is too large.");
+  }
+  if (maxOutputTokens < 128 || maxOutputTokens > 8_192) {
+    throw new HttpsError("invalid-argument", "maxOutputTokens is out of range.");
+  }
+  return {
+    systemPrompt,
+    userPrompt,
+    maxOutputTokens
+  };
+}
+
 function parseAllowedProducts(raw: string): Set<string> {
   return new Set(
     raw
@@ -325,4 +452,31 @@ function asNumber(value: unknown): number | null {
 function sha256(raw: string): string {
   return crypto.createHash("sha256").update(raw).digest("hex");
 }
+
+function parseGeminiError(raw: string): string | null {
+  if (!raw.trim()) return null;
+  try {
+    const parsed = JSON.parse(raw) as {
+      error?: {
+        message?: unknown;
+      };
+    };
+    return asString(parsed.error?.message) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+type GeminiGenerateContentResponse = {
+  candidates?: GeminiCandidate[];
+};
+
+type GeminiCandidate = {
+  content?: {
+    parts?: Array<{
+      text?: string | null;
+    }>;
+  };
+  finishReason?: string | null;
+};
 

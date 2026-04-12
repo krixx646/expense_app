@@ -222,6 +222,67 @@ class PlayBillingService @Inject constructor(
         BillingRestoreResult.Success(active)
     }
 
+    override suspend fun queryOwnedOneTimeProducts(
+        productIds: List<String>
+    ): BillingOneTimeRestoreResult = withContext(ioDispatcher) {
+        val distinctIds = productIds
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+        if (distinctIds.isEmpty()) {
+            return@withContext BillingOneTimeRestoreResult.Success(emptyList())
+        }
+
+        val ready = ensureConnected()
+        if (ready.responseCode != BillingClient.BillingResponseCode.OK) {
+            return@withContext BillingOneTimeRestoreResult.Failure(
+                ready.debugMessage.ifBlank { "Unable to connect to Google Play Billing." }
+            )
+        }
+
+        val params = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+
+        val queryResult = suspendCancellableCoroutine<Pair<BillingResult, List<Purchase>>> { continuation ->
+            billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+                continuation.resume(billingResult to purchases)
+            }
+        }
+
+        val billingResult = queryResult.first
+        val purchases = queryResult.second
+        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+            return@withContext BillingOneTimeRestoreResult.Failure(
+                billingResult.debugMessage.ifBlank { "Unable to query one-time products." }
+            )
+        }
+
+        val owned = mutableListOf<BillingOneTimePurchase>()
+        purchases.forEach { purchase ->
+            purchase.products
+                .filter { it in distinctIds }
+                .forEach { productId ->
+                    val mapped = toOneTimePurchase(productId = productId, purchase = purchase)
+                    if (mapped.state == BillingPurchaseState.PURCHASED && !mapped.isAcknowledged) {
+                        val ack = acknowledge(mapped.purchaseToken)
+                        if (ack.responseCode != BillingClient.BillingResponseCode.OK) {
+                            return@withContext BillingOneTimeRestoreResult.Failure(
+                                ack.debugMessage.ifBlank { "Unable to acknowledge founder reward purchase." }
+                            )
+                        }
+                        owned += mapped.copy(isAcknowledged = true)
+                    } else {
+                        owned += mapped
+                    }
+                }
+        }
+
+        BillingOneTimeRestoreResult.Success(
+            owned.sortedByDescending { it.purchaseTime }
+        )
+    }
+
     private suspend fun purchaseFromStoreOrFailure(productId: String): BillingPurchaseResult {
         return when (val restored = queryActiveSubscriptions()) {
             is BillingRestoreResult.Failure -> BillingPurchaseResult.Failure(restored.message)
@@ -374,6 +435,25 @@ class PlayBillingService @Inject constructor(
             purchaseToken = purchase.purchaseToken,
             purchaseTime = purchase.purchaseTime,
             isAutoRenewing = purchase.isAutoRenewing,
+            isAcknowledged = purchase.isAcknowledged,
+            state = state,
+            orderId = purchase.orderId
+        )
+    }
+
+    private fun toOneTimePurchase(
+        productId: String,
+        purchase: Purchase
+    ): BillingOneTimePurchase {
+        val state = when (purchase.purchaseState) {
+            Purchase.PurchaseState.PURCHASED -> BillingPurchaseState.PURCHASED
+            Purchase.PurchaseState.PENDING -> BillingPurchaseState.PENDING
+            else -> BillingPurchaseState.UNKNOWN
+        }
+        return BillingOneTimePurchase(
+            productId = productId,
+            purchaseToken = purchase.purchaseToken,
+            purchaseTime = purchase.purchaseTime,
             isAcknowledged = purchase.isAcknowledged,
             state = state,
             orderId = purchase.orderId

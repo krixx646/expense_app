@@ -2,8 +2,10 @@ package com.chelumore.xpenze.domain.usecase.analytics
 
 import com.chelumore.xpenze.core.localization.localizedUncategorized
 import com.chelumore.xpenze.core.localization.localizedUnknown
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.DateRange
 import com.chelumore.xpenze.domain.model.TransactionType
+import com.chelumore.xpenze.domain.model.resolvedCategoryId
 import com.chelumore.xpenze.domain.repository.CategoryRepository
 import com.chelumore.xpenze.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
@@ -19,21 +21,24 @@ class GetSpendingByCategoryUseCase @Inject constructor(
             transactionRepository.getByDateRange(range.startMillis, range.endMillis),
             categoryRepository.getAll()
         ) { transactions, categories ->
-            val categoryNameById = categories.associateBy({ it.id }, { it.name })
-
-            val expenseTx = transactions.filter { it.type == TransactionType.EXPENSE }
-            val totalsByCategory = expenseTx.groupBy { it.categoryId }.mapValues { (_, list) ->
-                list.sumOf { it.money.amountCents }
-            }
+            val expenseCategories = categories.filter { it.type == CategoryType.EXPENSE }
+            val totalsByCategory = transactions
+                .asSequence()
+                .filter { it.type == TransactionType.EXPENSE }
+                .groupBy { it.resolvedCategoryId(expenseCategories) }
+                .mapValues { (_, list) -> list.sumOf { it.money.amountCents } }
 
             val totalExpense = totalsByCategory.values.sum().coerceAtLeast(0L)
 
             totalsByCategory.entries
                 .sortedByDescending { it.value }
                 .map { (categoryId, amount) ->
+                    val resolvedCategory = categoryId?.let { id ->
+                        expenseCategories.firstOrNull { it.id == id }
+                    }
                     val name = when {
                         categoryId == null -> localizedUncategorized()
-                        categoryNameById.containsKey(categoryId) -> categoryNameById.getValue(categoryId)
+                        resolvedCategory != null -> resolvedCategory.name
                         else -> localizedUnknown()
                     }
                     val percent = if (totalExpense > 0) (amount.toFloat() / totalExpense.toFloat()) else 0f

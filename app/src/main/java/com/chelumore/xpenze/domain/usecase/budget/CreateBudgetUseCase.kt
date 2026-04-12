@@ -21,7 +21,9 @@ class CreateBudgetUseCase @Inject constructor(
         startDate: Long = System.currentTimeMillis(),
         endDate: Long? = null,
         alertThresholdPercent: Int = 80,
-        isActive: Boolean = true
+        isActive: Boolean = true,
+        isRecurring: Boolean = false,
+        seriesId: String? = null
     ): String {
         require(name.isNotBlank()) { "name is required" }
         require(amountLimitCents > 0) { "amountLimitCents must be > 0" }
@@ -29,6 +31,11 @@ class CreateBudgetUseCase @Inject constructor(
 
         val now = System.currentTimeMillis()
         val id = UUID.randomUUID().toString()
+        val normalizedSeriesId = if (isRecurring) {
+            seriesId?.takeIf { it.isNotBlank() } ?: id
+        } else {
+            null
+        }
 
         val budget = Budget(
             id = id,
@@ -44,12 +51,12 @@ class CreateBudgetUseCase @Inject constructor(
             synced = false,
             deleted = false,
             createdAt = now,
-            updatedAt = now
+            updatedAt = now,
+            isRecurring = isRecurring,
+            seriesId = normalizedSeriesId
         )
 
         budgetRepository.insert(budget)
         return id
     }
 }
-
-

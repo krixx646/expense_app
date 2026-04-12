@@ -20,6 +20,26 @@ sealed interface TrialActivationResult {
     data class Failure(val message: String) : TrialActivationResult
 }
 
+sealed interface FounderTrialActivationResult {
+    data class Started(
+        val startedAt: Long,
+        val expiresAt: Long,
+        val message: String
+    ) : FounderTrialActivationResult
+
+    data class AlreadyActivated(
+        val startedAt: Long,
+        val expiresAt: Long,
+        val message: String
+    ) : FounderTrialActivationResult
+
+    data object RewardNotOwned : FounderTrialActivationResult
+    data object NotSignedIn : FounderTrialActivationResult
+    data object BackendUnavailable : FounderTrialActivationResult
+    data object AlreadyPremium : FounderTrialActivationResult
+    data class Failure(val message: String) : FounderTrialActivationResult
+}
+
 sealed interface PurchaseSubscriptionResult {
     data class Success(val subscription: UserSubscription) : PurchaseSubscriptionResult
     data object NotSignedIn : PurchaseSubscriptionResult
@@ -46,7 +66,9 @@ interface SubscriptionRepository {
     suspend fun clearSubscriptions()
     suspend fun syncTrialStateFromBackend()
     suspend fun syncPremiumStateFromBackend()
+    suspend fun syncFounderRewardStateFromBackend()
     suspend fun claimTrial(days: Int = 7): TrialActivationResult
+    suspend fun activateFounderTrial(): FounderTrialActivationResult
     suspend fun purchaseSubscription(
         activity: Activity,
         productId: String

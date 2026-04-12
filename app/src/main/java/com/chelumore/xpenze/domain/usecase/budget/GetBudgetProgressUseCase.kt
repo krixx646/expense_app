@@ -1,9 +1,11 @@
 package com.chelumore.xpenze.domain.usecase.budget
 
 import com.chelumore.xpenze.domain.model.Budget
+import com.chelumore.xpenze.domain.model.Category
 import com.chelumore.xpenze.domain.model.DateRange
 import com.chelumore.xpenze.domain.model.Transaction
 import com.chelumore.xpenze.domain.model.TransactionType
+import com.chelumore.xpenze.domain.model.matchesBudgetScope
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -24,16 +26,21 @@ class GetBudgetProgressUseCase @Inject constructor() {
     operator fun invoke(
         budget: Budget,
         transactions: List<Transaction>,
-        range: DateRange? = null
+        range: DateRange? = null,
+        categories: List<Category> = emptyList()
     ): BudgetProgress {
         val limit = budget.amountLimitCents
         val spent = transactions.asSequence()
-            .filter { it.type == TransactionType.EXPENSE }
             .filter { tx ->
                 val inRange = range?.contains(tx.dateTime) ?: true
-                val categoryOk = budget.categoryId?.let { it == tx.categoryId } ?: true
-                val accountOk = budget.accountId?.let { it == tx.accountId } ?: true
-                inRange && categoryOk && accountOk
+                val scopeOk = if (categories.isEmpty()) {
+                    tx.type == TransactionType.EXPENSE &&
+                        (budget.categoryId?.let { it == tx.categoryId } ?: true) &&
+                        (budget.accountId?.let { it == tx.accountId } ?: true)
+                } else {
+                    tx.matchesBudgetScope(budget, categories)
+                }
+                inRange && scopeOk
             }
             .sumOf { it.money.amountCents }
 

@@ -68,6 +68,7 @@ import com.chelumore.xpenze.core.ui.components.input.TimePickerField
 import com.chelumore.xpenze.core.ui.components.layout.ConfirmationDialog
 import com.chelumore.xpenze.core.ui.components.layout.XpenzeBottomSheet
 import com.chelumore.xpenze.core.ui.components.layout.XpenzeTopAppBar
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.RecurringFrequency
 import com.chelumore.xpenze.domain.model.TransactionType
 import com.chelumore.xpenze.ui.theme.BlackBackground
@@ -108,6 +109,13 @@ fun RecurringRulesScreen(
     var startTime by remember { mutableStateOf(LocalTime.now().withSecond(0).withNano(0)) }
     var endDateMillis by remember { mutableStateOf<Long?>(null) }
     var isActive by remember { mutableStateOf(true) }
+    val selectableCategories = remember(uiState.categories, type) {
+        when (type) {
+            TransactionType.EXPENSE -> uiState.categories.filter { it.type == CategoryType.EXPENSE }
+            TransactionType.INCOME -> uiState.categories.filter { it.type == CategoryType.INCOME }
+            TransactionType.TRANSFER -> emptyList()
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -453,7 +461,7 @@ fun RecurringRulesScreen(
                             R.string.common_optional_format,
                             stringResource(R.string.transaction_form_category_label)
                         ),
-                        categories = uiState.categories,
+                        categories = selectableCategories,
                         selectedCategoryId = categoryId,
                         onSelected = { categoryId = it },
                         allowClearSelection = true,

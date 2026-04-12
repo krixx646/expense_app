@@ -13,6 +13,7 @@ data class DashboardUiState(
     val currentMonth: YearMonth = YearMonth.now(),
     val userName: String = "User",
     val userPhotoUrl: String? = null,
+    val hasFounderReward: Boolean = false,
     val hasPremiumAccess: Boolean = false,
     val currencyCode: String = "USD",
     val appLanguageTag: String = "en",

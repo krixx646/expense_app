@@ -66,6 +66,8 @@ class PremiumEntitlementTracker(
             trialConsumed = prefs.trialConsumed,
             trialStartedAt = prefs.trialStartedAt,
             trialExpiresAt = prefs.trialExpiresAt,
+            hasFounderReward = prefs.hasFounderReward,
+            founderTrialActivated = prefs.founderTrialActivated,
             millisUntilTrialExpiry = millisUntilExpiry
         )
     }.distinctUntilChanged()

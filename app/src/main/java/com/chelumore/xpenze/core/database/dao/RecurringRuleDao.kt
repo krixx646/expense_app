@@ -39,6 +39,9 @@ interface RecurringRuleDao {
     @Query("SELECT * FROM recurring_rules WHERE deleted = 0 ORDER BY title ASC")
     fun getAll(): Flow<List<RecurringRuleEntity>>
 
+    @Query("SELECT * FROM recurring_rules WHERE deleted = 0")
+    suspend fun getAllAliveOnce(): List<RecurringRuleEntity>
+
     @Query("SELECT * FROM recurring_rules WHERE deleted = 0 AND isActive = 1 ORDER BY nextOccurrence ASC")
     fun getActive(): Flow<List<RecurringRuleEntity>>
 

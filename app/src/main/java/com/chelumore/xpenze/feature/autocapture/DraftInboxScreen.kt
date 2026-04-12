@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,32 +23,54 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.chelumore.xpenze.R
+import com.chelumore.xpenze.core.autocapture.NotificationCaptureListenerService
 import com.chelumore.xpenze.core.common.toCurrencyString
 import com.chelumore.xpenze.core.common.toFormattedDateTime
+import com.chelumore.xpenze.core.localization.localizedAutoCaptureManageSetupBody
+import com.chelumore.xpenze.core.localization.localizedAutoCaptureNotificationAccessMessage
+import com.chelumore.xpenze.core.localization.localizedAutoCaptureNotificationToolsHint
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureSourceLabel
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureStatusLabel
 import com.chelumore.xpenze.core.ui.components.input.AccountPicker
+import com.chelumore.xpenze.core.ui.components.layout.ConfirmationDialog
 import com.chelumore.xpenze.core.ui.components.layout.XpenzeTopAppBar
+import com.chelumore.xpenze.core.ui.util.hasNotificationListenerAccess
+import com.chelumore.xpenze.core.ui.util.isXiaomiFamilyDevice
+import com.chelumore.xpenze.core.ui.util.openNotificationListenerSettings
+import com.chelumore.xpenze.core.ui.util.openXiaomiAutoStartSettings
 import com.chelumore.xpenze.domain.model.AutoCaptureDraft
 import com.chelumore.xpenze.domain.model.AutoCaptureDraftStatus
 import com.chelumore.xpenze.domain.model.AutoCaptureSource
@@ -62,11 +86,30 @@ fun DraftInboxScreen(
     onNavigateBack: () -> Unit,
     onNavigateToSubscription: () -> Unit,
     onNavigateToReviewDraft: (String, String) -> Unit,
+    onNavigateToAutoCaptureSetup: () -> Unit,
     viewModel: DraftInboxViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val installedNotificationApps = rememberNotificationCaptureAppOptions()
+    val autoCaptureNotificationEnabled by rememberUpdatedState(uiState.notificationCaptureEnabled)
+    var showAutoCaptureDisclosureDialog by rememberSaveable { mutableStateOf(false) }
+    var showNotificationListenerDialog by remember { mutableStateOf(false) }
+    var showNotificationAppPicker by remember { mutableStateOf(false) }
+    var pendingNotificationListenerEnable by rememberSaveable { mutableStateOf(false) }
+    var hasNotificationListenerAccess by remember { mutableStateOf(context.hasNotificationListenerAccess()) }
+    val showXiaomiAutoStartCard = remember(
+        uiState.autoCaptureEnabled,
+        uiState.notificationCaptureEnabled,
+        hasNotificationListenerAccess
+    ) {
+        context.isXiaomiFamilyDevice() &&
+            uiState.autoCaptureEnabled &&
+            uiState.notificationCaptureEnabled &&
+            hasNotificationListenerAccess
+    }
 
     val pickStatement = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -96,6 +139,30 @@ fun DraftInboxScreen(
             when (event) {
                 is DraftInboxViewModel.DraftInboxEvent.Message -> snackbarHostState.showSnackbar(event.text)
             }
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val access = context.hasNotificationListenerAccess()
+                hasNotificationListenerAccess = access
+                if (pendingNotificationListenerEnable) {
+                    pendingNotificationListenerEnable = false
+                    viewModel.toggleAutoCaptureNotification(access)
+                    if (access) {
+                        NotificationCaptureListenerService.requestRebindIfAllowed(context)
+                    }
+                } else if (!access && autoCaptureNotificationEnabled) {
+                    viewModel.toggleAutoCaptureNotification(false)
+                } else if (access && autoCaptureNotificationEnabled) {
+                    NotificationCaptureListenerService.requestRebindIfAllowed(context)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
@@ -150,24 +217,104 @@ fun DraftInboxScreen(
                 items(uiState.drafts, key = { it.id }) { draft ->
                     DraftCard(
                         draft = draft,
+                        isWorking = uiState.isWorking,
                         onReview = {
                             onNavigateToReviewDraft(
                                 draft.id,
                                 (draft.suggestedType ?: TransactionType.EXPENSE).name
                             )
                         },
-                        onReviewAsTransfer = {
-                            onNavigateToReviewDraft(draft.id, TransactionType.TRANSFER.name)
-                        },
                         onSaveAsExpense = { viewModel.saveAsExpense(draft.id) },
                         onSaveAsIncome = { viewModel.saveAsIncome(draft.id) },
-                        onSaveAsReimbursement = { viewModel.saveAsReimbursement(draft.id) },
-                        onMarkPassThrough = { viewModel.markPassThrough(draft.id) },
                         onMarkExcluded = { viewModel.markExcluded(draft.id) }
                     )
                 }
             }
+            item {
+                AutomaticSetupCard(
+                    uiState = uiState,
+                    hasNotificationListenerAccess = hasNotificationListenerAccess,
+                    installedNotificationApps = installedNotificationApps,
+                    onOpenSetup = onNavigateToAutoCaptureSetup,
+                    onUpgrade = onNavigateToSubscription,
+                    onMasterToggle = { enabled ->
+                        if (enabled && !uiState.autoCaptureDisclosureAccepted) {
+                            showAutoCaptureDisclosureDialog = true
+                        } else {
+                            viewModel.toggleAutoCapture(enabled)
+                        }
+                    },
+                    onStatementToggle = viewModel::toggleAutoCaptureStatementImport,
+                    onOcrToggle = viewModel::toggleAutoCaptureOcr,
+                    onNotificationToggle = { enabled ->
+                        if (!enabled) {
+                            pendingNotificationListenerEnable = false
+                            viewModel.toggleAutoCaptureNotification(false)
+                        } else if (!hasNotificationListenerAccess) {
+                            showNotificationListenerDialog = true
+                        } else {
+                            viewModel.toggleAutoCaptureNotification(true)
+                            NotificationCaptureListenerService.requestRebindIfAllowed(context)
+                        }
+                    },
+                    onUseGeneralNotifications = {
+                        viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
+                    },
+                    onUseSpecificNotifications = { showNotificationAppPicker = true },
+                    onMerchantToggle = viewModel::toggleAutoCaptureMerchantMemory,
+                    onRecurringToggle = viewModel::toggleAutoCaptureRecurringSuggestions,
+                    onChooseNotificationApps = { showNotificationAppPicker = true },
+                    onClearNotificationApps = {
+                        viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
+                    },
+                    showXiaomiAutoStartCard = showXiaomiAutoStartCard,
+                    onOpenXiaomiAutoStartSettings = { context.openXiaomiAutoStartSettings() }
+                )
+            }
         }
+    }
+
+    if (showAutoCaptureDisclosureDialog) {
+        ConfirmationDialog(
+            title = stringResource(R.string.auto_capture_disclosure_title),
+            message = stringResource(R.string.auto_capture_disclosure_message),
+            confirmText = stringResource(R.string.auto_capture_disclosure_confirm),
+            dismissText = stringResource(R.string.common_cancel),
+            onConfirm = {
+                showAutoCaptureDisclosureDialog = false
+                viewModel.setAutoCaptureDisclosureAccepted()
+                viewModel.toggleAutoCapture(true)
+            },
+            onDismiss = { showAutoCaptureDisclosureDialog = false }
+        )
+    }
+
+    if (showNotificationListenerDialog) {
+        ConfirmationDialog(
+            title = stringResource(R.string.auto_capture_notification_access_title),
+            message = localizedAutoCaptureNotificationAccessMessage(uiState.appLanguageTag),
+            confirmText = stringResource(R.string.auto_capture_notification_access_confirm),
+            dismissText = stringResource(R.string.common_cancel),
+            onConfirm = {
+                showNotificationListenerDialog = false
+                pendingNotificationListenerEnable = true
+                context.openNotificationListenerSettings()
+            },
+            onDismiss = { showNotificationListenerDialog = false }
+        )
+    }
+
+    if (showNotificationAppPicker) {
+        NotificationCaptureAppSelectionSheet(
+            languageTag = uiState.appLanguageTag,
+            installedApps = installedNotificationApps,
+            initialSelection = uiState.notificationAllowedPackages,
+            onDismiss = { showNotificationAppPicker = false },
+            onSaveSelection = { packageNames ->
+                viewModel.setAutoCaptureNotificationAllowedPackages(packageNames)
+                showNotificationAppPicker = false
+            }
+        )
     }
 }
 
@@ -186,11 +333,21 @@ private fun SummaryCard(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = stringResource(R.string.auto_capture_draft_inbox_heading),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.auto_capture_draft_inbox_heading),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                DraftPill(
+                    label = count.toString(),
+                    color = if (count > 0) WarningOrange else SuccessGreen
+                )
+            }
             Text(
                 text = when {
                     !hasPremiumAccess -> stringResource(R.string.auto_capture_premium_required)
@@ -276,6 +433,292 @@ private fun CaptureActionsCard(
 }
 
 @Composable
+private fun AutomaticSetupCard(
+    uiState: DraftInboxUiState,
+    hasNotificationListenerAccess: Boolean,
+    installedNotificationApps: List<NotificationCaptureAppOption>,
+    onOpenSetup: () -> Unit,
+    onUpgrade: () -> Unit,
+    onMasterToggle: (Boolean) -> Unit,
+    onStatementToggle: (Boolean) -> Unit,
+    onOcrToggle: (Boolean) -> Unit,
+    onNotificationToggle: (Boolean) -> Unit,
+    onUseGeneralNotifications: () -> Unit,
+    onUseSpecificNotifications: () -> Unit,
+    onMerchantToggle: (Boolean) -> Unit,
+    onRecurringToggle: (Boolean) -> Unit,
+    onChooseNotificationApps: () -> Unit,
+    onClearNotificationApps: () -> Unit,
+    showXiaomiAutoStartCard: Boolean,
+    onOpenXiaomiAutoStartSettings: () -> Unit
+) {
+    val isSpecificNotificationMode = uiState.notificationAllowedPackages.isNotEmpty()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.auto_capture_settings_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = if (uiState.hasPremiumAccess) {
+                    localizedAutoCaptureManageSetupBody()
+                } else {
+                    stringResource(R.string.auto_capture_settings_premium_subtitle)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (!uiState.hasPremiumAccess) {
+                Button(
+                    onClick = onUpgrade,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = YellowPrimary,
+                        contentColor = BlackBackground
+                    )
+                ) {
+                    Text(stringResource(R.string.auto_capture_upgrade_button))
+                }
+            } else {
+                AutoCaptureSettingRow(
+                    label = stringResource(R.string.auto_capture_master_label),
+                    subtitle = stringResource(R.string.auto_capture_master_subtitle),
+                    checked = uiState.autoCaptureEnabled,
+                    enabled = true,
+                    onCheckedChange = onMasterToggle
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                AutoCaptureSettingRow(
+                    label = stringResource(R.string.auto_capture_statement_toggle),
+                    subtitle = stringResource(R.string.auto_capture_statement_subtitle),
+                    checked = uiState.statementImportEnabled,
+                    enabled = uiState.autoCaptureEnabled,
+                    onCheckedChange = onStatementToggle
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                AutoCaptureSettingRow(
+                    label = stringResource(R.string.auto_capture_ocr_toggle),
+                    subtitle = stringResource(R.string.auto_capture_ocr_subtitle),
+                    checked = uiState.ocrEnabled,
+                    enabled = uiState.autoCaptureEnabled,
+                    onCheckedChange = onOcrToggle
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                AutoCaptureSettingRow(
+                    label = stringResource(R.string.auto_capture_notification_toggle),
+                    subtitle = if (hasNotificationListenerAccess) {
+                        stringResource(R.string.auto_capture_notification_subtitle_on)
+                    } else {
+                        stringResource(R.string.auto_capture_notification_subtitle_off)
+                    },
+                    checked = uiState.notificationCaptureEnabled && hasNotificationListenerAccess,
+                    enabled = uiState.autoCaptureEnabled,
+                    onCheckedChange = onNotificationToggle
+                )
+                NotificationCaptureModeSelector(
+                    isSpecificMode = isSpecificNotificationMode,
+                    enabled = uiState.autoCaptureEnabled && uiState.notificationCaptureEnabled,
+                    onUseGeneral = onUseGeneralNotifications,
+                    onUseSpecific = onUseSpecificNotifications
+                )
+                NotificationCaptureAppFilterCard(
+                    languageTag = uiState.appLanguageTag,
+                    selectedPackages = uiState.notificationAllowedPackages,
+                    installedApps = installedNotificationApps,
+                    enabled = uiState.autoCaptureEnabled &&
+                        uiState.notificationCaptureEnabled &&
+                        isSpecificNotificationMode,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    onChooseApps = onChooseNotificationApps,
+                    onClearSelection = onClearNotificationApps
+                )
+                if (showXiaomiAutoStartCard) {
+                    NotificationCaptureAutoStartCard(
+                        modifier = Modifier.padding(top = 4.dp),
+                        onOpenSettings = onOpenXiaomiAutoStartSettings
+                    )
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                AutoCaptureSettingRow(
+                    label = stringResource(R.string.auto_capture_merchant_toggle),
+                    subtitle = stringResource(R.string.auto_capture_merchant_subtitle),
+                    checked = uiState.merchantMemoryEnabled,
+                    enabled = uiState.autoCaptureEnabled,
+                    onCheckedChange = onMerchantToggle
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                AutoCaptureSettingRow(
+                    label = stringResource(R.string.auto_capture_recurring_toggle),
+                    subtitle = stringResource(R.string.auto_capture_recurring_subtitle),
+                    checked = uiState.recurringSuggestionsEnabled,
+                    enabled = uiState.autoCaptureEnabled,
+                    onCheckedChange = onRecurringToggle
+                )
+            }
+            OutlinedButton(
+                onClick = onOpenSetup,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.auto_capture_guide_button))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AutoCaptureSettingRow(
+    label: String,
+    subtitle: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = BlackBackground,
+                checkedTrackColor = YellowPrimary,
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
+    }
+}
+
+@Composable
+private fun NotificationCaptureModeSelector(
+    isSpecificMode: Boolean,
+    enabled: Boolean,
+    onUseGeneral: () -> Unit,
+    onUseSpecific: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.auto_capture_notification_mode_title),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (!isSpecificMode) {
+                Button(
+                    onClick = onUseGeneral,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = YellowPrimary,
+                        contentColor = BlackBackground
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.auto_capture_notification_mode_general),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                OutlinedButton(
+                    onClick = onUseGeneral,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = stringResource(R.string.auto_capture_notification_mode_general),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            if (isSpecificMode) {
+                Button(
+                    onClick = onUseSpecific,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = YellowPrimary,
+                        contentColor = BlackBackground
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.auto_capture_notification_mode_specific),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                OutlinedButton(
+                    onClick = onUseSpecific,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = stringResource(R.string.auto_capture_notification_mode_specific),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+        Text(
+            text = if (isSpecificMode) {
+                stringResource(R.string.auto_capture_notification_mode_specific_hint)
+            } else {
+                stringResource(R.string.auto_capture_notification_mode_general_hint)
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 private fun EmptyDraftsCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -303,12 +746,10 @@ private fun EmptyDraftsCard() {
 @Composable
 private fun DraftCard(
     draft: AutoCaptureDraft,
+    isWorking: Boolean,
     onReview: () -> Unit,
-    onReviewAsTransfer: () -> Unit,
     onSaveAsExpense: () -> Unit,
     onSaveAsIncome: () -> Unit,
-    onSaveAsReimbursement: () -> Unit,
-    onMarkPassThrough: () -> Unit,
     onMarkExcluded: () -> Unit
 ) {
     Card(
@@ -316,9 +757,11 @@ private fun DraftCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp)
     ) {
+        val previewText = draft.notes?.takeIf { it.isNotBlank() } ?: draft.rawText?.takeIf { it.isNotBlank() }
+
         Column(
             modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -327,17 +770,20 @@ private fun DraftCard(
             ) {
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
                         text = draft.title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                     draft.amountCents?.let { amount ->
                         Text(
                             text = amount.toCurrencyString(draft.currency),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
                             color = when (draft.suggestedType) {
                                 TransactionType.INCOME -> SuccessGreen
                                 TransactionType.TRANSFER -> InfoBlue
@@ -358,17 +804,17 @@ private fun DraftCard(
                 }
             }
 
-            if (!draft.notes.isNullOrBlank()) {
-                Text(
-                    text = draft.notes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            if (!draft.needsReviewReason.isNullOrBlank()) {
+                DraftSupportingTextCard(
+                    text = draft.needsReviewReason,
+                    accent = WarningOrange
                 )
-            } else if (!draft.rawText.isNullOrBlank()) {
-                Text(
-                    text = draft.rawText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            }
+
+            if (!previewText.isNullOrBlank()) {
+                DraftSupportingTextCard(
+                    text = previewText,
+                    accent = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -376,63 +822,106 @@ private fun DraftCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
+                PrimaryDraftActionButton(
                     onClick = onReview,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = YellowPrimary,
-                        contentColor = BlackBackground
-                    )
-                ) {
-                    Text(stringResource(R.string.auto_capture_review_button))
-                }
-                OutlinedButton(
+                    enabled = !isWorking,
+                    label = stringResource(R.string.auto_capture_review_button),
+                    modifier = Modifier.weight(1f)
+                )
+                SecondaryDraftActionButton(
                     onClick = onSaveAsExpense,
-                    modifier = Modifier.weight(1f),
-                    enabled = draft.amountCents != null
-                ) {
-                    Text(stringResource(R.string.auto_capture_save_expense_button))
-                }
-                OutlinedButton(
-                    onClick = onSaveAsIncome,
-                    modifier = Modifier.weight(1f),
-                    enabled = draft.amountCents != null
-                ) {
-                    Text(stringResource(R.string.auto_capture_save_income_button))
-                }
+                    enabled = !isWorking && draft.amountCents != null,
+                    label = stringResource(R.string.auto_capture_save_expense_button),
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(
-                    onClick = onSaveAsReimbursement,
-                    modifier = Modifier.weight(1f),
-                    enabled = draft.amountCents != null
-                ) {
-                    Text(stringResource(R.string.auto_capture_reimbursement_button))
-                }
-                OutlinedButton(
-                    onClick = onReviewAsTransfer,
+                SecondaryDraftActionButton(
+                    onClick = onSaveAsIncome,
+                    enabled = !isWorking && draft.amountCents != null,
+                    label = stringResource(R.string.auto_capture_save_income_button),
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.auto_capture_transfer_button))
-                }
-                OutlinedButton(
-                    onClick = onMarkPassThrough,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.auto_capture_pass_through_button))
-                }
-                OutlinedButton(
+                )
+                SecondaryDraftActionButton(
                     onClick = onMarkExcluded,
+                    enabled = !isWorking,
+                    label = stringResource(R.string.auto_capture_exclude_button),
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.auto_capture_exclude_button))
-                }
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun PrimaryDraftActionButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    label: String
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.heightIn(min = 48.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = YellowPrimary,
+            contentColor = BlackBackground
+        )
+    ) {
+        Text(
+            text = label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun SecondaryDraftActionButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    label: String
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.heightIn(min = 48.dp)
+    ) {
+        Text(
+            text = label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun DraftSupportingTextCard(
+    text: String,
+    accent: Color
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = accent.copy(alpha = 0.10f)
+        ),
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -440,7 +929,7 @@ private fun DraftCard(
 private fun DraftPill(label: String, color: Color) {
     Box(
         modifier = Modifier
-            .height(28.dp),
+            .defaultMinSize(minHeight = 28.dp),
         contentAlignment = Alignment.Center
     ) {
         Card(
@@ -451,7 +940,9 @@ private fun DraftPill(label: String, color: Color) {
                 text = label,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                 style = MaterialTheme.typography.labelSmall,
-                color = color
+                color = color,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -490,7 +981,7 @@ private fun buildCaptureActionsFootnote(
         }
         if (!uiState.notificationCaptureEnabled) {
             append(" ")
-            append(context.getString(R.string.auto_capture_notification_tools_hint))
+            append(localizedAutoCaptureNotificationToolsHint())
         }
     }.trim()
 }

@@ -11,6 +11,7 @@ import com.chelumore.xpenze.core.common.toLocalDateTime
 import com.chelumore.xpenze.core.datastore.PreferencesDataStore
 import com.chelumore.xpenze.domain.model.AutoCaptureDraftStatus
 import com.chelumore.xpenze.domain.model.AutoCaptureResolution
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.Money
 import com.chelumore.xpenze.domain.model.RecurringFrequency
 import com.chelumore.xpenze.domain.model.RecurringRule
@@ -74,10 +75,19 @@ class AddEditTransactionViewModel @Inject constructor(
         val fallbackAccountId = form.selectedAccountId ?: accounts.firstOrNull()?.id
         val accountCurrency = accounts.firstOrNull { it.id == fallbackAccountId }?.currency
         val resolvedCurrency = accountCurrency ?: form.currency.ifBlank { prefs.defaultCurrency }
+        val allowedCategories = when (form.type) {
+            TransactionType.EXPENSE -> categories.filter { it.type == CategoryType.EXPENSE }
+            TransactionType.INCOME -> categories.filter { it.type == CategoryType.INCOME }
+            TransactionType.TRANSFER -> emptyList()
+        }
+        val sanitizedCategoryId = form.selectedCategoryId?.takeIf { selectedId ->
+            allowedCategories.any { it.id == selectedId }
+        }
         form.copy(
             // Keep form.isLoading as-is; init() will toggle it.
             categories = categories,
             accounts = accounts,
+            selectedCategoryId = sanitizedCategoryId,
             selectedAccountId = fallbackAccountId,
             currency = resolvedCurrency
         )
@@ -318,6 +328,7 @@ class AddEditTransactionViewModel @Inject constructor(
 
                 val interval = state.recurringIntervalText.toIntOrNull()?.coerceAtLeast(1) ?: 1
                 val resolvedTitle = resolveTitle(state)
+                val resolvedCategoryId = resolveCategoryIdForSave(state)
                 val resolvedRuleId = if (state.isRecurring) {
                     state.recurringRuleId ?: UUID.randomUUID().toString()
                 } else null
@@ -338,7 +349,7 @@ class AddEditTransactionViewModel @Inject constructor(
                         id = resolvedRuleId,
                         accountId = state.selectedAccount!!.id,
                         toAccountId = if (state.type == TransactionType.TRANSFER) state.selectedToAccount?.id else null,
-                        categoryId = if (state.type == TransactionType.TRANSFER) null else state.selectedCategoryId,
+                        categoryId = resolvedCategoryId,
                         money = Money(amountCents = amountCents, currency = state.currency),
                         type = state.type,
                         title = resolvedTitle,
@@ -373,7 +384,7 @@ class AddEditTransactionViewModel @Inject constructor(
                         val createdTransactionId = addTransactionUseCase(
                             accountId = state.selectedAccount!!.id,
                             toAccountId = if (state.type == TransactionType.TRANSFER) state.selectedToAccount?.id else null,
-                            categoryId = if (state.type == TransactionType.TRANSFER) null else state.selectedCategoryId,
+                            categoryId = resolvedCategoryId,
                             amountCents = amountCents,
                             currency = state.currency,
                             type = state.type,
@@ -405,7 +416,7 @@ class AddEditTransactionViewModel @Inject constructor(
                     val updated = existing.copy(
                         accountId = state.selectedAccount!!.id,
                         toAccountId = if (state.type == TransactionType.TRANSFER) state.selectedToAccount?.id else null,
-                        categoryId = if (state.type == TransactionType.TRANSFER) null else state.selectedCategoryId,
+                        categoryId = resolvedCategoryId,
                         money = Money(amountCents = amountCents, currency = state.currency),
                         type = state.type,
                         title = resolvedTitle,
@@ -457,6 +468,14 @@ class AddEditTransactionViewModel @Inject constructor(
                 ?: context.getString(R.string.transaction_default_title_income)
             TransactionType.EXPENSE -> state.selectedCategory?.name
                 ?: context.getString(R.string.transaction_default_title_expense)
+        }
+    }
+
+    private fun resolveCategoryIdForSave(state: AddEditTransactionUiState): String? {
+        return when (state.type) {
+            TransactionType.EXPENSE -> state.selectedCategory?.takeIf { it.type == CategoryType.EXPENSE }?.id
+            TransactionType.INCOME -> state.selectedCategory?.takeIf { it.type == CategoryType.INCOME }?.id
+            TransactionType.TRANSFER -> null
         }
     }
 

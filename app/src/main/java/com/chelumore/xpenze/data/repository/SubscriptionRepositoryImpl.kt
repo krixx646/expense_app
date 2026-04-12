@@ -3,6 +3,7 @@ package com.chelumore.xpenze.data.repository
 import android.app.Activity
 import android.content.Context
 import com.chelumore.xpenze.BuildConfig
+import com.chelumore.xpenze.core.billing.BillingOneTimeRestoreResult
 import com.chelumore.xpenze.core.billing.BillingPurchaseResult
 import com.chelumore.xpenze.core.billing.BillingPurchaseState
 import com.chelumore.xpenze.core.billing.BillingRestoreResult
@@ -18,6 +19,7 @@ import com.chelumore.xpenze.data.mapper.toDomain
 import com.chelumore.xpenze.data.mapper.toEntity
 import com.chelumore.xpenze.domain.model.UserSubscription
 import com.chelumore.xpenze.domain.repository.AuthRepository
+import com.chelumore.xpenze.domain.repository.FounderTrialActivationResult
 import com.chelumore.xpenze.domain.repository.PurchaseSubscriptionResult
 import com.chelumore.xpenze.domain.repository.RestorePurchasesResult
 import com.chelumore.xpenze.domain.repository.SubscriptionRepository
@@ -249,6 +251,105 @@ class SubscriptionRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override suspend fun syncFounderRewardStateFromBackend() {
+        withContext(ioDispatcher) {
+            val user = authRepository.getCurrentUser()
+            if (user == null) {
+                userRepository.clearFounderRewardState()
+                return@withContext
+            }
+
+            if (!supabaseBillingApi.isConfigured()) {
+                return@withContext
+            }
+
+            val verifiedFromPlay = when (
+                val restore = billingService.queryOwnedOneTimeProducts(
+                    listOf(Constants.FOUNDER_REWARD_PRODUCT)
+                )
+            ) {
+                is BillingOneTimeRestoreResult.Failure -> null
+                is BillingOneTimeRestoreResult.Success -> {
+                    restore.purchases
+                        .firstOrNull { it.state == BillingPurchaseState.PURCHASED }
+                        ?.let { purchase ->
+                            when (
+                                val result = supabaseBillingApi.verifyFounderReward(
+                                    productId = purchase.productId,
+                                    purchaseToken = purchase.purchaseToken,
+                                    packageName = context.packageName
+                                )
+                            ) {
+                                is SupabaseBillingApi.FounderRewardApiCallResult.Failure -> null
+                                SupabaseBillingApi.FounderRewardApiCallResult.NotConfigured -> null
+                                is SupabaseBillingApi.FounderRewardApiCallResult.Success -> {
+                                    result.payload.toFounderRewardSyncResponse()
+                                }
+                            }
+                        }
+                }
+            }
+
+            val founderState = verifiedFromPlay ?: when (
+                val result = supabaseBillingApi.refreshFounderReward()
+            ) {
+                is SupabaseBillingApi.FounderRewardApiCallResult.Failure -> null
+                SupabaseBillingApi.FounderRewardApiCallResult.NotConfigured -> null
+                is SupabaseBillingApi.FounderRewardApiCallResult.Success -> {
+                    result.payload.toFounderRewardSyncResponse()
+                }
+            }
+            when {
+                founderState == null -> Unit
+                founderState.hasFounderReward -> applyFounderRewardState(founderState)
+                else -> userRepository.clearFounderRewardState()
+            }
+        }
+    }
+
+    override suspend fun activateFounderTrial(): FounderTrialActivationResult =
+        withContext(ioDispatcher) {
+            authRepository.getCurrentUser() ?: return@withContext FounderTrialActivationResult.NotSignedIn
+
+            val prefs = userRepository.userPreferences.first()
+            if (prefs.isPremium) {
+                return@withContext FounderTrialActivationResult.AlreadyPremium
+            }
+
+            val response = when (val result = supabaseBillingApi.activateFounderReward()) {
+                is SupabaseBillingApi.FounderRewardApiCallResult.Failure -> {
+                    return@withContext FounderTrialActivationResult.Failure(
+                        result.message.ifBlank { "Unable to activate founder reward right now." }
+                    )
+                }
+                SupabaseBillingApi.FounderRewardApiCallResult.NotConfigured -> {
+                    return@withContext FounderTrialActivationResult.BackendUnavailable
+                }
+                is SupabaseBillingApi.FounderRewardApiCallResult.Success -> {
+                    result.payload.toFounderTrialActivationResponse()
+                }
+            }
+            if (!response.hasFounderReward) {
+                userRepository.clearFounderRewardState()
+                return@withContext FounderTrialActivationResult.RewardNotOwned
+            }
+
+            applyFounderRewardState(response)
+            return@withContext if (response.newlyActivated) {
+                FounderTrialActivationResult.Started(
+                    startedAt = response.trialStartedAt,
+                    expiresAt = response.trialExpiresAt,
+                    message = response.message
+                )
+            } else {
+                FounderTrialActivationResult.AlreadyActivated(
+                    startedAt = response.trialStartedAt,
+                    expiresAt = response.trialExpiresAt,
+                    message = response.message
+                )
+            }
+        }
 
     override suspend fun purchaseSubscription(
         activity: Activity,
@@ -530,6 +631,50 @@ class SubscriptionRepositoryImpl @Inject constructor(
         )
     }
 
+    private suspend fun applyFounderRewardState(
+        response: FounderRewardSyncResponse
+    ) {
+        if (!response.hasFounderReward) {
+            userRepository.clearFounderRewardState()
+            return
+        }
+
+        userRepository.setFounderRewardState(
+            hasFounderReward = true,
+            founderTrialActivated = response.trialActivated,
+            founderRewardProductId = response.productId.ifBlank { null }
+        )
+        if (response.trialActivated && response.trialExpiresAt > 0L) {
+            userRepository.setTrialState(
+                startedAt = response.trialStartedAt,
+                expiresAt = response.trialExpiresAt,
+                consumed = true
+            )
+        }
+    }
+
+    private suspend fun applyFounderRewardState(
+        response: FounderTrialActivationResponse
+    ) {
+        if (!response.hasFounderReward) {
+            userRepository.clearFounderRewardState()
+            return
+        }
+
+        userRepository.setFounderRewardState(
+            hasFounderReward = true,
+            founderTrialActivated = response.trialActivated,
+            founderRewardProductId = response.productId.ifBlank { null }
+        )
+        if (response.trialActivated && response.trialExpiresAt > 0L) {
+            userRepository.setTrialState(
+                startedAt = response.trialStartedAt,
+                expiresAt = response.trialExpiresAt,
+                consumed = true
+            )
+        }
+    }
+
     private fun SupabaseBillingApi.BillingVerificationPayload.toVerificationResult(): VerificationResult {
         return VerificationResult(
             isPremium = isPremium,
@@ -540,6 +685,29 @@ class SubscriptionRepositoryImpl @Inject constructor(
             acknowledgedAt = acknowledgedAt,
             purchaseTokenHash = purchaseTokenHash,
             message = message
+        )
+    }
+
+    private fun SupabaseBillingApi.FounderRewardPayload.toFounderRewardSyncResponse(): FounderRewardSyncResponse {
+        return FounderRewardSyncResponse(
+            hasFounderReward = hasFounderReward,
+            productId = productId,
+            trialActivated = founderTrialActivated,
+            trialStartedAt = trialStartedAt,
+            trialExpiresAt = trialExpiresAt,
+            message = message
+        )
+    }
+
+    private fun SupabaseBillingApi.FounderRewardPayload.toFounderTrialActivationResponse(): FounderTrialActivationResponse {
+        return FounderTrialActivationResponse(
+            hasFounderReward = hasFounderReward,
+            productId = productId,
+            trialActivated = founderTrialActivated,
+            trialStartedAt = trialStartedAt,
+            trialExpiresAt = trialExpiresAt,
+            message = message,
+            newlyActivated = newlyActivated
         )
     }
 
@@ -651,6 +819,25 @@ class SubscriptionRepositoryImpl @Inject constructor(
         val acknowledgedAt: Long?,
         val purchaseTokenHash: String,
         val message: String
+    )
+
+    private data class FounderRewardSyncResponse(
+        val hasFounderReward: Boolean,
+        val productId: String,
+        val trialActivated: Boolean,
+        val trialStartedAt: Long,
+        val trialExpiresAt: Long,
+        val message: String
+    )
+
+    private data class FounderTrialActivationResponse(
+        val hasFounderReward: Boolean,
+        val productId: String,
+        val trialActivated: Boolean,
+        val trialStartedAt: Long,
+        val trialExpiresAt: Long,
+        val message: String,
+        val newlyActivated: Boolean
     )
 
     private sealed interface BackendVerificationResult {

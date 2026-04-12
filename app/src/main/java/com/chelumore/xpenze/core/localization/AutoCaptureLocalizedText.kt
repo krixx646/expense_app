@@ -415,6 +415,238 @@ internal fun localizedAutoCaptureStatementAmbiguousReason(languageTag: String? =
         zh = "可能是转账，或账单行含义不明确。"
     )
 
+internal fun localizedAutoCaptureDraftNotificationBody(
+    amountText: String?,
+    languageTag: String? = null
+): String = if (!amountText.isNullOrBlank()) {
+    pickAutoCaptureText(
+        languageTag,
+        en = "New draft captured for $amountText. Review it or save it from this notification.",
+        es = "Se capturo un nuevo borrador por $amountText. Revisalo o guardalo desde esta notificacion.",
+        fr = "Nouveau brouillon capture pour $amountText. Verifiez-le ou enregistrez-le depuis cette notification.",
+        de = "Neuer Entwurf uber $amountText erfasst. Prufen oder speichern Sie ihn direkt aus dieser Benachrichtigung.",
+        pt = "Novo rascunho capturado por $amountText. Revise ou salve por esta notificacao.",
+        ar = "تم التقاط مسودة جديدة بقيمة $amountText. راجعها أو احفظها من هذا الإشعار.",
+        hi = "$amountText के लिए नया ड्राफ्ट कैप्चर हुआ है। इसे रिव्यू करें या इसी नोटिफिकेशन से सेव करें।",
+        ja = "$amountText の新しい下書きを取り込みました。この通知から確認または保存できます。",
+        sw = "Rasimu mpya ya $amountText imenakiliwa. Ikague au ihifadhi kutoka kwenye arifa hii.",
+        zh = "已捕捉一条金额为 $amountText 的新草稿。你可以直接在此通知中审核或保存。"
+    )
+} else {
+    pickAutoCaptureText(
+        languageTag,
+        en = "New money draft captured. Review it or save it from this notification.",
+        es = "Se capturo un nuevo borrador de dinero. Revisalo o guardalo desde esta notificacion.",
+        fr = "Un nouveau brouillon financier a ete capture. Verifiez-le ou enregistrez-le depuis cette notification.",
+        de = "Ein neuer Geld-Entwurf wurde erfasst. Prufen oder speichern Sie ihn direkt aus dieser Benachrichtigung.",
+        pt = "Um novo rascunho financeiro foi capturado. Revise ou salve por esta notificacao.",
+        ar = "تم التقاط مسودة مالية جديدة. راجعها أو احفظها من هذا الإشعار.",
+        hi = "नया मनी ड्राफ्ट कैप्चर हुआ है। इसे रिव्यू करें या इसी नोटिफिकेशन से सेव करें।",
+        ja = "新しいお金の下書きを取り込みました。この通知から確認または保存できます。",
+        sw = "Rasimu mpya ya fedha imenakiliwa. Ikague au ihifadhi kutoka kwenye arifa hii.",
+        zh = "已捕捉一条新的资金草稿。你可以直接在此通知中审核或保存。"
+    )
+}
+
+internal fun localizedAutoCaptureManageSetupBody(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Manage notification capture, statement import, OCR, merchant memory, and recurring suggestions from one clear setup flow.",
+        es = "Gestiona la captura de notificaciones, importacion de extractos, OCR, memoria de comercios y sugerencias recurrentes desde una sola configuracion clara.",
+        fr = "Gerez la capture des notifications, l'import de releves, l'OCR, la memoire des marchands et les suggestions recurrentes depuis une seule configuration claire.",
+        de = "Verwalten Sie Benachrichtigungserfassung, Auszugsimport, OCR, Haendlerspeicher und wiederkehrende Vorschlaege in einem klaren Setup.",
+        pt = "Gerencie captura de notificacoes, importacao de extratos, OCR, memoria de lojistas e sugestoes recorrentes em um unico fluxo claro.",
+        ar = "أدر التقاط الإشعارات واستيراد الكشوف وOCR وذاكرة التجار واقتراحات التكرار من خلال إعداد واحد واضح.",
+        hi = "नोटिफिकेशन कैप्चर, स्टेटमेंट इम्पोर्ट, OCR, मर्चेंट मेमोरी और रिकरिंग सुझावों को एक साफ सेटअप फ्लो से मैनेज करें।",
+        ja = "通知取り込み、明細インポート、OCR、加盟店メモリ、定期候補を1つの分かりやすい設定フローで管理できます。",
+        sw = "Dhibiti ukamataji wa arifa, uingizaji wa taarifa, OCR, kumbukumbu ya wauzaji na mapendekezo ya mara kwa mara kutoka sehemu moja iliyo wazi.",
+        zh = "通过一个清晰的设置流程管理通知捕捉、账单导入、OCR、商户记忆和周期性建议。"
+    )
+
+internal fun localizedAutoCaptureManageSetupButton(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Open automatic setup",
+        es = "Abrir configuracion automatica",
+        fr = "Ouvrir la configuration automatique",
+        de = "Automatisches Setup offnen",
+        pt = "Abrir configuracao automatica",
+        ar = "افتح الإعداد التلقائي",
+        hi = "ऑटोमैटिक सेटअप खोलें",
+        ja = "自動設定を開く",
+        sw = "Fungua mpangilio wa kiotomatiki",
+        zh = "打开自动设置"
+    )
+
+internal fun localizedAutoCaptureNotificationToolsHint(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Open automatic setup below if you want Xpenze to watch supported transaction alerts too.",
+        es = "Abre la configuracion automatica de abajo si quieres que Xpenze tambien vigile alertas de transacciones compatibles.",
+        fr = "Ouvrez la configuration automatique ci-dessous si vous voulez que Xpenze surveille aussi les alertes de transaction prises en charge.",
+        de = "Offnen Sie unten das automatische Setup, wenn Xpenze auch unterstuetzte Transaktionshinweise beobachten soll.",
+        pt = "Abra a configuracao automatica abaixo se quiser que o Xpenze tambem acompanhe alertas de transacao compativeis.",
+        ar = "افتح الإعداد التلقائي أدناه إذا أردت أن يراقب Xpenze أيضاً تنبيهات المعاملات المدعومة.",
+        hi = "अगर आप चाहते हैं कि Xpenze समर्थित ट्रांजैक्शन अलर्ट भी देखे, तो नीचे ऑटोमैटिक सेटअप खोलें।",
+        ja = "対応する取引アラートも Xpenze に見守らせたい場合は、下の自動設定を開いてください。",
+        sw = "Fungua mpangilio wa kiotomatiki hapa chini kama unataka Xpenze pia ifuatilie arifa za miamala zinazotumika.",
+        zh = "如果你也希望 Xpenze 监测受支持的交易提醒，请打开下方的自动设置。"
+    )
+
+internal fun localizedAutoCaptureNotificationAppFilterTitle(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Notification sources",
+        es = "Fuentes de notificaciones",
+        fr = "Sources de notifications",
+        de = "Benachrichtigungsquellen",
+        pt = "Fontes de notificacoes",
+        ar = "مصادر الإشعارات",
+        hi = "नोटिफिकेशन स्रोत",
+        ja = "通知元",
+        sw = "Vyanzo vya arifa",
+        zh = "通知来源"
+    )
+
+internal fun localizedAutoCaptureNotificationAppFilterAllSummary(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "All supported apps can create drafts right now.",
+        es = "Todas las apps compatibles pueden crear borradores ahora mismo.",
+        fr = "Toutes les applications compatibles peuvent creer des brouillons pour le moment.",
+        de = "Alle unterstuetzten Apps konnen derzeit Entwuerfe erstellen.",
+        pt = "Todos os apps compativeis podem criar rascunhos agora.",
+        ar = "يمكن لجميع التطبيقات المدعومة إنشاء مسودات الآن.",
+        hi = "अभी सभी समर्थित ऐप ड्राफ्ट बना सकते हैं।",
+        ja = "現在は対応アプリの通知がすべて下書きを作成できます。",
+        sw = "Programu zote zinazotumika zinaweza kuunda rasimu kwa sasa.",
+        zh = "目前所有受支持的应用都可以创建草稿。"
+    )
+
+internal fun localizedAutoCaptureNotificationAppFilterSelectedSummary(
+    selectedCount: Int,
+    languageTag: String? = null
+): String = pickAutoCaptureText(
+    languageTag,
+    en = "Only $selectedCount selected app(s) can create drafts.",
+    es = "Solo $selectedCount app(s) seleccionada(s) pueden crear borradores.",
+    fr = "Seules $selectedCount application(s) selectionnee(s) peuvent creer des brouillons.",
+    de = "Nur $selectedCount ausgewaehlte App(s) koennen Entwuerfe erstellen.",
+    pt = "Apenas $selectedCount app(s) selecionado(s) podem criar rascunhos.",
+    ar = "فقط $selectedCount تطبيق/تطبيقات محددة يمكنها إنشاء مسودات.",
+    hi = "सिर्फ चुने गए $selectedCount ऐप ड्राफ्ट बना सकते हैं।",
+    ja = "選択した $selectedCount 個のアプリだけが下書きを作成できます。",
+    sw = "Ni programu $selectedCount zilizochaguliwa pekee zinaweza kuunda rasimu.",
+    zh = "只有所选的 $selectedCount 个应用可以创建草稿。"
+)
+
+internal fun localizedAutoCaptureNotificationAppFilterChooseButton(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Choose specific apps",
+        es = "Elegir apps especificas",
+        fr = "Choisir des applications precises",
+        de = "Bestimmte Apps auswaehlen",
+        pt = "Escolher apps especificos",
+        ar = "اختيار تطبيقات محددة",
+        hi = "खास ऐप चुनें",
+        ja = "特定のアプリを選ぶ",
+        sw = "Chagua programu maalum",
+        zh = "选择特定应用"
+    )
+
+internal fun localizedAutoCaptureNotificationAppFilterResetButton(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Use all supported apps",
+        es = "Usar todas las apps compatibles",
+        fr = "Utiliser toutes les applications compatibles",
+        de = "Alle unterstuetzten Apps verwenden",
+        pt = "Usar todos os apps compativeis",
+        ar = "استخدم جميع التطبيقات المدعومة",
+        hi = "सभी समर्थित ऐप इस्तेमाल करें",
+        ja = "対応アプリをすべて使う",
+        sw = "Tumia programu zote zinazotumika",
+        zh = "使用所有受支持应用"
+    )
+
+internal fun localizedAutoCaptureNotificationAppPickerTitle(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Choose notification apps",
+        es = "Elegir apps de notificaciones",
+        fr = "Choisir les applications de notification",
+        de = "Benachrichtigungs-Apps auswaehlen",
+        pt = "Escolher apps de notificacao",
+        ar = "اختر تطبيقات الإشعارات",
+        hi = "नोटिफिकेशन ऐप चुनें",
+        ja = "通知アプリを選択",
+        sw = "Chagua programu za arifa",
+        zh = "选择通知应用"
+    )
+
+internal fun localizedAutoCaptureNotificationAppPickerBody(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Pick the apps whose money alerts should be allowed to create drafts.",
+        es = "Elige las apps cuyas alertas de dinero podran crear borradores.",
+        fr = "Choisissez les applications dont les alertes d'argent pourront creer des brouillons.",
+        de = "Waehlen Sie die Apps aus, deren Geldbenachrichtigungen Entwuerfe erstellen duerfen.",
+        pt = "Escolha os apps cujos alertas de dinheiro poderao criar rascunhos.",
+        ar = "اختر التطبيقات التي يُسمح لتنبيهات الأموال فيها بإنشاء مسودات.",
+        hi = "वे ऐप चुनें जिनके money alerts ड्राफ्ट बना सकें।",
+        ja = "お金に関する通知から下書きを作成してよいアプリを選んでください。",
+        sw = "Chagua programu ambazo arifa zake za pesa zitaruhusiwa kuunda rasimu.",
+        zh = "选择允许其资金提醒创建草稿的应用。"
+    )
+
+internal fun localizedAutoCaptureNotificationAppPickerSearchPlaceholder(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "Search apps",
+        es = "Buscar apps",
+        fr = "Rechercher des applications",
+        de = "Apps suchen",
+        pt = "Buscar apps",
+        ar = "ابحث عن التطبيقات",
+        hi = "ऐप खोजें",
+        ja = "アプリを検索",
+        sw = "Tafuta programu",
+        zh = "搜索应用"
+    )
+
+internal fun localizedAutoCaptureNotificationAppPickerSelectedCount(
+    selectedCount: Int,
+    languageTag: String? = null
+): String = pickAutoCaptureText(
+    languageTag,
+    en = "$selectedCount app(s) selected",
+    es = "$selectedCount app(s) seleccionada(s)",
+    fr = "$selectedCount application(s) selectionnee(s)",
+    de = "$selectedCount App(s) ausgewaehlt",
+    pt = "$selectedCount app(s) selecionado(s)",
+    ar = "تم اختيار $selectedCount تطبيق/تطبيقات",
+    hi = "$selectedCount ऐप चुने गए",
+    ja = "$selectedCount 個のアプリを選択",
+    sw = "Programu $selectedCount zimechaguliwa",
+    zh = "已选择 $selectedCount 个应用"
+)
+
+internal fun localizedAutoCaptureNotificationAppPickerEmptyResults(languageTag: String? = null): String =
+    pickAutoCaptureText(
+        languageTag,
+        en = "No matching apps found on this device.",
+        es = "No se encontraron apps coincidentes en este dispositivo.",
+        fr = "Aucune application correspondante trouvee sur cet appareil.",
+        de = "Auf diesem Geraet wurden keine passenden Apps gefunden.",
+        pt = "Nenhum app correspondente foi encontrado neste dispositivo.",
+        ar = "لم يتم العثور على تطبيقات مطابقة على هذا الجهاز.",
+        hi = "इस डिवाइस पर कोई मेल खाने वाला ऐप नहीं मिला।",
+        ja = "この端末で一致するアプリが見つかりませんでした。",
+        sw = "Hakuna programu zinazolingana zilizopatikana kwenye kifaa hiki.",
+        zh = "此设备上未找到匹配的应用。"
+    )
+
 private fun pickAutoCaptureText(
     languageTag: String?,
     en: String,

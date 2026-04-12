@@ -20,6 +20,13 @@ export type PlaySubscriptionSnapshot = {
   isPremium: boolean;
 };
 
+export type PlayProductSnapshot = {
+  orderId: string;
+  purchaseTime: number;
+  acknowledgedAt: number | null;
+  isPurchased: boolean;
+};
+
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 
 export function configuredPackageName(): string {
@@ -29,6 +36,15 @@ export function configuredPackageName(): string {
 export function configuredAllowedProducts(): Set<string> {
   return new Set(
     requiredEnv("PLAY_ALLOWED_PRODUCTS")
+      .split(",")
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0)
+  );
+}
+
+export function configuredAllowedOneTimeProducts(): Set<string> {
+  return new Set(
+    requiredEnv("PLAY_ALLOWED_ONE_TIME_PRODUCTS")
       .split(",")
       .map((value) => value.trim())
       .filter((value) => value.length > 0)
@@ -88,6 +104,59 @@ export async function fetchPlaySubscriptionSnapshot(params: {
     isAutoRenewing: Boolean(payload.autoRenewing ?? false),
     acknowledgedAt: isAcknowledged ? now : null,
     isPremium: expiryTime > now
+  };
+}
+
+export async function fetchPlayProductSnapshot(params: {
+  packageName: string;
+  productId: string;
+  purchaseToken: string;
+}): Promise<PlayProductSnapshot | null> {
+  const accessToken = await getGoogleAccessToken();
+  const endpoint =
+    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(params.packageName)}` +
+    `/purchases/products/${encodeURIComponent(params.productId)}/tokens/${encodeURIComponent(params.purchaseToken)}`;
+
+  const response = await fetch(endpoint, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+
+  if (response.status == 404) {
+    return null;
+  }
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Google Play product verification failed", {
+      status: response.status,
+      body: errorText,
+      productId: params.productId,
+      packageName: params.packageName
+    });
+    throw new HttpError(
+      502,
+      userFacingVerificationMessage(response.status)
+    );
+  }
+
+  const payload = await response.json() as {
+    purchaseTimeMillis?: string | number;
+    acknowledgementState?: string | number;
+    purchaseState?: string | number;
+    orderId?: string;
+  };
+
+  const now = Date.now();
+  const purchaseTime = asNumber(payload.purchaseTimeMillis) ?? now;
+  const isAcknowledged = asNumber(payload.acknowledgementState) == 1;
+  const purchaseState = asNumber(payload.purchaseState) ?? 1;
+
+  return {
+    orderId: asNonEmptyString(payload.orderId) ?? "",
+    purchaseTime,
+    acknowledgedAt: isAcknowledged ? now : null,
+    isPurchased: purchaseState == 0
   };
 }
 

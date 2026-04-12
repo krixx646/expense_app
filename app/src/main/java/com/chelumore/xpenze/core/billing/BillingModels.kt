@@ -16,6 +16,15 @@ data class BillingSubscriptionPurchase(
     val orderId: String?
 )
 
+data class BillingOneTimePurchase(
+    val productId: String,
+    val purchaseToken: String,
+    val purchaseTime: Long,
+    val isAcknowledged: Boolean,
+    val state: BillingPurchaseState,
+    val orderId: String?
+)
+
 data class BillingSubscriptionPlan(
     val productId: String,
     val offerToken: String,
@@ -37,6 +46,11 @@ sealed interface BillingPurchaseResult {
 sealed interface BillingRestoreResult {
     data class Success(val purchases: List<BillingSubscriptionPurchase>) : BillingRestoreResult
     data class Failure(val message: String) : BillingRestoreResult
+}
+
+sealed interface BillingOneTimeRestoreResult {
+    data class Success(val purchases: List<BillingOneTimePurchase>) : BillingOneTimeRestoreResult
+    data class Failure(val message: String) : BillingOneTimeRestoreResult
 }
 
 sealed interface BillingCatalogResult {

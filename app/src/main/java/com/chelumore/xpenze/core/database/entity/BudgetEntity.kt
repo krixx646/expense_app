@@ -32,7 +32,8 @@ enum class BudgetPeriod {
     indices = [
         Index(value = ["categoryId"]),
         Index(value = ["accountId"]),
-        Index(value = ["isActive"])
+        Index(value = ["isActive"]),
+        Index(value = ["seriesId"])
     ]
 )
 data class BudgetEntity(
@@ -50,6 +51,7 @@ data class BudgetEntity(
     val synced: Boolean = false,
     val deleted: Boolean = false,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val isRecurring: Boolean = false,
+    val seriesId: String? = null
 )
-

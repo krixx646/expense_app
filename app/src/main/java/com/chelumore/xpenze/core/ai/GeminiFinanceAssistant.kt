@@ -19,6 +19,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 @Singleton
 class GeminiFinanceAssistant @Inject constructor(
     private val json: Json,
+    private val supabaseMochiApi: SupabaseMochiApi,
+    private val firebaseMochiApi: FirebaseMochiApi,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     private val client = OkHttpClient()
@@ -33,12 +35,7 @@ class GeminiFinanceAssistant @Inject constructor(
         val sanitizedQuestion = question.trim()
         val languageTag = preferredLanguageTag.trim().ifBlank { "en" }
 
-        val apiKey = BuildConfig.GEMINI_API_KEY.trim()
-        if (apiKey.isBlank()) {
-            throw IllegalStateException(
-                "Gemini API key is missing. Set GEMINI_API_KEY in gradle.properties or environment variables."
-            )
-        }
+        val apiKey = BuildConfig.GEMINI_API_KEY.trim().ifBlank { null }
 
         val systemPrompt = buildSystemPrompt(
             userDisplayName = userDisplayName,
@@ -128,12 +125,69 @@ class GeminiFinanceAssistant @Inject constructor(
         normalizedText
     }
 
-    private fun requestGeminiCompletion(
-        apiKey: String,
+    private suspend fun requestGeminiCompletion(
+        apiKey: String?,
         systemPrompt: String,
         userPrompt: String,
         maxOutputTokens: Int
     ): GeminiCompletionResult {
+        when (
+            val backendResult = supabaseMochiApi.requestCompletion(
+                systemPrompt = systemPrompt,
+                userPrompt = userPrompt,
+                maxOutputTokens = maxOutputTokens
+            )
+        ) {
+            is SupabaseMochiApi.ApiCallResult.Success -> {
+                return GeminiCompletionResult(
+                    text = backendResult.text,
+                    finishReason = backendResult.finishReason
+                )
+            }
+
+            is SupabaseMochiApi.ApiCallResult.Failure -> {
+                if (apiKey.isNullOrBlank()) {
+                    throw IllegalStateException(backendResult.message)
+                }
+            }
+
+            SupabaseMochiApi.ApiCallResult.NotConfigured -> Unit
+        }
+
+        when (
+            val backendResult = firebaseMochiApi.requestCompletion(
+                systemPrompt = systemPrompt,
+                userPrompt = userPrompt,
+                maxOutputTokens = maxOutputTokens
+            )
+        ) {
+            is FirebaseMochiApi.ApiCallResult.Success -> {
+                return GeminiCompletionResult(
+                    text = backendResult.text,
+                    finishReason = backendResult.finishReason
+                )
+            }
+
+            is FirebaseMochiApi.ApiCallResult.Failure -> {
+                if (apiKey.isNullOrBlank()) {
+                    throw IllegalStateException(backendResult.message)
+                }
+            }
+
+            FirebaseMochiApi.ApiCallResult.NotConfigured -> {
+                if (apiKey.isNullOrBlank()) {
+                    throw IllegalStateException(
+                        "Mochi backend is not configured and no fallback Gemini key is available."
+                    )
+                }
+            }
+        }
+
+        val resolvedApiKey = apiKey?.trim().orEmpty()
+        if (resolvedApiKey.isBlank()) {
+            throw IllegalStateException("Mochi backend is unavailable.")
+        }
+
         val payload = GeminiGenerateContentRequest(
             systemInstruction = GeminiContent(
                 parts = listOf(
@@ -156,7 +210,7 @@ class GeminiFinanceAssistant @Inject constructor(
         val requestBody = json.encodeToString(GeminiGenerateContentRequest.serializer(), payload)
             .toRequestBody("application/json".toMediaType())
         val url = "https://generativelanguage.googleapis.com/v1beta/models/" +
-            "${BuildConfig.GEMINI_MODEL}:generateContent?key=$apiKey"
+            "${BuildConfig.GEMINI_MODEL}:generateContent?key=$resolvedApiKey"
 
         val request = Request.Builder()
             .url(url)

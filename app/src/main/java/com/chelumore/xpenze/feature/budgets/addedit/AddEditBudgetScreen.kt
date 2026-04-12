@@ -2,7 +2,16 @@ package com.chelumore.xpenze.feature.budgets.addedit
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -49,25 +58,33 @@ import com.chelumore.xpenze.core.ui.components.input.DropdownSelector
 import com.chelumore.xpenze.core.ui.components.input.ExpenseTextField
 import com.chelumore.xpenze.core.ui.components.layout.ConfirmationDialog
 import com.chelumore.xpenze.core.ui.components.layout.XpenzeTopAppBar
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.BudgetPeriod
 import com.chelumore.xpenze.ui.theme.BlackBackground
 import com.chelumore.xpenze.ui.theme.ErrorRed
 import com.chelumore.xpenze.ui.theme.YellowPrimary
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditBudgetScreen(
     budgetId: String?,
+    cloneFromBudgetId: String? = null,
     onNavigateBack: () -> Unit,
+    onNavigateToSubscription: () -> Unit,
     viewModel: AddEditBudgetViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirm by remember { mutableStateOf(false) }
-    var showAdvancedOptions by rememberSaveable(budgetId) { mutableStateOf(budgetId != null) }
+    var showAdvancedOptions by rememberSaveable(budgetId, cloneFromBudgetId) {
+        mutableStateOf(budgetId != null || cloneFromBudgetId != null)
+    }
 
-    LaunchedEffect(budgetId) {
-        viewModel.init(budgetId)
+    LaunchedEffect(budgetId, cloneFromBudgetId) {
+        viewModel.init(budgetId = budgetId, cloneFromBudgetId = cloneFromBudgetId)
     }
 
     LaunchedEffect(uiState.error) {
@@ -105,6 +122,27 @@ fun AddEditBudgetScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = YellowPrimary)
+            }
+            return@Scaffold
+        }
+
+        val periodLabel = localizedPeriodLabel(uiState.period)
+        val categoryScope = uiState.selectedCategory?.name ?: stringResource(R.string.common_all_categories)
+        val accountScope = uiState.selectedAccount?.name ?: stringResource(R.string.common_all_accounts)
+        val scopeLabel = stringResource(R.string.budget_editor_scope_pair, categoryScope, accountScope)
+        val autoEndDate = uiState.effectiveEndDate
+        val expenseCategories = remember(uiState.categories) {
+            uiState.categories.filter { it.type == CategoryType.EXPENSE }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -113,7 +151,6 @@ fun AddEditBudgetScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Amount Input
             AmountInputField(
                 amountText = uiState.amountText,
                 onAmountTextChange = viewModel::setAmount,
@@ -122,7 +159,6 @@ fun AddEditBudgetScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Name Input
             ExpenseTextField(
                 value = uiState.name,
                 onValueChange = viewModel::setName,
@@ -133,17 +169,6 @@ fun AddEditBudgetScreen(
                 placeholder = stringResource(R.string.budget_editor_name_placeholder),
                 modifier = Modifier.fillMaxWidth()
             )
-
-            val periodLabel = when (uiState.period) {
-                BudgetPeriod.DAILY -> stringResource(R.string.budget_period_daily)
-                BudgetPeriod.WEEKLY -> stringResource(R.string.budget_period_weekly)
-                BudgetPeriod.MONTHLY -> stringResource(R.string.budget_period_monthly)
-                BudgetPeriod.YEARLY -> stringResource(R.string.budget_period_yearly)
-                BudgetPeriod.CUSTOM -> stringResource(R.string.budget_default_custom_name)
-            }
-            val categoryScope = uiState.selectedCategory?.name ?: stringResource(R.string.common_all_categories)
-            val accountScope = uiState.selectedAccount?.name ?: stringResource(R.string.common_all_accounts)
-            val scopeLabel = stringResource(R.string.budget_editor_scope_pair, categoryScope, accountScope)
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -186,25 +211,17 @@ fun AddEditBudgetScreen(
             }
 
             if (showAdvancedOptions) {
-                val periodItems = BudgetPeriod.entries
-                    .filter { it != BudgetPeriod.CUSTOM }
-                    .map {
-                        DropdownItem(
-                            id = it.name,
-                            label = when (it) {
-                                BudgetPeriod.DAILY -> stringResource(R.string.budget_period_daily)
-                                BudgetPeriod.WEEKLY -> stringResource(R.string.budget_period_weekly)
-                                BudgetPeriod.MONTHLY -> stringResource(R.string.budget_period_monthly)
-                                BudgetPeriod.YEARLY -> stringResource(R.string.budget_period_yearly)
-                                BudgetPeriod.CUSTOM -> stringResource(R.string.budget_default_custom_name)
-                            }
-                        )
-                    }
+                val periodItems = BudgetPeriod.entries.map {
+                    DropdownItem(
+                        id = it.name,
+                        label = localizedPeriodLabel(it)
+                    )
+                }
                 DropdownSelector(
                     label = stringResource(R.string.onboarding_budget_period_label),
                     items = periodItems,
                     selectedId = uiState.period.name,
-                    onSelected = { id -> id?.let { viewModel.setPeriod(BudgetPeriod.valueOf(it)) } },
+                    onSelected = { id -> id?.let { value -> viewModel.setPeriod(BudgetPeriod.valueOf(value)) } },
                     placeholder = stringResource(R.string.onboarding_budget_period_label),
                     allowClearSelection = false
                 )
@@ -214,43 +231,68 @@ fun AddEditBudgetScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    DatePickerField(
-                        label = stringResource(R.string.common_start_date),
-                        dateMillis = uiState.startDate,
-                        onDateMillisChange = viewModel::setStartDate,
-                        modifier = Modifier.weight(1f)
-                    )
+                DatePickerField(
+                    label = stringResource(R.string.common_start_date),
+                    dateMillis = uiState.startDate,
+                    onDateMillisChange = viewModel::setStartDate,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (uiState.period == BudgetPeriod.CUSTOM) {
                     DatePickerField(
                         label = stringResource(R.string.common_end_date),
                         dateMillis = uiState.endDate,
-                        onDateMillisChange = { viewModel.setEndDate(it) },
+                        onDateMillisChange = viewModel::setEndDate,
                         placeholder = stringResource(R.string.common_no_end_date),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     )
-                }
-                if (uiState.endDate != null) {
+                    if (uiState.endDate != null) {
+                        Text(
+                            text = stringResource(R.string.common_clear_end_date),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .clickable { viewModel.setEndDate(null) }
+                                .padding(top = 4.dp)
+                        )
+                    }
                     Text(
-                        text = stringResource(R.string.common_clear_end_date),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .align(Alignment.End)
-                            .clickable { viewModel.setEndDate(null) }
-                            .padding(top = 4.dp)
+                        text = stringResource(R.string.budget_editor_custom_end_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else if (autoEndDate != null) {
+                    Text(
+                        text = stringResource(
+                            R.string.budget_editor_auto_end_hint,
+                            formatBudgetDate(autoEndDate)
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
+                RecurringBudgetCard(
+                    hasPremiumAccess = uiState.hasPremiumAccess,
+                    isRecurring = uiState.isRecurring,
+                    periodLabel = periodLabel,
+                    onRecurringChange = viewModel::setRecurring,
+                    onNavigateToSubscription = onNavigateToSubscription
+                )
+
                 CategoryPicker(
                     label = stringResource(R.string.transaction_form_category_label),
-                    categories = uiState.categories,
+                    categories = expenseCategories,
                     selectedCategoryId = uiState.selectedCategoryId,
                     onSelected = viewModel::setCategoryId,
                     placeholder = stringResource(R.string.common_all_categories),
                     allowClearSelection = true,
                     clearLabel = stringResource(R.string.common_all_categories)
+                )
+                Text(
+                    text = stringResource(R.string.budget_editor_category_expense_only_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 AccountPicker(
@@ -270,15 +312,15 @@ fun AddEditBudgetScreen(
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                    text = stringResource(R.string.budget_editor_alert_threshold),
+                        text = stringResource(R.string.budget_editor_alert_threshold),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                    text = stringResource(
-                        R.string.budget_editor_alert_threshold_value,
-                        (uiState.alertThreshold * 100).toInt()
-                    ),
+                        text = stringResource(
+                            R.string.budget_editor_alert_threshold_value,
+                            (uiState.alertThreshold * 100).toInt()
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -366,4 +408,89 @@ fun AddEditBudgetScreen(
             onDismiss = { showDeleteConfirm = false }
         )
     }
+}
+
+@Composable
+private fun RecurringBudgetCard(
+    hasPremiumAccess: Boolean,
+    isRecurring: Boolean,
+    periodLabel: String,
+    onRecurringChange: (Boolean) -> Unit,
+    onNavigateToSubscription: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.budget_editor_recurring_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (hasPremiumAccess) {
+                            stringResource(R.string.budget_editor_recurring_body)
+                        } else {
+                            stringResource(R.string.budget_editor_recurring_premium_body)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (hasPremiumAccess) {
+                    Switch(
+                        checked = isRecurring,
+                        onCheckedChange = onRecurringChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = BlackBackground,
+                            checkedTrackColor = YellowPrimary
+                        )
+                    )
+                }
+            }
+            if (hasPremiumAccess && isRecurring) {
+                Text(
+                    text = stringResource(R.string.budget_editor_recurring_next_hint, periodLabel),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (!hasPremiumAccess) {
+                OutlinedButton(
+                    onClick = onNavigateToSubscription,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.ai_chat_go_premium))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun localizedPeriodLabel(period: BudgetPeriod): String {
+    return when (period) {
+        BudgetPeriod.DAILY -> stringResource(R.string.budget_period_daily)
+        BudgetPeriod.WEEKLY -> stringResource(R.string.budget_period_weekly)
+        BudgetPeriod.MONTHLY -> stringResource(R.string.budget_period_monthly)
+        BudgetPeriod.YEARLY -> stringResource(R.string.budget_period_yearly)
+        BudgetPeriod.CUSTOM -> stringResource(R.string.budget_period_custom)
+    }
+}
+
+private fun formatBudgetDate(epochMillis: Long): String {
+    val date = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate()
+    return date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
 }

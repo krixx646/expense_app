@@ -19,7 +19,9 @@ import kotlinx.coroutines.launch
 data class AutoCaptureSetupUiState(
     val appLanguageTag: String = "en",
     val hasPremiumAccess: Boolean = false,
-    val autoCaptureEnabled: Boolean = false
+    val autoCaptureEnabled: Boolean = false,
+    val autoCaptureNotificationEnabled: Boolean = false,
+    val autoCaptureNotificationAllowedPackages: Set<String> = emptySet()
 )
 
 sealed interface AutoCaptureSetupEvent {
@@ -43,7 +45,9 @@ class AutoCaptureSetupViewModel @Inject constructor(
         AutoCaptureSetupUiState(
             appLanguageTag = AppLanguages.normalizeTag(prefs.appLanguageTag),
             hasPremiumAccess = entitlement.hasPremiumAccess,
-            autoCaptureEnabled = prefs.autoCaptureEnabled
+            autoCaptureEnabled = prefs.autoCaptureEnabled,
+            autoCaptureNotificationEnabled = prefs.autoCaptureNotificationEnabled,
+            autoCaptureNotificationAllowedPackages = prefs.autoCaptureNotificationAllowedPackages
         )
     }.stateIn(
         scope = viewModelScope,
@@ -63,6 +67,20 @@ class AutoCaptureSetupViewModel @Inject constructor(
             preferencesDataStore.setAutoCaptureRecurringSuggestionsEnabled(true)
 
             eventsChannel.send(AutoCaptureSetupEvent.Enabled)
+        }
+    }
+
+    fun toggleAutoCaptureNotification(enabled: Boolean) {
+        viewModelScope.launch {
+            if (!uiState.value.hasPremiumAccess) return@launch
+            preferencesDataStore.setAutoCaptureNotificationEnabled(enabled)
+        }
+    }
+
+    fun setAutoCaptureNotificationAllowedPackages(packageNames: Set<String>) {
+        viewModelScope.launch {
+            if (!uiState.value.hasPremiumAccess) return@launch
+            preferencesDataStore.setAutoCaptureNotificationAllowedPackages(packageNames)
         }
     }
 }

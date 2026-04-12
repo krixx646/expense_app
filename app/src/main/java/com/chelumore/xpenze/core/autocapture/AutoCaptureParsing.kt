@@ -127,6 +127,7 @@ private fun scoreMoneyCandidate(text: String, candidate: ParsedMoneyCandidate): 
     val start = (candidate.startIndex - 24).coerceAtLeast(0)
     val end = (candidate.startIndex + candidate.raw.length + 24).coerceAtMost(text.length)
     val context = normalizeCaptureText(text.substring(start, end))
+    val leadingContext = normalizeCaptureText(text.substring(start, candidate.startIndex))
     val normalizedRaw = normalizeCaptureText(candidate.raw)
     var score = 0
 
@@ -138,6 +139,9 @@ private fun scoreMoneyCandidate(text: String, candidate: ParsedMoneyCandidate): 
     }
     if (positiveAmountContextKeywords.any { context.contains(it) }) {
         score += 3
+    }
+    if (balanceLeadingContextKeywords.any { leadingContext.contains(it) }) {
+        score -= 10
     }
     if (accountLikeContextKeywords.any { context.contains(it) }) {
         score -= 6
@@ -213,4 +217,13 @@ private val accountLikeContextKeywords = setOf(
     "帐户",
     "card ending",
     "ending"
+)
+private val balanceLeadingContextKeywords = setOf(
+    "available balance",
+    "avail balance",
+    "avail bal",
+    "balance",
+    "ledger balance",
+    "credit limit",
+    "remaining limit"
 )

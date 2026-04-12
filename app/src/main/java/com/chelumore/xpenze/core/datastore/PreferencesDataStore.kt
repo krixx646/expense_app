@@ -38,6 +38,7 @@ class PreferencesDataStore @Inject constructor(
         val APP_LANGUAGE_TAG = stringPreferencesKey("app_language_tag")
         val ACCOUNT_CARD_STYLE = stringPreferencesKey("account_card_style")
         val ACCOUNT_CARD_STYLE_OVERRIDES = stringPreferencesKey("account_card_style_overrides")
+        val ACCOUNT_CARD_STYLE_UPDATED_AT = longPreferencesKey("account_card_style_updated_at")
         val ARE_BALANCES_HIDDEN = booleanPreferencesKey("are_balances_hidden")
         val DEFAULT_CURRENCY = stringPreferencesKey("default_currency")
         val DEFAULT_ACCOUNT_ID = stringPreferencesKey("default_account_id")
@@ -62,12 +63,17 @@ class PreferencesDataStore @Inject constructor(
         val TRIAL_EXPIRES_AT = longPreferencesKey("trial_expires_at")
         val TRIAL_CONSUMED = booleanPreferencesKey("trial_consumed")
         val TRIAL_CONSUMED_USER_IDS = stringPreferencesKey("trial_consumed_user_ids")
+        val HAS_FOUNDER_REWARD = booleanPreferencesKey("has_founder_reward")
+        val FOUNDER_TRIAL_ACTIVATED = booleanPreferencesKey("founder_trial_activated")
+        val FOUNDER_REWARD_PRODUCT_ID = stringPreferencesKey("founder_reward_product_id")
         val AUTO_CAPTURE_ENABLED = booleanPreferencesKey("auto_capture_enabled")
         val AUTO_CAPTURE_STATEMENT_IMPORT_ENABLED =
             booleanPreferencesKey("auto_capture_statement_import_enabled")
         val AUTO_CAPTURE_OCR_ENABLED = booleanPreferencesKey("auto_capture_ocr_enabled")
         val AUTO_CAPTURE_NOTIFICATION_ENABLED =
             booleanPreferencesKey("auto_capture_notification_enabled")
+        val AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES =
+            stringPreferencesKey("auto_capture_notification_allowed_packages")
         val AUTO_CAPTURE_MERCHANT_MEMORY_ENABLED =
             booleanPreferencesKey("auto_capture_merchant_memory_enabled")
         val AUTO_CAPTURE_RECURRING_SUGGESTIONS_ENABLED =
@@ -96,6 +102,7 @@ class PreferencesDataStore @Inject constructor(
             accountCardStyleOverrides = decodeAccountCardStyleOverrides(
                 prefs[Keys.ACCOUNT_CARD_STYLE_OVERRIDES].orEmpty()
             ),
+            accountCardStyleUpdatedAt = prefs[Keys.ACCOUNT_CARD_STYLE_UPDATED_AT] ?: 0L,
             areBalancesHidden = prefs[Keys.ARE_BALANCES_HIDDEN] ?: false,
             defaultCurrency = prefs[Keys.DEFAULT_CURRENCY] ?: Constants.DEFAULT_CURRENCY,
             defaultAccountId = prefs[Keys.DEFAULT_ACCOUNT_ID],
@@ -117,10 +124,16 @@ class PreferencesDataStore @Inject constructor(
             trialStartedAt = prefs[Keys.TRIAL_STARTED_AT] ?: 0L,
             trialExpiresAt = prefs[Keys.TRIAL_EXPIRES_AT] ?: 0L,
             trialConsumed = consumedForCurrentUser,
+            hasFounderReward = prefs[Keys.HAS_FOUNDER_REWARD] ?: false,
+            founderTrialActivated = prefs[Keys.FOUNDER_TRIAL_ACTIVATED] ?: false,
+            founderRewardProductId = prefs[Keys.FOUNDER_REWARD_PRODUCT_ID],
             autoCaptureEnabled = prefs[Keys.AUTO_CAPTURE_ENABLED] ?: false,
             autoCaptureStatementImportEnabled = prefs[Keys.AUTO_CAPTURE_STATEMENT_IMPORT_ENABLED] ?: false,
             autoCaptureOcrEnabled = prefs[Keys.AUTO_CAPTURE_OCR_ENABLED] ?: false,
             autoCaptureNotificationEnabled = prefs[Keys.AUTO_CAPTURE_NOTIFICATION_ENABLED] ?: false,
+            autoCaptureNotificationAllowedPackages = decodeStringSet(
+                prefs[Keys.AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES].orEmpty()
+            ),
             autoCaptureMerchantMemoryEnabled = prefs[Keys.AUTO_CAPTURE_MERCHANT_MEMORY_ENABLED] ?: false,
             autoCaptureRecurringSuggestionsEnabled =
                 prefs[Keys.AUTO_CAPTURE_RECURRING_SUGGESTIONS_ENABLED] ?: false,
@@ -158,6 +171,7 @@ class PreferencesDataStore @Inject constructor(
     suspend fun setAccountCardStyle(style: AccountCardStyle) {
         context.dataStore.edit { prefs ->
             prefs[Keys.ACCOUNT_CARD_STYLE] = style.name
+            prefs[Keys.ACCOUNT_CARD_STYLE_UPDATED_AT] = System.currentTimeMillis()
         }
     }
 
@@ -178,6 +192,23 @@ class PreferencesDataStore @Inject constructor(
             } else {
                 prefs[Keys.ACCOUNT_CARD_STYLE_OVERRIDES] = encodeAccountCardStyleOverrides(current)
             }
+            prefs[Keys.ACCOUNT_CARD_STYLE_UPDATED_AT] = System.currentTimeMillis()
+        }
+    }
+
+    suspend fun applyAccountCardStyleSync(
+        style: AccountCardStyle,
+        overrides: Map<String, AccountCardStyle>,
+        updatedAt: Long
+    ) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.ACCOUNT_CARD_STYLE] = style.name
+            if (overrides.isEmpty()) {
+                prefs.remove(Keys.ACCOUNT_CARD_STYLE_OVERRIDES)
+            } else {
+                prefs[Keys.ACCOUNT_CARD_STYLE_OVERRIDES] = encodeAccountCardStyleOverrides(overrides)
+            }
+            prefs[Keys.ACCOUNT_CARD_STYLE_UPDATED_AT] = updatedAt
         }
     }
 
@@ -284,9 +315,11 @@ class PreferencesDataStore @Inject constructor(
             if (email != null) prefs[Keys.USER_EMAIL] = email else prefs.remove(Keys.USER_EMAIL)
             if (name != null) prefs[Keys.USER_NAME] = name else prefs.remove(Keys.USER_NAME)
             if (photoUrl != null) prefs[Keys.USER_PHOTO_URL] = photoUrl else prefs.remove(Keys.USER_PHOTO_URL)
-            if (userId == null || (!previousUserId.isNullOrBlank() && previousUserId != userId)) {
+            if (userId == null || previousUserId != userId) {
                 prefs.remove(Keys.AI_CHAT_HISTORY_JSON)
+                prefs.remove(Keys.ACCOUNT_CARD_STYLE)
                 prefs.remove(Keys.ACCOUNT_CARD_STYLE_OVERRIDES)
+                prefs.remove(Keys.ACCOUNT_CARD_STYLE_UPDATED_AT)
                 prefs.remove(Keys.APP_OPEN_COUNT)
                 prefs.remove(Keys.RATE_APP_PROMPT_LAST_SHOWN_AT)
                 prefs.remove(Keys.HAS_RATED_ON_PLAY_STORE)
@@ -350,6 +383,20 @@ class PreferencesDataStore @Inject constructor(
         }
     }
 
+    suspend fun setAutoCaptureNotificationAllowedPackages(packageNames: Set<String>) {
+        val cleaned = packageNames
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toSortedSet()
+        context.dataStore.edit { prefs ->
+            if (cleaned.isEmpty()) {
+                prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES)
+            } else {
+                prefs[Keys.AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES] = encodeStringSet(cleaned)
+            }
+        }
+    }
+
     suspend fun setAutoCaptureMerchantMemoryEnabled(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.AUTO_CAPTURE_MERCHANT_MEMORY_ENABLED] = enabled
@@ -400,6 +447,30 @@ class PreferencesDataStore @Inject constructor(
         }
     }
 
+    suspend fun setFounderRewardState(
+        hasFounderReward: Boolean,
+        founderTrialActivated: Boolean,
+        founderRewardProductId: String?
+    ) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.HAS_FOUNDER_REWARD] = hasFounderReward
+            prefs[Keys.FOUNDER_TRIAL_ACTIVATED] = founderTrialActivated
+            if (founderRewardProductId.isNullOrBlank()) {
+                prefs.remove(Keys.FOUNDER_REWARD_PRODUCT_ID)
+            } else {
+                prefs[Keys.FOUNDER_REWARD_PRODUCT_ID] = founderRewardProductId
+            }
+        }
+    }
+
+    suspend fun clearFounderRewardState() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(Keys.HAS_FOUNDER_REWARD)
+            prefs.remove(Keys.FOUNDER_TRIAL_ACTIVATED)
+            prefs.remove(Keys.FOUNDER_REWARD_PRODUCT_ID)
+        }
+    }
+
     suspend fun clearUserData() {
         context.dataStore.edit { prefs ->
             prefs.remove(Keys.USER_ID)
@@ -407,10 +478,15 @@ class PreferencesDataStore @Inject constructor(
             prefs.remove(Keys.USER_NAME)
             prefs.remove(Keys.USER_PHOTO_URL)
             prefs.remove(Keys.AI_CHAT_HISTORY_JSON)
+            prefs.remove(Keys.ACCOUNT_CARD_STYLE)
             prefs.remove(Keys.ACCOUNT_CARD_STYLE_OVERRIDES)
+            prefs.remove(Keys.ACCOUNT_CARD_STYLE_UPDATED_AT)
             prefs.remove(Keys.HAS_SEEN_AI_COACH_CTA)
             prefs.remove(Keys.IS_PREMIUM)
             prefs.remove(Keys.LAST_SYNC_TIME)
+            prefs.remove(Keys.HAS_FOUNDER_REWARD)
+            prefs.remove(Keys.FOUNDER_TRIAL_ACTIVATED)
+            prefs.remove(Keys.FOUNDER_REWARD_PRODUCT_ID)
             prefs.remove(Keys.NOTIFICATION_PERMISSION_PROMPT_LAST_SHOWN_AT)
             prefs.remove(Keys.APP_OPEN_COUNT)
             prefs.remove(Keys.RATE_APP_PROMPT_LAST_SHOWN_AT)
@@ -419,6 +495,7 @@ class PreferencesDataStore @Inject constructor(
             prefs.remove(Keys.AUTO_CAPTURE_STATEMENT_IMPORT_ENABLED)
             prefs.remove(Keys.AUTO_CAPTURE_OCR_ENABLED)
             prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ENABLED)
+            prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES)
             prefs.remove(Keys.AUTO_CAPTURE_MERCHANT_MEMORY_ENABLED)
             prefs.remove(Keys.AUTO_CAPTURE_RECURRING_SUGGESTIONS_ENABLED)
             prefs.remove(Keys.AUTO_CAPTURE_DISCLOSURE_ACCEPTED)
@@ -469,6 +546,22 @@ class PreferencesDataStore @Inject constructor(
     private fun encodeConsumedUserIds(ids: List<String>): String {
         return runCatching {
             json.encodeToString(ListSerializer(String.serializer()), ids)
+        }.getOrElse { "[]" }
+    }
+
+    private fun decodeStringSet(raw: String): Set<String> {
+        if (raw.isBlank()) return emptySet()
+        return runCatching {
+            json.decodeFromString(ListSerializer(String.serializer()), raw)
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
+        }.getOrElse { emptySet() }
+    }
+
+    private fun encodeStringSet(values: Set<String>): String {
+        return runCatching {
+            json.encodeToString(ListSerializer(String.serializer()), values.toList())
         }.getOrElse { "[]" }
     }
 }

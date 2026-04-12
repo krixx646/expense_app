@@ -98,6 +98,11 @@
             </intent-filter>
         </service>
 
+        <receiver
+            android:name=".core.notifications.AutoCaptureDraftActionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>

@@ -18,7 +18,8 @@ import kotlinx.serialization.json.Json
 internal enum class NotificationChannelKind {
     BUDGETS,
     DAILY,
-    MOCHI
+    MOCHI,
+    AUTO_CAPTURE
 }
 
 internal data class NotificationChannelCopy(
@@ -143,6 +144,35 @@ internal fun notificationChannelCopy(
                 ja = "Mochiからのお金に役立つ気づきと機会です。",
                 sw = "Vidokezo vya fedha na fursa muhimu kutoka kwa Mochi.",
                 zh = "来自 Mochi 的实用理财提醒与机会。"
+            )
+        )
+
+        NotificationChannelKind.AUTO_CAPTURE -> NotificationChannelCopy(
+            name = pickLanguage(
+                languageTag,
+                en = "Draft capture alerts",
+                es = "Alertas de borradores capturados",
+                fr = "Alertes de brouillons captures",
+                de = "Hinweise zu erfassten Entwurfen",
+                pt = "Alertas de rascunhos capturados",
+                ar = "تنبيهات المسودات الملتقطة",
+                hi = "कैप्चर किए गए ड्राफ्ट अलर्ट",
+                ja = "下書き取り込みアラート",
+                sw = "Arifa za rasimu zilizokamatwa",
+                zh = "草稿捕捉提醒"
+            ),
+            description = pickLanguage(
+                languageTag,
+                en = "Alerts when Xpenze captures a new transaction draft from your automatic tools.",
+                es = "Alertas cuando Xpenze captura un nuevo borrador de transaccion desde tus herramientas automaticas.",
+                fr = "Alertes lorsque Xpenze capture un nouveau brouillon de transaction a partir de vos outils automatiques.",
+                de = "Hinweise, wenn Xpenze einen neuen Transaktionsentwurf aus Ihren automatischen Tools erfasst.",
+                pt = "Alertas quando o Xpenze captura um novo rascunho de transacao das suas ferramentas automaticas.",
+                ar = "تنبيهات عندما يلتقط Xpenze مسودة معاملة جديدة من أدواتك التلقائية.",
+                hi = "जब Xpenze आपके ऑटोमैटिक टूल्स से नया ट्रांजैक्शन ड्राफ्ट कैप्चर करे तब अलर्ट।",
+                ja = "自動ツールで新しい取引下書きを取り込んだときの通知です。",
+                sw = "Arifa wakati Xpenze inakamata rasimu mpya ya muamala kutoka zana zako za kiotomatiki.",
+                zh = "当 Xpenze 从你的自动工具中捕捉到新的交易草稿时发出提醒。"
             )
         )
     }

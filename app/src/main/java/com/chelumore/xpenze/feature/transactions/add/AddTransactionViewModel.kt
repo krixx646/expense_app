@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chelumore.xpenze.domain.model.Account
 import com.chelumore.xpenze.domain.model.Category
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.TransactionType
 import com.chelumore.xpenze.domain.usecase.account.GetAccountsUseCase
 import com.chelumore.xpenze.domain.usecase.category.GetCategoriesUseCase
@@ -33,9 +34,17 @@ class AddTransactionViewModel @Inject constructor(
         getCategoriesUseCase(),
         getAccountsUseCase(includeArchived = true)
     ) { form, categories, accounts ->
+        val sanitizedCategory = form.selectedCategory?.takeIf { category ->
+            when (form.type) {
+                TransactionType.EXPENSE -> category.type == CategoryType.EXPENSE
+                TransactionType.INCOME -> category.type == CategoryType.INCOME
+                TransactionType.TRANSFER -> false
+            }
+        }
         form.copy(
             categories = categories,
             accounts = accounts,
+            selectedCategory = sanitizedCategory,
             // Pre-select first account if none selected and accounts exist
             selectedAccount = form.selectedAccount ?: accounts.firstOrNull()
         )
@@ -46,7 +55,19 @@ class AddTransactionViewModel @Inject constructor(
     )
 
     fun setType(type: TransactionType) {
-        _formState.update { it.copy(type = type) }
+        _formState.update { state ->
+            state.copy(
+                type = type,
+                selectedCategory = state.selectedCategory?.takeIf { category ->
+                    when (type) {
+                        TransactionType.EXPENSE -> category.type == CategoryType.EXPENSE
+                        TransactionType.INCOME -> category.type == CategoryType.INCOME
+                        TransactionType.TRANSFER -> false
+                    }
+                },
+                selectedToAccount = if (type == TransactionType.TRANSFER) state.selectedToAccount else null
+            )
+        }
     }
 
     fun setAmount(amount: String) {

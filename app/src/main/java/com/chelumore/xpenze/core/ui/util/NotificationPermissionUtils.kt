@@ -1,6 +1,7 @@
 package com.chelumore.xpenze.core.ui.util
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -49,5 +50,30 @@ fun Context.openNotificationListenerSettings() {
     }
     runCatching { startActivity(intent) }
         .onFailure { openAppNotificationSettings() }
+}
+
+fun Context.isXiaomiFamilyDevice(): Boolean {
+    val brand = Build.BRAND.orEmpty().lowercase()
+    val manufacturer = Build.MANUFACTURER.orEmpty().lowercase()
+    return manufacturer.contains("xiaomi") ||
+        brand.contains("xiaomi") ||
+        brand.contains("redmi") ||
+        brand.contains("poco")
+}
+
+fun Context.openXiaomiAutoStartSettings() {
+    val miuiIntent = Intent().apply {
+        component = ComponentName(
+            "com.miui.securitycenter",
+            "com.miui.permcenter.autostart.AutoStartManagementActivity"
+        )
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    val detailsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.parse("package:$packageName")
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    runCatching { startActivity(miuiIntent) }
+        .onFailure { runCatching { startActivity(detailsIntent) } }
 }
 

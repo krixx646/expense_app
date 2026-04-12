@@ -1,5 +1,4 @@
 package com.chelumore.xpenze.feature.auth
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chelumore.xpenze.core.common.Constants
@@ -7,9 +6,12 @@ import com.chelumore.xpenze.core.database.AppDatabase
 import com.chelumore.xpenze.domain.repository.AuthRepository
 import com.chelumore.xpenze.domain.repository.AccountRepository
 import com.chelumore.xpenze.domain.repository.SyncRepository
+import com.chelumore.xpenze.domain.repository.SyncState
 import com.chelumore.xpenze.domain.repository.SubscriptionRepository
 import com.chelumore.xpenze.domain.repository.UserRepository
+import com.chelumore.xpenze.domain.repository.UserPreferences
 import com.chelumore.xpenze.core.work.SyncScheduler
+import com.chelumore.xpenze.domain.model.Account
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -29,7 +32,8 @@ import javax.inject.Inject
 data class SplashUiState(
     val isLoading: Boolean = true,
     val destination: SplashDestination? = null,
-    val error: String? = null
+    val error: SplashError? = null,
+    val errorMessage: String? = null
 )
 
 sealed interface SplashDestination {
@@ -37,6 +41,10 @@ sealed interface SplashDestination {
     data object Verification : SplashDestination
     data object Onboarding : SplashDestination
     data object Main : SplashDestination
+}
+
+enum class SplashError {
+    RESTORE_FAILED
 }
 
 @HiltViewModel
@@ -52,6 +60,7 @@ class SplashViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(SplashUiState())
     val uiState: StateFlow<SplashUiState> = _uiState
+    private val refreshRequests = MutableStateFlow(0)
 
     init {
         // Start/stop cloud sync based on auth state.
@@ -64,11 +73,6 @@ class SplashViewModel @Inject constructor(
                         syncScheduler.cancelAll()
                     } else {
                         syncScheduler.schedulePeriodic()
-                        // Pull cloud data immediately after sign-in/account switch.
-                        syncScheduler.scheduleNow()
-                        runCatching { subscriptionRepository.syncTrialStateFromBackend() }
-                        runCatching { subscriptionRepository.syncPremiumStateFromBackend() }
-                        runCatching { subscriptionRepository.restorePurchases() }
                     }
                 }
         }
@@ -76,10 +80,11 @@ class SplashViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 authRepository.observeAuthState(),
-                userRepository.userPreferences
-            ) { user, prefs -> user to prefs }
+                refreshRequests
+            ) { user, refreshKey -> user to refreshKey }
                 .distinctUntilChanged()
-                .collectLatest { (user, prefs) ->
+                .collectLatest { (user, _) ->
+                    var prefs = userRepository.userPreferences.first()
                     // Keep local preferences in sync (covers "already signed in" sessions on app start).
                     if (user == null && !prefs.userId.isNullOrBlank()) {
                         withContext(Dispatchers.IO) {
@@ -92,7 +97,7 @@ class SplashViewModel @Inject constructor(
                         userRepository.updateLastSyncTime(0L)
                         userRepository.setPremium(false)
                         userRepository.clearTrialState()
-                        return@collectLatest
+                        prefs = userRepository.userPreferences.first()
                     } else if (user != null && prefs.userId != user.uid) {
                         withContext(Dispatchers.IO) {
                             appDatabase.clearAllTables()
@@ -109,68 +114,204 @@ class SplashViewModel @Inject constructor(
                             name = user.displayName,
                             photoUrl = user.photoUrl
                         )
-                        return@collectLatest
+                        prefs = userRepository.userPreferences.first()
                     }
 
                     when {
                         user == null -> {
-                            _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Welcome, error = null) }
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    destination = SplashDestination.Welcome,
+                                    error = null,
+                                    errorMessage = null
+                                )
+                            }
                         }
                         user.email != null && !user.isEmailVerified -> {
-                            _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Verification, error = null) }
-                        }
-                        prefs.isOnboardingComplete -> {
-                            _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Main, error = null) }
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    destination = SplashDestination.Verification,
+                                    error = null,
+                                    errorMessage = null
+                                )
+                            }
                         }
                         else -> {
-                            // New install on another device: prefer pulling existing cloud accounts over forcing a new onboarding account.
-                            _uiState.update { it.copy(isLoading = true, destination = null, error = null) }
-
-                            // Immediate bootstrap sync for signed-in users so cross-device login
-                            // can see existing cloud accounts before we decide onboarding vs main.
-                            withTimeoutOrNull(FIRST_BOOTSTRAP_SYNC_TIMEOUT_MS) {
-                                runCatching { syncRepository.fullSync() }
-                            }
-
-                            val existingAccounts = accountRepository.getAll().first()
-                            val hasAccounts = if (existingAccounts.isNotEmpty()) {
-                                true
-                            } else {
-                                withTimeoutOrNull(ACCOUNT_APPEAR_WAIT_TIMEOUT_MS) {
-                                    accountRepository.getAll()
-                                        .map { it.isNotEmpty() }
-                                        .filter { it }
-                                        .first()
-                                } != null
-                            }
-
-                            if (hasAccounts) {
-                                accountRepository.getAll()
-                                    .filter { it.isNotEmpty() }
-                                    .first()
-                            } else {
-                                emptyList()
-                            }.let { accounts ->
-                                if (accounts.isNotEmpty()) {
-                                val defaultAccount = accounts.firstOrNull { it.isDefault } ?: accounts.first()
-                                userRepository.setDefaultCurrency(defaultAccount.currency)
-                                userRepository.setDefaultAccountId(defaultAccount.id)
-                                userRepository.setOnboardingComplete(true)
-
-                                _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Main, error = null) }
-                            } else {
-                                _uiState.update { it.copy(isLoading = false, destination = SplashDestination.Onboarding, error = null) }
-                            }
-                            }
+                            resolveSignedInDestination(prefs)
                         }
                     }
                 }
         }
     }
 
+    fun retryRestore() {
+        refreshRequests.update { it + 1 }
+    }
+
+    private suspend fun resolveSignedInDestination(prefs: UserPreferences) {
+        _uiState.update { it.copy(isLoading = true, destination = null, error = null, errorMessage = null) }
+
+        val restoreResult = attemptRequiredStartupSync()
+        if (!restoreResult.syncCompleted) {
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    destination = null,
+                    error = SplashError.RESTORE_FAILED,
+                    errorMessage = restoreResult.errorMessage
+                )
+            }
+            return
+        }
+
+        if (restoreResult.accounts.isNotEmpty()) {
+            finalizeMainDestination(restoreResult.accounts, prefs)
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                destination = if (prefs.isOnboardingComplete) {
+                    SplashDestination.Main
+                } else {
+                    SplashDestination.Onboarding
+                },
+                error = null,
+                errorMessage = null
+            )
+        }
+    }
+
+    private suspend fun attemptRequiredStartupSync(): BootstrapRestoreResult {
+        var syncOutcome = SyncAttemptResult(
+            completed = false,
+            errorMessage = "Restore could not complete."
+        )
+        for (attemptIndex in 0 until MAX_REQUIRED_STARTUP_SYNC_ATTEMPTS) {
+            syncOutcome = runStartupSyncAttempt()
+            if (syncOutcome.completed) {
+                break
+            }
+            val hasMoreAttempts = attemptIndex < MAX_REQUIRED_STARTUP_SYNC_ATTEMPTS - 1
+            if (hasMoreAttempts) {
+                delay(AUTOMATIC_RETRY_DELAY_MS * (attemptIndex + 1L))
+            }
+        }
+
+        val accounts = accountRepository.getAll().first()
+            .takeIf { it.isNotEmpty() }
+            ?: withTimeoutOrNull(ACCOUNT_APPEAR_WAIT_TIMEOUT_MS) {
+                accountRepository.getAll()
+                    .filter { it.isNotEmpty() }
+                    .first()
+            }
+            ?: emptyList()
+
+        return BootstrapRestoreResult(
+            syncCompleted = syncOutcome.completed,
+            accounts = if (syncOutcome.completed) accounts else emptyList(),
+            errorMessage = syncOutcome.errorMessage
+        )
+    }
+
+    private suspend fun finalizeMainDestination(
+        accounts: List<Account>,
+        prefs: UserPreferences
+    ) {
+        syncDefaultAccountSelection(accounts, prefs)
+        if (!prefs.isOnboardingComplete) {
+            userRepository.setOnboardingComplete(true)
+        }
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                destination = SplashDestination.Main,
+                error = null,
+                errorMessage = null
+            )
+        }
+        refreshSubscriptionStateInBackground()
+    }
+
+    private suspend fun syncDefaultAccountSelection(
+        accounts: List<Account>,
+        prefs: UserPreferences
+    ) {
+        val defaultAccount = accounts.firstOrNull { it.isDefault } ?: accounts.firstOrNull() ?: return
+        if (prefs.defaultCurrency != defaultAccount.currency) {
+            userRepository.setDefaultCurrency(defaultAccount.currency)
+        }
+        if (prefs.defaultAccountId != defaultAccount.id) {
+            userRepository.setDefaultAccountId(defaultAccount.id)
+        }
+    }
+
+    private data class BootstrapRestoreResult(
+        val syncCompleted: Boolean,
+        val accounts: List<Account>,
+        val errorMessage: String? = null
+    )
+
+    private data class SyncAttemptResult(
+        val completed: Boolean,
+        val errorMessage: String? = null,
+        val timedOut: Boolean = false
+    )
+
+    private suspend fun runStartupSyncAttempt(): SyncAttemptResult {
+        return withTimeoutOrNull(REQUIRED_STARTUP_SYNC_TIMEOUT_MS) {
+            val currentState = syncRepository.syncState.first()
+            val finalSyncState = when (currentState) {
+                is SyncState.Syncing -> {
+                    syncRepository.syncState
+                        .filter { it !is SyncState.Syncing }
+                        .first()
+                }
+                is SyncState.Success -> currentState
+                else -> {
+                    val fullSyncResult = runCatching { syncRepository.fullSync() }
+                    if (fullSyncResult.isFailure) {
+                        return@withTimeoutOrNull SyncAttemptResult(
+                            completed = false,
+                            errorMessage = fullSyncResult.exceptionOrNull()?.message
+                        )
+                    }
+                    syncRepository.syncState.first()
+                }
+            }
+
+            when (finalSyncState) {
+                is SyncState.Success -> SyncAttemptResult(completed = true)
+                is SyncState.Error -> SyncAttemptResult(
+                    completed = false,
+                    errorMessage = finalSyncState.message
+                )
+                else -> SyncAttemptResult(completed = false)
+            }
+        } ?: SyncAttemptResult(
+            completed = false,
+            errorMessage = "Sync is taking too long. Check your connection and try again.",
+            timedOut = true
+        )
+    }
+
+    private fun refreshSubscriptionStateInBackground() {
+        viewModelScope.launch {
+            runCatching { subscriptionRepository.syncTrialStateFromBackend() }
+            runCatching { subscriptionRepository.syncFounderRewardStateFromBackend() }
+            runCatching { subscriptionRepository.syncPremiumStateFromBackend() }
+            runCatching { subscriptionRepository.restorePurchases() }
+        }
+    }
+
     private companion object {
-        const val FIRST_BOOTSTRAP_SYNC_TIMEOUT_MS = 8_000L
-        const val ACCOUNT_APPEAR_WAIT_TIMEOUT_MS = 2_000L
+        const val REQUIRED_STARTUP_SYNC_TIMEOUT_MS = 45_000L
+        const val ACCOUNT_APPEAR_WAIT_TIMEOUT_MS = 10_000L
+        const val AUTOMATIC_RETRY_DELAY_MS = 1_500L
+        const val MAX_REQUIRED_STARTUP_SYNC_ATTEMPTS = 3
     }
 }
 

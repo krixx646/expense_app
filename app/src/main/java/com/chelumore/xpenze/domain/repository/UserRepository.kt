@@ -29,6 +29,12 @@ interface UserRepository {
     suspend fun setAiChatHistoryJson(historyJson: String?)
     suspend fun setTrialState(startedAt: Long, expiresAt: Long, consumed: Boolean)
     suspend fun clearTrialState()
+    suspend fun setFounderRewardState(
+        hasFounderReward: Boolean,
+        founderTrialActivated: Boolean,
+        founderRewardProductId: String?
+    )
+    suspend fun clearFounderRewardState()
     suspend fun clearUserData()
 }
 

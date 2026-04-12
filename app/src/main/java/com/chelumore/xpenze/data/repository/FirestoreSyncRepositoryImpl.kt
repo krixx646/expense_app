@@ -21,6 +21,7 @@ import com.chelumore.xpenze.core.database.entity.TransactionEntity
 import com.chelumore.xpenze.core.database.entity.TransactionType
 import com.chelumore.xpenze.core.datastore.PreferencesDataStore
 import com.chelumore.xpenze.core.di.IoDispatcher
+import com.chelumore.xpenze.domain.repository.AccountCardStyle
 import com.chelumore.xpenze.domain.repository.AuthRepository
 import com.chelumore.xpenze.domain.repository.SyncRepository
 import com.chelumore.xpenze.domain.repository.SyncState
@@ -28,12 +29,14 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -59,6 +62,10 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
     private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
     override val syncState: Flow<SyncState> = _syncState
 
+    private companion object {
+        const val DOCUMENT_APPEARANCE_SETTINGS = "appearance"
+    }
+
     override suspend fun syncTransactions() = fullSync()
     override suspend fun syncAccounts() = fullSync()
     override suspend fun syncCategories() = fullSync()
@@ -83,15 +90,26 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
             try {
                 val uid = user.uid
                 val root = firestore.collection("users").document(uid)
+                val appearanceSettings = root.collection("settings").document(DOCUMENT_APPEARANCE_SETTINGS)
 
                 // Order matters (FKs): accounts -> categories -> budgets -> recurring -> transactions.
                 // We intentionally do a full cloud pull after pushing local deltas because relying on a
                 // device-local watermark can miss changes from another device with a different clock.
+                rebaseLocalAccountInitialBalances()
                 pushAccounts(root.collection("accounts"))
                 pullAccounts(root.collection("accounts"))
 
+                // Account card appearance sync is optional until matching Firestore rules are deployed.
+                ignoreOptionalPermissionDenied {
+                    pushAccountCardStyleSettings(appearanceSettings)
+                }
+                ignoreOptionalPermissionDenied {
+                    pullAccountCardStyleSettings(appearanceSettings)
+                }
+
                 pushCategories(root.collection("categories"))
                 pullCategories(root.collection("categories"))
+                repairInvalidCategoryLinksAndScopes()
 
                 pushBudgets(root.collection("budgets"))
                 pullBudgets(root.collection("budgets"))
@@ -125,6 +143,16 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
         return runCatching { FirebaseFirestore.getInstance(app) }.getOrNull()
     }
 
+    private suspend fun ignoreOptionalPermissionDenied(block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: FirebaseFirestoreException) {
+            if (e.code != FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                throw e
+            }
+        }
+    }
+
     // ---------------------------
     // Push (local -> Firestore)
     // ---------------------------
@@ -154,6 +182,39 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
 
         if (syncedIds.isNotEmpty()) accountDao.markSyncedBatch(syncedIds.distinct())
         return maxUpdatedAt
+    }
+
+    private suspend fun pushAccountCardStyleSettings(doc: DocumentReference): Long {
+        val prefs = preferencesDataStore.userPreferences.first()
+        val updatedAt = when {
+            prefs.accountCardStyleUpdatedAt > 0L -> prefs.accountCardStyleUpdatedAt
+            prefs.accountCardStyle != AccountCardStyle.MATTE || prefs.accountCardStyleOverrides.isNotEmpty() -> {
+                System.currentTimeMillis()
+            }
+            else -> 0L
+        }
+        if (updatedAt <= 0L) return 0L
+
+        if (prefs.accountCardStyleUpdatedAt <= 0L) {
+            preferencesDataStore.applyAccountCardStyleSync(
+                style = prefs.accountCardStyle,
+                overrides = prefs.accountCardStyleOverrides,
+                updatedAt = updatedAt
+            )
+        }
+
+        val didPush = upsertIfNewer(
+            doc = doc,
+            localUpdatedAt = updatedAt,
+            data = mapOf(
+                "accountCardStyle" to prefs.accountCardStyle.name,
+                "accountCardStyleOverrides" to prefs.accountCardStyleOverrides.mapValues { (_, style) ->
+                    style.name
+                },
+                "updatedAt" to updatedAt
+            )
+        )
+        return if (didPush) updatedAt else 0L
     }
 
     private suspend fun pushCategories(collection: com.google.firebase.firestore.CollectionReference): Long {
@@ -306,17 +367,72 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
                     accountDao.softDelete(remote.id, remote.updatedAt)
                     accountDao.markSynced(remote.id)
                 } else {
-                    val currentBalance = when {
-                        local == null -> remote.initialBalance
-                        local.deleted -> remote.initialBalance
-                        else -> local.currentBalance
+                    val merged = when {
+                        local == null -> remote.copy(
+                            currentBalance = remote.initialBalance,
+                            synced = true,
+                            deleted = false
+                        )
+                        local.deleted -> remote.copy(
+                            currentBalance = remote.initialBalance,
+                            synced = true,
+                            deleted = false
+                        )
+                        else -> remote.copy(
+                            initialBalance = local.initialBalance,
+                            currentBalance = local.currentBalance,
+                            synced = true,
+                            deleted = false
+                        )
                     }
-                    accountDao.insert(remote.copy(currentBalance = currentBalance, synced = true, deleted = false))
+                    if (local == null) {
+                        accountDao.insert(merged)
+                    } else {
+                        accountDao.update(merged)
+                    }
                 }
             }
         }
 
         return maxUpdatedAt
+    }
+
+    private suspend fun pullAccountCardStyleSettings(doc: DocumentReference): Long {
+        val snap = doc.get().await()
+        if (!snap.exists()) return 0L
+
+        val remoteUpdatedAt = snap.getLong("updatedAt") ?: 0L
+        if (remoteUpdatedAt <= 0L) return 0L
+
+        val localUpdatedAt = preferencesDataStore.userPreferences.first().accountCardStyleUpdatedAt
+        if (localUpdatedAt > remoteUpdatedAt) return remoteUpdatedAt
+
+        val style = runCatching {
+            AccountCardStyle.valueOf(
+                snap.getString("accountCardStyle").orEmpty().ifBlank { AccountCardStyle.MATTE.name }
+            )
+        }.getOrDefault(AccountCardStyle.MATTE)
+        val overrides = (snap.get("accountCardStyleOverrides") as? Map<*, *>)
+            .orEmpty()
+            .mapNotNull { (key, value) ->
+                val accountId = (key as? String)?.trim().orEmpty()
+                val overrideStyle = runCatching {
+                    AccountCardStyle.valueOf((value as? String)?.trim().orEmpty())
+                }.getOrNull()
+                if (accountId.isBlank() || overrideStyle == null) {
+                    null
+                } else {
+                    accountId to overrideStyle
+                }
+            }
+            .toMap()
+
+        preferencesDataStore.applyAccountCardStyleSync(
+            style = style,
+            overrides = overrides,
+            updatedAt = remoteUpdatedAt
+        )
+        return remoteUpdatedAt
     }
 
     private suspend fun pullCategories(
@@ -368,7 +484,12 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
                 if (shouldPreserveUnsyncedLocal(local?.synced ?: true, local?.updatedAt ?: -1L, remote.updatedAt)) {
                     continue
                 }
-                categoryDao.insert(remote.copy(synced = true, deleted = false))
+                val merged = remote.copy(synced = true, deleted = false)
+                if (local == null) {
+                    categoryDao.insert(merged)
+                } else {
+                    categoryDao.update(merged)
+                }
             }
         }
 
@@ -558,6 +679,164 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
         }
     }
 
+    private suspend fun repairInvalidCategoryLinksAndScopes() {
+        appDatabase.withTransaction {
+            val categories = categoryDao.getAllAliveOnce()
+            if (categories.isEmpty()) return@withTransaction
+
+            val categoriesById = categories.associateBy { it.id }
+            val expenseCategoriesByName = categories
+                .filter { it.type == CategoryType.EXPENSE }
+                .groupBy { normalizeLabel(it.name) }
+            val incomeCategoriesByName = categories
+                .filter { it.type == CategoryType.INCOME }
+                .groupBy { normalizeLabel(it.name) }
+
+            val now = System.currentTimeMillis()
+            transactionDao.getAllAliveOnce().forEach { tx ->
+                val repairedCategoryId = resolveTransactionCategoryId(
+                    tx = tx,
+                    categoriesById = categoriesById,
+                    expenseCategoriesByName = expenseCategoriesByName,
+                    incomeCategoriesByName = incomeCategoriesByName
+                )
+                if (tx.categoryId != repairedCategoryId) {
+                    transactionDao.update(
+                        tx.copy(
+                            categoryId = repairedCategoryId,
+                            synced = false,
+                            updatedAt = maxOf(now, tx.updatedAt + 1L)
+                        )
+                    )
+                }
+            }
+
+            budgetDao.getAllAliveOnce().forEach { budget ->
+                val repairedCategoryId = resolveScopedExpenseCategoryId(
+                    currentCategoryId = budget.categoryId,
+                    categoriesById = categoriesById,
+                    expenseCategoriesByName = expenseCategoriesByName
+                )
+                if (budget.categoryId != repairedCategoryId) {
+                    budgetDao.update(
+                        budget.copy(
+                            categoryId = repairedCategoryId,
+                            synced = false,
+                            updatedAt = maxOf(now, budget.updatedAt + 1L)
+                        )
+                    )
+                }
+            }
+
+            recurringRuleDao.getAllAliveOnce().forEach { rule ->
+                val repairedCategoryId = when (rule.type) {
+                    TransactionType.EXPENSE -> resolveScopedExpenseCategoryId(
+                        currentCategoryId = rule.categoryId,
+                        categoriesById = categoriesById,
+                        expenseCategoriesByName = expenseCategoriesByName
+                    )
+                    TransactionType.INCOME -> resolveScopedIncomeCategoryId(
+                        currentCategoryId = rule.categoryId,
+                        categoriesById = categoriesById,
+                        incomeCategoriesByName = incomeCategoriesByName
+                    )
+                    TransactionType.TRANSFER -> null
+                }
+                if (rule.categoryId != repairedCategoryId) {
+                    recurringRuleDao.update(
+                        rule.copy(
+                            categoryId = repairedCategoryId,
+                            synced = false,
+                            updatedAt = maxOf(now, rule.updatedAt + 1L)
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun resolveTransactionCategoryId(
+        tx: TransactionEntity,
+        categoriesById: Map<String, CategoryEntity>,
+        expenseCategoriesByName: Map<String, List<CategoryEntity>>,
+        incomeCategoriesByName: Map<String, List<CategoryEntity>>
+    ): String? {
+        return when (tx.type) {
+            TransactionType.EXPENSE -> {
+                val currentCategory = tx.categoryId?.let(categoriesById::get)
+                when {
+                    currentCategory?.type == CategoryType.EXPENSE -> currentCategory.id
+                    else -> expenseCategoriesByName[normalizeLabel(tx.title)].orEmpty().singleOrNull()?.id
+                }
+            }
+            TransactionType.INCOME -> {
+                val currentCategory = tx.categoryId?.let(categoriesById::get)
+                when {
+                    currentCategory?.type == CategoryType.INCOME -> currentCategory.id
+                    else -> incomeCategoriesByName[normalizeLabel(tx.title)].orEmpty().singleOrNull()?.id
+                }
+            }
+            TransactionType.TRANSFER -> null
+        }
+    }
+
+    private fun resolveScopedExpenseCategoryId(
+        currentCategoryId: String?,
+        categoriesById: Map<String, CategoryEntity>,
+        expenseCategoriesByName: Map<String, List<CategoryEntity>>
+    ): String? {
+        val currentCategory = currentCategoryId?.let(categoriesById::get) ?: return null
+        if (currentCategory.type == CategoryType.EXPENSE) return currentCategory.id
+        return expenseCategoriesByName[normalizeLabel(currentCategory.name)].orEmpty().singleOrNull()?.id
+    }
+
+    private fun resolveScopedIncomeCategoryId(
+        currentCategoryId: String?,
+        categoriesById: Map<String, CategoryEntity>,
+        incomeCategoriesByName: Map<String, List<CategoryEntity>>
+    ): String? {
+        val currentCategory = currentCategoryId?.let(categoriesById::get) ?: return null
+        if (currentCategory.type == CategoryType.INCOME) return currentCategory.id
+        return incomeCategoriesByName[normalizeLabel(currentCategory.name)].orEmpty().singleOrNull()?.id
+    }
+
+    private suspend fun rebaseLocalAccountInitialBalances() {
+        appDatabase.withTransaction {
+            val accounts = accountDao.getAllAliveOnce()
+            if (accounts.isEmpty()) return@withTransaction
+
+            val deltas = mutableMapOf<String, Long>()
+            fun add(accountId: String?, delta: Long) {
+                if (accountId.isNullOrBlank() || delta == 0L) return
+                deltas[accountId] = (deltas[accountId] ?: 0L) + delta
+            }
+
+            transactionDao.getAllAliveOnce().forEach { tx ->
+                when (tx.type) {
+                    TransactionType.INCOME -> add(tx.accountId, tx.amount)
+                    TransactionType.EXPENSE -> add(tx.accountId, -tx.amount)
+                    TransactionType.TRANSFER -> {
+                        add(tx.accountId, -tx.amount)
+                        add(tx.toAccountId, tx.amount)
+                    }
+                }
+            }
+
+            val now = System.currentTimeMillis()
+            accounts.forEach { account ->
+                val effectiveInitialBalance = account.currentBalance - (deltas[account.id] ?: 0L)
+                if (effectiveInitialBalance != account.initialBalance) {
+                    accountDao.rebaseBalanceState(
+                        id = account.id,
+                        initialBalance = effectiveInitialBalance,
+                        currentBalance = account.currentBalance,
+                        updatedAt = maxOf(now, account.updatedAt + 1L)
+                    )
+                }
+            }
+        }
+    }
+
     private suspend fun recalculateAccountBalancesFromTransactions() {
         appDatabase.withTransaction {
             val accounts = accountDao.getAllAliveOnce()
@@ -633,6 +912,8 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
         "endDate" to b.endDate,
         "alertThresholdPercent" to b.alertThresholdPercent,
         "isActive" to b.isActive,
+        "isRecurring" to b.isRecurring,
+        "seriesId" to b.seriesId,
         "deleted" to b.deleted,
         "createdAt" to b.createdAt,
         "updatedAt" to b.updatedAt
@@ -747,7 +1028,9 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
             synced = true,
             deleted = s.getBoolean("deleted") ?: false,
             createdAt = createdAt,
-            updatedAt = updatedAt
+            updatedAt = updatedAt,
+            isRecurring = s.getBoolean("isRecurring") ?: false,
+            seriesId = s.getString("seriesId")
         )
     }
 
@@ -815,6 +1098,10 @@ class FirestoreSyncRepositoryImpl @Inject constructor(
     private inline fun <reified T : Enum<T>> enumOrNull(value: String?): T? {
         if (value.isNullOrBlank()) return null
         return runCatching { enumValueOf<T>(value) }.getOrNull()
+    }
+
+    private fun normalizeLabel(value: String): String {
+        return value.trim().lowercase().replace(Regex("""\s+"""), " ")
     }
 }
 

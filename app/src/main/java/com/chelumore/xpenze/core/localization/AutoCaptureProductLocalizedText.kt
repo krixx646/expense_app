@@ -444,16 +444,16 @@ internal fun localizedAutoCaptureSetupCopy(
             ),
             pickAutoCaptureUxText(
                 normalized,
-                en = "Notification capture stays off until you enable it in Settings and grant Android access.",
-                es = "La captura de notificaciones queda apagada hasta que la actives en Ajustes y concedas acceso en Android.",
-                fr = "La capture des notifications reste desactivee jusqu'a son activation dans les Reglages et l'autorisation Android.",
-                de = "Die Benachrichtigungserfassung bleibt aus, bis Sie sie in den Einstellungen aktivieren und Android-Zugriff gewahren.",
-                pt = "A captura de notificacoes fica desligada ate voce ativa-la nas Configuracoes e conceder acesso no Android.",
-                ar = "سيبقى التقاط الإشعارات مغلقًا حتى تفعّله من الإعدادات وتمنح وصول Android.",
-                hi = "Notification capture तब तक बंद रहेगा जब तक आप इसे Settings में चालू न करें और Android access न दें।",
-                ja = "通知取り込みは、設定で有効にして Android のアクセスを許可するまでオフのままです。",
-                sw = "Ukamataji wa arifa hubaki kuzimwa mpaka uuwashe kwenye Mipangilio na uruhusu Android.",
-                zh = "通知捕捉会保持关闭，直到你在设置中启用并授予 Android 权限。"
+                en = "Notification capture is available on this page too. After you continue, Xpenze can ask Android for access and it still stays off unless you allow it.",
+                es = "La captura de notificaciones tambien esta en esta pagina. Despues de continuar, Xpenze puede pedir acceso a Android y seguira apagada si no lo permites.",
+                fr = "La capture des notifications est aussi disponible sur cette page. Apres avoir continue, Xpenze peut demander l'acces Android et elle reste desactivee sans votre accord.",
+                de = "Die Benachrichtigungserfassung ist auch auf dieser Seite verfugbar. Nach dem Fortfahren kann Xpenze Android-Zugriff anfragen und sie bleibt aus, wenn Sie nicht zustimmen.",
+                pt = "A captura de notificacoes tambem aparece nesta pagina. Depois de continuar, o Xpenze pode pedir acesso ao Android e ela continua desligada se voce nao permitir.",
+                ar = "التقاط الإشعارات متاح أيضًا في هذه الصفحة. بعد المتابعة يمكن لـ Xpenze طلب وصول Android، وسيبقى مغلقًا ما لم تسمح بذلك.",
+                hi = "Notification capture इसी पेज पर भी मौजूद है। आगे बढ़ने के बाद Xpenze Android access मांग सकता है, और आपकी अनुमति के बिना यह फिर भी चालू नहीं होगा।",
+                ja = "通知取り込みはこのページからも有効にできます。続行後に Xpenze が Android のアクセスを求めますが、許可しない限りオンにはなりません。",
+                sw = "Ukamataji wa arifa pia upo kwenye ukurasa huu. Baada ya kuendelea, Xpenze inaweza kuomba ufikiaji wa Android na utaendelea kuzimwa hadi uruhusu.",
+                zh = "通知捕捉在此页面也能开启。继续后，Xpenze 可以请求 Android 权限，但在你允许之前它仍会保持关闭。"
             )
         ),
         primaryCta = when {
@@ -488,6 +488,21 @@ internal fun localizedAutoCaptureSetupCopy(
         )
     )
 }
+
+internal fun localizedAutoCaptureNotificationSetupPromptMessage(languageTag: String): String =
+    pickAutoCaptureUxText(
+        normalizeAutoCaptureUxTag(languageTag),
+        en = "When you tap the button below, Xpenze will immediately offer notification capture here too. Android access is still required before supported money alerts can become drafts.",
+        es = "Cuando toques el boton de abajo, Xpenze te ofrecera aqui mismo la captura de notificaciones. Aun hace falta acceso de Android antes de que las alertas compatibles se conviertan en borradores.",
+        fr = "Quand vous appuierez sur le bouton ci-dessous, Xpenze proposera aussi ici la capture des notifications. L'acces Android reste necessaire avant que les alertes compatibles deviennent des brouillons.",
+        de = "Wenn Sie unten auf die Schaltflache tippen, bietet Xpenze die Benachrichtigungserfassung auch hier sofort an. Android-Zugriff ist weiterhin erforderlich, bevor passende Geldalarme zu Entwurfen werden.",
+        pt = "Quando voce tocar no botao abaixo, o Xpenze oferecera aqui mesmo a captura de notificacoes. O acesso do Android ainda e necessario antes que alertas compativeis virem rascunhos.",
+        ar = "عندما تضغط الزر أدناه، سيعرض Xpenze هنا أيضًا التقاط الإشعارات فورًا. ما زلت بحاجة إلى وصول Android قبل أن تتحول التنبيهات المتوافقة إلى مسودات.",
+        hi = "जब आप नीचे वाला बटन दबाएंगे, Xpenze यहीं notification capture भी तुरंत ऑफर करेगा। समर्थित money alerts को draft बनाने से पहले Android access अभी भी जरूरी है।",
+        ja = "下のボタンを押すと、Xpenze はここで通知取り込みもすぐに案内します。対応する入出金通知を下書きにするには、Android のアクセス許可がまだ必要です。",
+        sw = "Ukipiga kitufe kilicho hapa chini, Xpenze itatoa ukamataji wa arifa hapa hapa mara moja. Ufikiaji wa Android bado unahitajika kabla arifa za pesa zinazotumika hazijawa rasimu.",
+        zh = "当你点击下方按钮时，Xpenze 也会立刻在这里提供通知捕捉。受支持的资金提醒要变成草稿，仍然需要先获得 Android 权限。"
+    )
 
 internal fun localizedAutoCapturePremiumBundleLabel(languageTag: String): String =
     pickAutoCaptureUxText(

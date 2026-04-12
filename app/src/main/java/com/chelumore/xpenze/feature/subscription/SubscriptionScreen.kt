@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -133,10 +134,17 @@ fun SubscriptionScreen(
 
                 StatusCard(
                     isPremium = uiState.isPremium,
-                    isTrialActive = uiState.isTrialActive
+                    isTrialActive = uiState.isTrialActive,
+                    hasFounderReward = uiState.hasFounderReward
                 )
 
-            if (uiState.hasPremiumAccess) {
+                if (uiState.hasFounderReward) {
+                    FounderRewardCard(
+                        uiState = uiState,
+                        onActivate = viewModel::activateFounderReward
+                    )
+                }
+
                 if (uiState.isPremium) {
                     val sub = uiState.activeSubscription
                     Card(
@@ -181,6 +189,7 @@ fun SubscriptionScreen(
                         }
                     }
                 } else {
+                    if (uiState.isTrialActive) {
                     Card(
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -204,8 +213,8 @@ fun SubscriptionScreen(
                             )
                         }
                     }
-                }
-            } else {
+                    }
+
                 PaywallValueCard(uiState = uiState)
                 PlanSelectorCard(
                     plans = uiState.availablePlans,
@@ -215,18 +224,36 @@ fun SubscriptionScreen(
                 )
                 FreeVsPremiumComparisonCard(uiState.appLanguageTag)
 
-                val mochiCopy = MochiPremiumCopywriter.paywall(
+                val baseMochiCopy = MochiPremiumCopywriter.paywall(
                     variant = uiState.nudgeVariant,
                     potentialMonthlySavingsCents = uiState.paywallPotentialMonthlySavingsCents,
                     currencyCode = uiState.currencyCode,
                     monthlyPriceText = uiState.monthlyReferencePriceText
                 )
+                val mochiCopy = if (uiState.isTrialActive) {
+                    baseMochiCopy.copy(
+                        note = if (uiState.trialExpiresAt > 0L) {
+                            stringResource(
+                                R.string.subscription_trial_checkout_note,
+                                uiState.trialExpiresAt.toFormattedDateTime()
+                            )
+                        } else {
+                            stringResource(R.string.subscription_trial_note)
+                        }
+                    )
+                } else {
+                    baseMochiCopy
+                }
                 AnimatedMochiCatHero(
                     headline = mochiCopy.headline
                 )
                 MochiPremiumNudgeCard(
                     copy = mochiCopy,
-                    primaryCtaText = stringResource(R.string.subscription_checkout_cta),
+                    primaryCtaText = if (uiState.isTrialActive) {
+                        stringResource(R.string.subscription_subscribe_now)
+                    } else {
+                        stringResource(R.string.subscription_checkout_cta)
+                    },
                     onPrimaryCta = {
                         viewModel.onMochiNudgeClick(
                             surface = "subscription_paywall",
@@ -240,17 +267,33 @@ fun SubscriptionScreen(
                             viewModel.onPurchaseClick()
                         }
                     },
-                    secondaryCtaText = if (uiState.trialConsumed) null else stringResource(R.string.subscription_start_trial),
-                    onSecondaryCta = if (uiState.trialConsumed) {
-                        null
-                    } else {
-                        {
-                            viewModel.onMochiNudgeClick(
-                                surface = "subscription_paywall",
-                                variant = uiState.nudgeVariant.name.lowercase(Locale.ROOT),
-                                action = "start_trial"
-                            )
-                            viewModel.startTrial(days = 7)
+                    secondaryCtaText = when {
+                        uiState.hasFounderReward && !uiState.founderTrialActivated ->
+                            stringResource(R.string.subscription_activate_founder_reward)
+                        uiState.trialConsumed -> null
+                        else -> stringResource(R.string.subscription_start_trial)
+                    },
+                    onSecondaryCta = when {
+                        uiState.hasFounderReward && !uiState.founderTrialActivated -> {
+                            {
+                                viewModel.onMochiNudgeClick(
+                                    surface = "subscription_paywall",
+                                    variant = uiState.nudgeVariant.name.lowercase(Locale.ROOT),
+                                    action = "activate_founder_reward"
+                                )
+                                viewModel.activateFounderReward()
+                            }
+                        }
+                        uiState.trialConsumed -> null
+                        else -> {
+                            {
+                                viewModel.onMochiNudgeClick(
+                                    surface = "subscription_paywall",
+                                    variant = uiState.nudgeVariant.name.lowercase(Locale.ROOT),
+                                    action = "start_trial"
+                                )
+                                viewModel.startTrial(days = 7)
+                            }
                         }
                     }
                 )
@@ -261,6 +304,7 @@ fun SubscriptionScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Benefit(localizedAutoCapturePremiumBenefit(uiState.appLanguageTag))
+                        Benefit(stringResource(R.string.subscription_benefit_recurring_budgets))
                         Benefit(stringResource(R.string.subscription_feature_monthly_savings_insights))
                         Benefit(stringResource(R.string.subscription_benefit_ai))
                         Benefit(stringResource(R.string.subscription_benefit_reports))
@@ -289,7 +333,10 @@ fun SubscriptionScreen(
                     )
                 }
 
-                if (uiState.trialConsumed) {
+                if (!uiState.isTrialActive &&
+                    uiState.trialConsumed &&
+                    !(uiState.hasFounderReward && !uiState.founderTrialActivated)
+                ) {
                     Text(
                         text = stringResource(R.string.subscription_trial_used_note),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -306,7 +353,11 @@ fun SubscriptionScreen(
 }
 
 @Composable
-private fun StatusCard(isPremium: Boolean, isTrialActive: Boolean) {
+private fun StatusCard(
+    isPremium: Boolean,
+    isTrialActive: Boolean,
+    hasFounderReward: Boolean
+) {
     val (label, color, bg) = when {
         isPremium -> Triple(
             stringResource(R.string.subscription_status_premium_active),
@@ -355,7 +406,100 @@ private fun StatusCard(isPremium: Boolean, isTrialActive: Boolean) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
+                if (hasFounderReward) {
+                    FounderBadgeChip(modifier = Modifier.padding(top = 8.dp))
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun FounderRewardCard(
+    uiState: SubscriptionUiState,
+    onActivate: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = YellowPrimary.copy(alpha = 0.12f))
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.subscription_founder_reward_title),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f)
+                )
+                FounderBadgeChip()
+            }
+            Text(
+                text = when {
+                    uiState.founderTrialActivated && uiState.trialExpiresAt > 0L ->
+                        stringResource(
+                            R.string.subscription_founder_reward_active,
+                            uiState.trialExpiresAt.toFormattedDateTime()
+                        )
+                    uiState.isPremium ->
+                        stringResource(R.string.subscription_founder_reward_premium_note)
+                    else ->
+                        stringResource(R.string.subscription_founder_reward_available)
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (!uiState.isPremium && !uiState.founderTrialActivated) {
+                Button(
+                    onClick = onActivate,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = YellowPrimary,
+                        contentColor = BlackBackground
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.subscription_activate_founder_reward),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FounderBadgeChip(
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = YellowPrimary.copy(alpha = 0.16f),
+        contentColor = YellowPrimary,
+        shape = RoundedCornerShape(100),
+        border = BorderStroke(1.dp, YellowPrimary.copy(alpha = 0.35f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = stringResource(R.string.settings_founder_badge),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -615,6 +759,11 @@ private fun FreeVsPremiumComparisonCard(appLanguageTag: String) {
                 feature = stringResource(R.string.subscription_feature_monthly_savings_insights),
                 freeValue = stringResource(R.string.subscription_feature_basic),
                 premiumValue = stringResource(R.string.subscription_feature_personalized)
+            )
+            ComparisonRow(
+                feature = stringResource(R.string.subscription_feature_recurring_budgets),
+                freeValue = stringResource(R.string.subscription_feature_locked),
+                premiumValue = stringResource(R.string.subscription_feature_included)
             )
             ComparisonRow(
                 feature = stringResource(R.string.subscription_feature_advanced_reports),

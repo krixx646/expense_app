@@ -174,9 +174,9 @@ fun TransactionsScreen(
     ) { padding ->
         if (!isTwoPane) {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 220.dp)
@@ -577,7 +577,7 @@ private fun FilterDropdownButton(
                 }
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
-            Text(
+                        Text(
                 text = "$label: $value",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -687,20 +687,20 @@ private fun LazyListScope.transactionFeedItems(
             val timeLabel = if (date == LocalDate.now()) {
                 java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
             } else null
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
+    ) {
+        Text(
                     text = dateLabel,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
                 if (timeLabel != null) {
                     Text(
                         text = timeLabel,
@@ -718,27 +718,27 @@ private fun LazyListScope.transactionFeedItems(
                         true
                     } else {
                         false
-                    }
-                }
-            )
+            }
+        }
+    )
 
-            SwipeToDismissBox(
-                state = dismissState,
-                backgroundContent = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(16.dp))
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
                             .background(ErrorRed)
                             .padding(horizontal = 20.dp),
                         contentAlignment = Alignment.CenterEnd
-                    ) {
-                        Icon(
+            ) {
+                Icon(
                             imageVector = Icons.Outlined.Delete,
                             contentDescription = stringResource(R.string.common_delete),
-                            tint = Color.White
-                        )
-                    }
+                    tint = Color.White
+                )
+            }
                 },
                 content = {
                     TransactionItem(
@@ -813,13 +813,13 @@ private fun TransactionItem(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
                 // Icon - Use category color for background
                 Box(
                     modifier = Modifier
@@ -848,9 +848,9 @@ private fun TransactionItem(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-
+                
                 Spacer(modifier = Modifier.width(12.dp))
-
+                
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = transaction.title,
@@ -871,28 +871,28 @@ private fun TransactionItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
+                
                     // Badges Row
                     if (transaction.isRecurring || transaction.hasReceipt) {
                         Row(modifier = Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            if (transaction.isRecurring) {
+                    if (transaction.isRecurring) {
                                 Badge(kind = TransactionBadgeKind.RECURRING, icon = Icons.Outlined.Repeat)
-                            }
-                            if (transaction.hasReceipt) {
+                    }
+                    if (transaction.hasReceipt) {
                                 Badge(kind = TransactionBadgeKind.RECEIPT, icon = Icons.Outlined.Receipt)
                             }
                         }
-                    }
                 }
-
-                Text(
+            }
+            
+            Text(
                     text = "${when (transaction.type) {
                         TransactionType.INCOME -> "+"
                         TransactionType.EXPENSE -> "-"
                         TransactionType.TRANSFER -> ""
                     }}${transaction.amount.toCurrencyString(transaction.currency)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -965,9 +965,9 @@ private fun Badge(kind: TransactionBadgeKind, icon: ImageVector) {
                 modifier = Modifier.size(10.dp)
             )
             Spacer(modifier = Modifier.width(2.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
                 fontSize = 10.sp,
                 color = badgeTextColor
             )

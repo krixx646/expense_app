@@ -3,7 +3,7 @@ package com.chelumore.xpenze.core.common
 object Constants {
     // Database
     const val DATABASE_NAME = "xpenze_database"
-    const val DATABASE_VERSION = 2
+    const val DATABASE_VERSION = 3
 
     // Preferences
     const val PREFERENCES_NAME = "xpenze_preferences"
@@ -31,5 +31,6 @@ object Constants {
     // Subscription Product IDs
     const val SUBSCRIPTION_MONTHLY = "xpenze_premium_monthly"
     const val SUBSCRIPTION_YEARLY = "xpenze_premium_yearly"
+    const val FOUNDER_REWARD_PRODUCT = "xpenze_preregister_founder_pack"
+    const val FOUNDER_REWARD_TOTAL_TRIAL_DAYS = 14
 }
-

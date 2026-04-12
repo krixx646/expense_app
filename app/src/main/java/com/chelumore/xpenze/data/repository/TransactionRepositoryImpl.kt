@@ -1,5 +1,4 @@
 package com.chelumore.xpenze.data.repository
-
 import androidx.room.withTransaction
 import com.chelumore.xpenze.core.common.currentTimeMillis
 import com.chelumore.xpenze.core.database.AppDatabase
@@ -68,7 +67,7 @@ class TransactionRepositoryImpl @Inject constructor(
         appDatabase.withTransaction {
             val entity = transaction.toEntity()
             transactionDao.insert(entity)
-            recalculateAccountBalancesFromTransactions()
+            applyAccountDeltas(deltasFor(entity))
         }
         syncScheduler.scheduleNow()
     }
@@ -76,9 +75,12 @@ class TransactionRepositoryImpl @Inject constructor(
     override suspend fun update(transaction: Transaction) = withContext(ioDispatcher) {
         appDatabase.withTransaction {
             val now = currentTimeMillis()
+            val oldEntity = transactionDao.getByIdAnyOnce(transaction.id)
             val newEntity = transaction.copy(updatedAt = now, synced = false).toEntity()
             transactionDao.update(newEntity)
-            recalculateAccountBalancesFromTransactions()
+            val oldDeltas = oldEntity?.takeIf { !it.deleted }?.let(::deltasFor).orEmpty()
+            val newDeltas = deltasFor(newEntity)
+            applyAccountDeltas(diffDeltas(oldDeltas, newDeltas))
         }
         syncScheduler.scheduleNow()
     }
@@ -86,8 +88,14 @@ class TransactionRepositoryImpl @Inject constructor(
     override suspend fun delete(id: String) = withContext(ioDispatcher) {
         appDatabase.withTransaction {
             val now = currentTimeMillis()
+            val existing = transactionDao.getByIdAnyOnce(id)
             transactionDao.softDelete(id, now)
-            recalculateAccountBalancesFromTransactions()
+            val reverse = existing
+                ?.takeIf { !it.deleted }
+                ?.let(::deltasFor)
+                ?.mapValues { (_, value) -> -value }
+                .orEmpty()
+            applyAccountDeltas(reverse)
         }
         syncScheduler.scheduleNow()
     }
@@ -133,45 +141,13 @@ class TransactionRepositoryImpl @Inject constructor(
         return out
     }
 
-    private suspend fun applyAccountDeltas(
-        deltas: Map<String, Long>,
-        updatedAt: Long = currentTimeMillis()
-    ) {
+    private suspend fun applyAccountDeltas(deltas: Map<String, Long>) {
         if (deltas.isEmpty()) return
         for ((accountId, delta) in deltas) {
             if (delta == 0L) continue
             val account = accountDao.getByIdOnce(accountId) ?: continue
             val newBalance = account.currentBalance + delta
             accountDao.updateBalance(accountId, newBalance)
-        }
-    }
-
-    private suspend fun recalculateAccountBalancesFromTransactions() {
-        val accounts = accountDao.getAllAliveOnce()
-        if (accounts.isEmpty()) return
-
-        val deltas = mutableMapOf<String, Long>()
-        fun add(accountId: String?, delta: Long) {
-            if (accountId.isNullOrBlank() || delta == 0L) return
-            deltas[accountId] = (deltas[accountId] ?: 0L) + delta
-        }
-
-        transactionDao.getAllAliveOnce().forEach { tx ->
-            when (tx.type) {
-                EntityTransactionType.INCOME -> add(tx.accountId, tx.amount)
-                EntityTransactionType.EXPENSE -> add(tx.accountId, -tx.amount)
-                EntityTransactionType.TRANSFER -> {
-                    add(tx.accountId, -tx.amount)
-                    add(tx.toAccountId, tx.amount)
-                }
-            }
-        }
-
-        accounts.forEach { account ->
-            val expectedBalance = account.initialBalance + (deltas[account.id] ?: 0L)
-            if (expectedBalance != account.currentBalance) {
-                accountDao.updateBalance(account.id, expectedBalance)
-            }
         }
     }
 }

@@ -79,6 +79,11 @@ fun AddEditAccountScreen(
     )
     val selectedAccountTypeLabel = accountTypeOptions.firstOrNull { it.first == uiState.type }?.second
         ?: stringResource(R.string.account_type_other)
+    val balanceLabel = if (uiState.isEdit) {
+        stringResource(R.string.onboarding_account_balance_label)
+    } else {
+        stringResource(R.string.account_editor_initial_balance_label)
+    }
 
     LaunchedEffect(accountId) {
         viewModel.loadAccount(accountId)
@@ -162,17 +167,22 @@ fun AddEditAccountScreen(
                 value = uiState.initialBalanceText,
                 onValueChange = viewModel::setInitialBalanceText,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.account_editor_initial_balance_label)) },
+                label = { Text(balanceLabel) },
                 singleLine = true,
-                enabled = !uiState.isEdit, // keep simple: avoid editing initial balance after transactions exist
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = YellowPrimary,
                     cursorColor = YellowPrimary,
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                    disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
+            if (uiState.isEdit) {
+                Text(
+                    text = stringResource(R.string.account_editor_balance_edit_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             ColorPicker(
                 selectedHex = uiState.colorHex,

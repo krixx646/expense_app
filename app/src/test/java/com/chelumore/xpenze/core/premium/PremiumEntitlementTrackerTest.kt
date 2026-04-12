@@ -197,6 +197,26 @@ class PremiumEntitlementTrackerTest {
             )
         }
 
+        override suspend fun setFounderRewardState(
+            hasFounderReward: Boolean,
+            founderTrialActivated: Boolean,
+            founderRewardProductId: String?
+        ) {
+            prefs.value = prefs.value.copy(
+                hasFounderReward = hasFounderReward,
+                founderTrialActivated = founderTrialActivated,
+                founderRewardProductId = founderRewardProductId
+            )
+        }
+
+        override suspend fun clearFounderRewardState() {
+            prefs.value = prefs.value.copy(
+                hasFounderReward = false,
+                founderTrialActivated = false,
+                founderRewardProductId = null
+            )
+        }
+
         override suspend fun clearUserData() {
             prefs.value = UserPreferences()
         }

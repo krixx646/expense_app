@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.chelumore.xpenze.core.common.Constants
 import com.chelumore.xpenze.core.database.AppDatabase
+import com.chelumore.xpenze.core.database.Migrations
 import com.chelumore.xpenze.core.database.dao.AccountDao
 import com.chelumore.xpenze.core.database.dao.AutoCaptureDraftDao
 import com.chelumore.xpenze.core.database.dao.BudgetDao
@@ -32,6 +33,10 @@ object DatabaseModule {
             AppDatabase::class.java,
             Constants.DATABASE_NAME
         )
+            .addMigrations(
+                Migrations.MIGRATION_1_2,
+                Migrations.MIGRATION_2_3
+            )
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -78,4 +83,3 @@ object DatabaseModule {
         return database.autoCaptureDraftDao()
     }
 }
-

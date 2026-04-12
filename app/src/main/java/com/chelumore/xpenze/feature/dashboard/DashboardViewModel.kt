@@ -9,6 +9,9 @@ import com.chelumore.xpenze.core.growth.buildPremiumOpportunities
 import com.chelumore.xpenze.core.localization.AppLanguages
 import com.chelumore.xpenze.core.premium.PremiumEntitlementTracker
 import com.chelumore.xpenze.domain.model.currentPeriodWindow
+import com.chelumore.xpenze.domain.model.matchesBudgetScope
+import com.chelumore.xpenze.domain.model.resolvedCategory
+import com.chelumore.xpenze.domain.model.resolvedCategoryId
 import com.chelumore.xpenze.domain.repository.AutoCaptureDraftRepository
 import com.chelumore.xpenze.domain.repository.UserRepository
 import com.chelumore.xpenze.domain.usecase.account.GetAccountsUseCase
@@ -112,7 +115,7 @@ class DashboardViewModel @Inject constructor(
         val expenseByCategory = monthTxCurrency
             .asSequence()
             .filter { it.type == com.chelumore.xpenze.domain.model.TransactionType.EXPENSE }
-            .groupBy { it.categoryId }
+            .groupBy { it.resolvedCategoryId(categories) }
             .mapValues { (_, list) -> list.sumOf { it.money.amountCents } }
 
         val totalExpense = monthlyExpense.coerceAtLeast(0L)
@@ -141,7 +144,7 @@ class DashboardViewModel @Inject constructor(
             .sortedByDescending { it.dateTime }
             .take(5)
             .map { tx ->
-                val category = categories.find { it.id == tx.categoryId }
+                val category = tx.resolvedCategory(categories)
                 val account = accounts.find { it.id == tx.accountId }
                 val toAccount = tx.toAccountId?.let { id -> accounts.find { it.id == id } }
                 TransactionUi(
@@ -150,7 +153,7 @@ class DashboardViewModel @Inject constructor(
                     amount = tx.money.amountCents,
                     currency = tx.money.currency,
                     type = tx.type,
-                    categoryName = category?.name.orEmpty(),
+                    categoryName = category?.name ?: localizedUncategorized(),
                     categoryIcon = category?.iconName ?: "help",
                     categoryColorHex = category?.colorHex ?: "#6C757D",
                     accountName = account?.name.orEmpty(),
@@ -171,8 +174,7 @@ class DashboardViewModel @Inject constructor(
                     .filter { it.type == com.chelumore.xpenze.domain.model.TransactionType.EXPENSE }
                     .filter { it.money.currency == currency }
                     .filter { it.dateTime in window.spentRange.startMillis..window.spentRange.endMillis }
-                    .filter { budget.categoryId == null || it.categoryId == budget.categoryId }
-                    .filter { budget.accountId == null || it.accountId == budget.accountId }
+                    .filter { it.matchesBudgetScope(budget, categories) }
                     .sumOf { it.money.amountCents }
 
                 val percentUsed = if (budget.amountLimitCents > 0) {
@@ -198,6 +200,7 @@ class DashboardViewModel @Inject constructor(
             currentMonth = month,
             userName = userName,
             userPhotoUrl = prefs.userPhotoUrl,
+            hasFounderReward = entitlement.hasFounderReward,
             hasPremiumAccess = entitlement.hasPremiumAccess,
             currencyCode = currency,
             appLanguageTag = AppLanguages.normalizeTag(prefs.appLanguageTag),

@@ -84,7 +84,7 @@ sealed interface Screen {
     
     // Budget screens
     @Serializable
-    data object AddBudget : Screen
+    data class AddBudget(val cloneFromBudgetId: String? = null) : Screen
     
     @Serializable
     data class EditBudget(val budgetId: String) : Screen

@@ -7,7 +7,6 @@ import com.chelumore.xpenze.core.datastore.PreferencesDataStore
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureChooseAccountFirstMessage
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureChooseDestinationFirstMessage
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureConfirmAmountFirstMessage
-import com.chelumore.xpenze.core.localization.localizedAutoCaptureDefaultTitle
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureDraftMissingMessage
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureEnableOcrFirstMessage
 import com.chelumore.xpenze.core.localization.localizedAutoCaptureEnableStatementFirstMessage
@@ -32,7 +31,8 @@ import com.chelumore.xpenze.domain.repository.AutoCaptureDraftRepository
 import com.chelumore.xpenze.domain.usecase.account.GetAccountsUseCase
 import com.chelumore.xpenze.domain.usecase.autocapture.CaptureReceiptToDraftUseCase
 import com.chelumore.xpenze.domain.usecase.autocapture.ImportStatementToDraftsUseCase
-import com.chelumore.xpenze.domain.usecase.transaction.AddTransactionUseCase
+import com.chelumore.xpenze.domain.usecase.autocapture.ResolveAutoCaptureDraftException
+import com.chelumore.xpenze.domain.usecase.autocapture.ResolveAutoCaptureDraftUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -48,10 +48,13 @@ import kotlinx.coroutines.launch
 data class DraftInboxUiState(
     val isWorking: Boolean = false,
     val hasPremiumAccess: Boolean = false,
+    val appLanguageTag: String = "en",
     val autoCaptureEnabled: Boolean = false,
+    val autoCaptureDisclosureAccepted: Boolean = false,
     val statementImportEnabled: Boolean = false,
     val ocrEnabled: Boolean = false,
     val notificationCaptureEnabled: Boolean = false,
+    val notificationAllowedPackages: Set<String> = emptySet(),
     val merchantMemoryEnabled: Boolean = false,
     val recurringSuggestionsEnabled: Boolean = false,
     val drafts: List<AutoCaptureDraft> = emptyList(),
@@ -68,7 +71,7 @@ class DraftInboxViewModel @Inject constructor(
     private val autoCaptureDraftRepository: AutoCaptureDraftRepository,
     private val importStatementToDraftsUseCase: ImportStatementToDraftsUseCase,
     private val captureReceiptToDraftUseCase: CaptureReceiptToDraftUseCase,
-    private val addTransactionUseCase: AddTransactionUseCase,
+    private val resolveAutoCaptureDraftUseCase: ResolveAutoCaptureDraftUseCase,
     private val getAccountsUseCase: GetAccountsUseCase,
     private val preferencesDataStore: PreferencesDataStore,
     private val premiumEntitlementTracker: PremiumEntitlementTracker
@@ -94,10 +97,13 @@ class DraftInboxViewModel @Inject constructor(
             ?: accounts.firstOrNull()?.id
         state.copy(
             hasPremiumAccess = entitlement.hasPremiumAccess,
+            appLanguageTag = prefs.appLanguageTag,
             autoCaptureEnabled = prefs.autoCaptureEnabled,
+            autoCaptureDisclosureAccepted = prefs.autoCaptureDisclosureAccepted,
             statementImportEnabled = prefs.autoCaptureStatementImportEnabled,
             ocrEnabled = prefs.autoCaptureOcrEnabled,
             notificationCaptureEnabled = prefs.autoCaptureNotificationEnabled,
+            notificationAllowedPackages = prefs.autoCaptureNotificationAllowedPackages,
             merchantMemoryEnabled = prefs.autoCaptureMerchantMemoryEnabled,
             recurringSuggestionsEnabled = prefs.autoCaptureRecurringSuggestionsEnabled,
             drafts = drafts,
@@ -113,6 +119,54 @@ class DraftInboxViewModel @Inject constructor(
 
     fun setImportAccount(accountId: String?) {
         baseState.update { it.copy(selectedImportAccountId = accountId) }
+    }
+
+    fun setAutoCaptureDisclosureAccepted() {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureDisclosureAccepted(true)
+        }
+    }
+
+    fun toggleAutoCapture(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureEnabled(enabled)
+        }
+    }
+
+    fun toggleAutoCaptureStatementImport(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureStatementImportEnabled(enabled)
+        }
+    }
+
+    fun toggleAutoCaptureOcr(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureOcrEnabled(enabled)
+        }
+    }
+
+    fun toggleAutoCaptureNotification(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureNotificationEnabled(enabled)
+        }
+    }
+
+    fun setAutoCaptureNotificationAllowedPackages(packageNames: Set<String>) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureNotificationAllowedPackages(packageNames)
+        }
+    }
+
+    fun toggleAutoCaptureMerchantMemory(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureMerchantMemoryEnabled(enabled)
+        }
+    }
+
+    fun toggleAutoCaptureRecurringSuggestions(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureRecurringSuggestionsEnabled(enabled)
+        }
     }
 
     fun importStatement(rawStatement: String) {
@@ -233,61 +287,21 @@ class DraftInboxViewModel @Inject constructor(
     private fun resolveAsTransaction(
         draftId: String,
         type: TransactionType,
-        resolution: AutoCaptureResolution,
-        extraTags: List<String> = emptyList()
+        resolution: AutoCaptureResolution
     ) {
         viewModelScope.launch {
-            val draft = autoCaptureDraftRepository.getByIdOnce(draftId)
-            if (draft == null) {
-                eventsChannel.send(DraftInboxEvent.Message(localizedAutoCaptureDraftMissingMessage()))
-                return@launch
-            }
-            val amount = draft.amountCents
-            if (amount == null || amount <= 0L) {
-                eventsChannel.send(
-                    DraftInboxEvent.Message(localizedAutoCaptureConfirmAmountFirstMessage())
-                )
-                return@launch
-            }
-            val accountId = draft.accountId
-                ?: uiState.value.selectedImportAccount?.id
-                ?: uiState.value.accounts.firstOrNull()?.id
-            if (accountId.isNullOrBlank()) {
-                eventsChannel.send(
-                    DraftInboxEvent.Message(localizedAutoCaptureChooseAccountFirstMessage())
-                )
-                return@launch
-            }
-            if (type == TransactionType.TRANSFER && draft.toAccountId.isNullOrBlank()) {
-                eventsChannel.send(
-                    DraftInboxEvent.Message(localizedAutoCaptureChooseDestinationFirstMessage())
-                )
-                return@launch
-            }
-
             baseState.update { it.copy(isWorking = true) }
             try {
-                val transactionId = addTransactionUseCase(
-                    accountId = accountId,
-                    toAccountId = if (type == TransactionType.TRANSFER) draft.toAccountId else null,
-                    categoryId = if (type == TransactionType.TRANSFER) null else draft.categoryId,
-                    amountCents = amount,
-                    currency = draft.currency.ifBlank { uiState.value.defaultCurrency },
+                resolveAutoCaptureDraftUseCase.saveAsTransaction(
+                    draftId = draftId,
                     type = type,
-                    title = draft.title.ifBlank { localizedAutoCaptureDefaultTitle() },
-                    notes = draft.notes,
-                    dateTime = draft.occurredAt,
-                    receiptUri = draft.receiptUri,
-                    tags = (draft.tags + extraTags).distinct()
-                )
-                autoCaptureDraftRepository.markResolved(
-                    id = draftId,
-                    resolution = resolution,
-                    createdTransactionId = transactionId
+                    resolution = resolution
                 )
                 eventsChannel.send(
                     DraftInboxEvent.Message(localizedAutoCaptureSavedToTransactionsMessage())
                 )
+            } catch (e: ResolveAutoCaptureDraftException) {
+                eventsChannel.send(DraftInboxEvent.Message(e.toUiMessage()))
             } catch (e: Exception) {
                 eventsChannel.send(
                     DraftInboxEvent.Message(
@@ -305,16 +319,23 @@ class DraftInboxViewModel @Inject constructor(
         resolution: AutoCaptureResolution
     ) {
         viewModelScope.launch {
-            autoCaptureDraftRepository.markResolved(draftId, resolution)
-            eventsChannel.send(
-                DraftInboxEvent.Message(
-                    when (resolution) {
-                        AutoCaptureResolution.PASS_THROUGH -> localizedAutoCaptureMarkedPassThroughMessage()
-                        AutoCaptureResolution.EXCLUDED -> localizedAutoCaptureExcludedMessage()
-                        else -> localizedAutoCaptureResolvedMessage()
-                    }
+            baseState.update { it.copy(isWorking = true) }
+            try {
+                resolveAutoCaptureDraftUseCase.markResolved(draftId, resolution)
+                eventsChannel.send(
+                    DraftInboxEvent.Message(
+                        when (resolution) {
+                            AutoCaptureResolution.PASS_THROUGH -> localizedAutoCaptureMarkedPassThroughMessage()
+                            AutoCaptureResolution.EXCLUDED -> localizedAutoCaptureExcludedMessage()
+                            else -> localizedAutoCaptureResolvedMessage()
+                        }
+                    )
                 )
-            )
+            } catch (e: ResolveAutoCaptureDraftException) {
+                eventsChannel.send(DraftInboxEvent.Message(e.toUiMessage()))
+            } finally {
+                baseState.update { it.copy(isWorking = false) }
+            }
         }
     }
 
@@ -322,5 +343,12 @@ class DraftInboxViewModel @Inject constructor(
         viewModelScope.launch {
             eventsChannel.send(DraftInboxEvent.Message(text))
         }
+    }
+
+    private fun ResolveAutoCaptureDraftException.toUiMessage(): String = when (this) {
+        ResolveAutoCaptureDraftException.DraftMissing -> localizedAutoCaptureDraftMissingMessage()
+        ResolveAutoCaptureDraftException.ConfirmAmountFirst -> localizedAutoCaptureConfirmAmountFirstMessage()
+        ResolveAutoCaptureDraftException.ChooseAccountFirst -> localizedAutoCaptureChooseAccountFirstMessage()
+        ResolveAutoCaptureDraftException.ChooseDestinationFirst -> localizedAutoCaptureChooseDestinationFirstMessage()
     }
 }

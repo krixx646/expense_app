@@ -22,7 +22,7 @@ data class Budget(
     val synced: Boolean = false,
     val deleted: Boolean = false,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val isRecurring: Boolean = false,
+    val seriesId: String? = null
 )
-
-

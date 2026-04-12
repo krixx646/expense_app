@@ -14,6 +14,7 @@ data class SettingsUiState(
     val hasPremiumAccess: Boolean = false,
     val isTrialActive: Boolean = false,
     val trialExpiresAt: Long = 0L,
+    val hasFounderReward: Boolean = false,
     
     // Preferences
     val appLanguageTag: String = "en",
@@ -34,6 +35,7 @@ data class SettingsUiState(
     val autoCaptureStatementImportEnabled: Boolean = false,
     val autoCaptureOcrEnabled: Boolean = false,
     val autoCaptureNotificationEnabled: Boolean = false,
+    val autoCaptureNotificationAllowedPackages: Set<String> = emptySet(),
     val autoCaptureMerchantMemoryEnabled: Boolean = false,
     val autoCaptureRecurringSuggestionsEnabled: Boolean = false,
     val autoCaptureDisclosureAccepted: Boolean = false,

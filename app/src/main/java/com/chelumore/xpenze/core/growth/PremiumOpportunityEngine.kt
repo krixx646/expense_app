@@ -8,6 +8,8 @@ import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.Transaction
 import com.chelumore.xpenze.domain.model.TransactionType
 import com.chelumore.xpenze.domain.model.currentPeriodWindow
+import com.chelumore.xpenze.domain.model.matchesBudgetScope
+import com.chelumore.xpenze.domain.model.resolvedCategoryId
 import java.time.YearMonth
 import java.time.ZoneId
 import kotlin.math.roundToLong
@@ -47,22 +49,26 @@ fun buildPremiumOpportunities(
         .filter { !it.deleted }
         .filter { it.type == CategoryType.EXPENSE }
         .associateBy { it.id }
+    val expenseCategories = expenseCategoriesById.values.toList()
 
     val opportunities = buildList {
         buildCategoryCutbackOpportunity(
             transactions = expenseTransactions,
             categoriesById = expenseCategoriesById,
+            categories = expenseCategories,
             nowMillis = nowMillis
         )?.let(::add)
 
         buildCategorySpikeOpportunity(
             transactions = expenseTransactions,
             categoriesById = expenseCategoriesById,
+            categories = expenseCategories,
             zoneId = zoneId
         )?.let(::add)
 
         buildBudgetPressureOpportunity(
             transactions = expenseTransactions,
+            categories = expenseCategories,
             budgets = budgets,
             nowMillis = nowMillis,
             zoneId = zoneId
@@ -76,6 +82,7 @@ fun buildPremiumOpportunities(
         buildBudgetSuggestionOpportunity(
             transactions = expenseTransactions,
             categoriesById = expenseCategoriesById,
+            categories = expenseCategories,
             budgets = budgets,
             zoneId = zoneId
         )?.let(::add)
@@ -104,12 +111,13 @@ fun buildPremiumOpportunities(
 private fun buildCategoryCutbackOpportunity(
     transactions: List<Transaction>,
     categoriesById: Map<String, Category>,
+    categories: List<Category>,
     nowMillis: Long
 ): PremiumOpportunity? {
     val recentStart = nowMillis - RECENT_LOOKBACK_MILLIS
     val topCategory = transactions.asSequence()
         .filter { it.dateTime in recentStart..nowMillis }
-        .groupBy { it.categoryId }
+        .groupBy { it.resolvedCategoryId(categories) }
         .mapValues { (_, values) -> values.sumOf { it.money.amountCents } }
         .maxByOrNull { it.value }
         ?: return null
@@ -130,6 +138,7 @@ private fun buildCategoryCutbackOpportunity(
 private fun buildCategorySpikeOpportunity(
     transactions: List<Transaction>,
     categoriesById: Map<String, Category>,
+    categories: List<Category>,
     zoneId: ZoneId
 ): PremiumOpportunity? {
     val currentMonth = YearMonth.now(zoneId)
@@ -138,11 +147,11 @@ private fun buildCategorySpikeOpportunity(
 
     val currentTotals = transactions.asSequence()
         .filter { it.dateTime in currentStart..currentEnd }
-        .groupBy { it.categoryId }
+        .groupBy { it.resolvedCategoryId(categories) }
         .mapValues { (_, values) -> values.sumOf { it.money.amountCents } }
     val previousTotals = transactions.asSequence()
         .filter { it.dateTime in previousStart..previousEnd }
-        .groupBy { it.categoryId }
+        .groupBy { it.resolvedCategoryId(categories) }
         .mapValues { (_, values) -> values.sumOf { it.money.amountCents } }
 
     return currentTotals.entries
@@ -171,6 +180,7 @@ private fun buildCategorySpikeOpportunity(
 
 private fun buildBudgetPressureOpportunity(
     transactions: List<Transaction>,
+    categories: List<Category>,
     budgets: List<Budget>,
     nowMillis: Long,
     zoneId: ZoneId
@@ -181,8 +191,7 @@ private fun buildBudgetPressureOpportunity(
             val window = budget.currentPeriodWindow(nowMillis = nowMillis, zoneId = zoneId) ?: return@mapNotNull null
             val spent = transactions.asSequence()
                 .filter { it.dateTime in window.spentRange.startMillis..window.spentRange.endMillis }
-                .filter { budget.categoryId == null || it.categoryId == budget.categoryId }
-                .filter { budget.accountId == null || it.accountId == budget.accountId }
+                .filter { it.matchesBudgetScope(budget, categories) }
                 .sumOf { it.money.amountCents }
             val percentUsed = ((spent.toDouble() / budget.amountLimitCents.toDouble()) * 100.0).roundToLong().toInt()
             if (percentUsed < MIN_BUDGET_PRESSURE_PERCENT) return@mapNotNull null
@@ -229,6 +238,7 @@ private fun buildRecurringReviewOpportunity(
 private fun buildBudgetSuggestionOpportunity(
     transactions: List<Transaction>,
     categoriesById: Map<String, Category>,
+    categories: List<Category>,
     budgets: List<Budget>,
     zoneId: ZoneId
 ): PremiumOpportunity? {
@@ -244,7 +254,7 @@ private fun buildBudgetSuggestionOpportunity(
         val (start, end) = monthBounds(month, zoneId)
         val monthTotals = transactions.asSequence()
             .filter { it.dateTime in start..end }
-            .groupBy { it.categoryId }
+            .groupBy { it.resolvedCategoryId(categories) }
             .mapValues { (_, values) -> values.sumOf { it.money.amountCents } }
 
         monthTotals.forEach { (categoryId, total) ->

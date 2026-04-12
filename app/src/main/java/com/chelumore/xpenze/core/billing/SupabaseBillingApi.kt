@@ -47,6 +47,38 @@ class SupabaseBillingApi @Inject constructor(
         )
     }
 
+    suspend fun verifyFounderReward(
+        productId: String,
+        purchaseToken: String,
+        packageName: String
+    ): FounderRewardApiCallResult {
+        val requestJson = json.encodeToString(
+            VerifyPurchaseRequest(
+                productId = productId,
+                purchaseToken = purchaseToken,
+                packageName = packageName
+            )
+        )
+        return postFounderRewardFunction(
+            path = VERIFY_FOUNDER_REWARD_PATH,
+            requestJson = requestJson
+        )
+    }
+
+    suspend fun refreshFounderReward(): FounderRewardApiCallResult {
+        return postFounderRewardFunction(
+            path = REFRESH_FOUNDER_REWARD_PATH,
+            requestJson = "{}"
+        )
+    }
+
+    suspend fun activateFounderReward(): FounderRewardApiCallResult {
+        return postFounderRewardFunction(
+            path = ACTIVATE_FOUNDER_REWARD_PATH,
+            requestJson = "{}"
+        )
+    }
+
     private suspend fun postFunction(
         path: String,
         requestJson: String
@@ -59,6 +91,27 @@ class SupabaseBillingApi @Inject constructor(
         )
         return if (firstAttempt is ApiCallResult.Failure && firstAttempt.statusCode == 401) {
             executeRequest(
+                path = path,
+                requestJson = requestJson,
+                forceRefreshToken = true
+            )
+        } else {
+            firstAttempt
+        }
+    }
+
+    private suspend fun postFounderRewardFunction(
+        path: String,
+        requestJson: String
+    ): FounderRewardApiCallResult {
+        if (!isConfigured()) return FounderRewardApiCallResult.NotConfigured
+        val firstAttempt = executeFounderRewardRequest(
+            path = path,
+            requestJson = requestJson,
+            forceRefreshToken = false
+        )
+        return if (firstAttempt is FounderRewardApiCallResult.Failure && firstAttempt.statusCode == 401) {
+            executeFounderRewardRequest(
                 path = path,
                 requestJson = requestJson,
                 forceRefreshToken = true
@@ -107,6 +160,49 @@ class SupabaseBillingApi @Inject constructor(
         }
     }
 
+    private suspend fun executeFounderRewardRequest(
+        path: String,
+        requestJson: String,
+        forceRefreshToken: Boolean
+    ): FounderRewardApiCallResult {
+        val idToken = authRepository.getIdToken(forceRefresh = forceRefreshToken)
+            ?.takeIf { it.isNotBlank() }
+            ?: return FounderRewardApiCallResult.Failure("Sign in is required.", statusCode = 401)
+
+        val request = Request.Builder()
+            .url("${projectUrl().trimEnd('/')}/functions/v1/$path")
+            .post(requestJson.toRequestBody(JSON_MEDIA_TYPE))
+            .header("Authorization", "Bearer $idToken")
+            .header("Content-Type", "application/json")
+            .build()
+
+        return runCatching {
+            client.newCall(request).execute().use { response ->
+                val rawBody = response.body?.string().orEmpty()
+                if (!response.isSuccessful) {
+                    return FounderRewardApiCallResult.Failure(
+                        message = parseErrorMessage(rawBody)
+                            ?: "Founder reward backend request failed (${response.code}).",
+                        statusCode = response.code
+                    )
+                }
+
+                val payload = runCatching {
+                    json.decodeFromString<FounderRewardPayload>(rawBody)
+                }.getOrElse {
+                    return FounderRewardApiCallResult.Failure(
+                        "Founder reward backend returned an invalid response."
+                    )
+                }
+                FounderRewardApiCallResult.Success(payload)
+            }
+        }.getOrElse { error ->
+            FounderRewardApiCallResult.Failure(
+                error.message ?: "Unable to reach founder reward backend."
+            )
+        }
+    }
+
     private fun parseErrorMessage(rawBody: String): String? {
         if (rawBody.isBlank()) return null
         return runCatching {
@@ -141,6 +237,22 @@ class SupabaseBillingApi @Inject constructor(
         val message: String = ""
     )
 
+    @Serializable
+    data class FounderRewardPayload(
+        val hasFounderReward: Boolean = false,
+        val productId: String = "",
+        val purchaseTime: Long = 0L,
+        val acknowledgedAt: Long? = null,
+        val purchaseTokenHash: String = "",
+        val founderBadgeGranted: Boolean = false,
+        val founderTrialActivated: Boolean = false,
+        val trialStartedAt: Long = 0L,
+        val trialExpiresAt: Long = 0L,
+        val newlyActivated: Boolean = false,
+        val source: String = "",
+        val message: String = ""
+    )
+
     sealed interface ApiCallResult {
         data object NotConfigured : ApiCallResult
 
@@ -154,10 +266,26 @@ class SupabaseBillingApi @Inject constructor(
         ) : ApiCallResult
     }
 
+    sealed interface FounderRewardApiCallResult {
+        data object NotConfigured : FounderRewardApiCallResult
+
+        data class Success(
+            val payload: FounderRewardPayload
+        ) : FounderRewardApiCallResult
+
+        data class Failure(
+            val message: String,
+            val statusCode: Int? = null
+        ) : FounderRewardApiCallResult
+    }
+
     private companion object {
         val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
         const val VERIFY_PURCHASE_PATH = "verify-play-subscription"
         const val REFRESH_PURCHASE_PATH = "refresh-play-subscription"
+        const val VERIFY_FOUNDER_REWARD_PATH = "verify-play-founder-reward"
+        const val REFRESH_FOUNDER_REWARD_PATH = "refresh-founder-reward"
+        const val ACTIVATE_FOUNDER_REWARD_PATH = "claim-founder-reward"
     }
 }

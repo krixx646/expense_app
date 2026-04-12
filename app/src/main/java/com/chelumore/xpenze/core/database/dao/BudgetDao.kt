@@ -39,6 +39,9 @@ interface BudgetDao {
     @Query("SELECT * FROM budgets WHERE deleted = 0 ORDER BY name ASC")
     fun getAll(): Flow<List<BudgetEntity>>
 
+    @Query("SELECT * FROM budgets WHERE deleted = 0")
+    suspend fun getAllAliveOnce(): List<BudgetEntity>
+
     @Query("SELECT * FROM budgets WHERE deleted = 0 AND isActive = 1 ORDER BY name ASC")
     fun getActive(): Flow<List<BudgetEntity>>
 

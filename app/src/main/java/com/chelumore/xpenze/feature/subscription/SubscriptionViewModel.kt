@@ -17,6 +17,7 @@ import com.chelumore.xpenze.core.localization.AppLanguages
 import com.chelumore.xpenze.core.premium.PremiumEntitlementTracker
 import com.chelumore.xpenze.domain.model.TransactionType
 import com.chelumore.xpenze.domain.model.UserSubscription
+import com.chelumore.xpenze.domain.repository.FounderTrialActivationResult
 import com.chelumore.xpenze.domain.repository.PurchaseSubscriptionResult
 import com.chelumore.xpenze.domain.repository.RestorePurchasesResult
 import com.chelumore.xpenze.domain.repository.SubscriptionRepository
@@ -63,6 +64,8 @@ data class SubscriptionUiState(
     val isTrialActive: Boolean = false,
     val trialConsumed: Boolean = false,
     val trialExpiresAt: Long = 0L,
+    val hasFounderReward: Boolean = false,
+    val founderTrialActivated: Boolean = false,
     val activeSubscription: UserSubscription? = null,
     val currencyCode: String = "USD",
     val appLanguageTag: String = "en",
@@ -172,6 +175,8 @@ class SubscriptionViewModel @Inject constructor(
             isTrialActive = entitlement.isTrialActive,
             trialConsumed = entitlement.trialConsumed,
             trialExpiresAt = entitlement.trialExpiresAt,
+            hasFounderReward = entitlement.hasFounderReward,
+            founderTrialActivated = entitlement.founderTrialActivated,
             activeSubscription = if (isPremium) active else null,
             currencyCode = paywall.currencyCode,
             appLanguageTag = paywall.appLanguageTag,
@@ -207,6 +212,7 @@ class SubscriptionViewModel @Inject constructor(
         // Always use backend/billing sources for entitlement state.
         viewModelScope.launch {
             runCatching { subscriptionRepository.syncTrialStateFromBackend() }
+            runCatching { subscriptionRepository.syncFounderRewardStateFromBackend() }
             runCatching { subscriptionRepository.syncPremiumStateFromBackend() }
             runCatching { subscriptionRepository.restorePurchases() }
         }
@@ -241,6 +247,10 @@ class SubscriptionViewModel @Inject constructor(
                     eventsChannel.send(SubscriptionEvent.Message("You already have an active premium plan."))
                     return@launch
                 }
+                if (prefs.hasFounderReward && !prefs.founderTrialActivated) {
+                    activateFounderTrialAndNotify()
+                    return@launch
+                }
                 if (prefs.isTrialActive()) {
                     growthAnalyticsTracker.logSubscriptionTrialBlocked("trial_already_active")
                     eventsChannel.send(SubscriptionEvent.Message("Your trial is already active."))
@@ -251,7 +261,9 @@ class SubscriptionViewModel @Inject constructor(
                     is TrialActivationResult.Started -> {
                         growthAnalyticsTracker.logSubscriptionTrialStarted()
                         eventsChannel.send(
-                            SubscriptionEvent.Message("Trial started. Enjoy 7 days of premium access.")
+                            SubscriptionEvent.Message(
+                                "Trial started. Enjoy $days days of premium access."
+                            )
                         )
                     }
                     is TrialActivationResult.AlreadyConsumed -> {
@@ -265,7 +277,7 @@ class SubscriptionViewModel @Inject constructor(
                         val message = if (result.expiresAt > System.currentTimeMillis()) {
                             "Your trial is already active on this account."
                         } else {
-                            "Your 7-day trial has already been used."
+                            "Your $days-day trial has already been used."
                         }
                         eventsChannel.send(SubscriptionEvent.Message(message))
                     }
@@ -296,6 +308,13 @@ class SubscriptionViewModel @Inject constructor(
                     SubscriptionEvent.Message(e.message ?: "Unable to start trial right now.")
                 )
             }
+        }
+    }
+
+    fun activateFounderReward() {
+        viewModelScope.launch {
+            growthAnalyticsTracker.logSubscriptionTrialClick()
+            activateFounderTrialAndNotify()
         }
     }
 
@@ -536,6 +555,68 @@ class SubscriptionViewModel @Inject constructor(
             return 0f
         }
         return ((monthlySavingsCents.toDouble() * 10_000.0) / priceMicros.toDouble()).toFloat()
+    }
+
+    private suspend fun activateFounderTrialAndNotify() {
+        when (val result = subscriptionRepository.activateFounderTrial()) {
+            is FounderTrialActivationResult.Started -> {
+                growthAnalyticsTracker.logSubscriptionTrialStarted()
+                eventsChannel.send(
+                    SubscriptionEvent.Message(
+                        result.message.ifBlank {
+                            "Founder reward activated. Enjoy your ${Constants.FOUNDER_REWARD_TOTAL_TRIAL_DAYS}-day Premium trial."
+                        }
+                    )
+                )
+            }
+            is FounderTrialActivationResult.AlreadyActivated -> {
+                eventsChannel.send(
+                    SubscriptionEvent.Message(
+                        result.message.ifBlank {
+                            "Your Founder reward has already been activated on this account."
+                        }
+                    )
+                )
+            }
+            FounderTrialActivationResult.RewardNotOwned -> {
+                growthAnalyticsTracker.logSubscriptionTrialBlocked("founder_reward_missing")
+                eventsChannel.send(
+                    SubscriptionEvent.Message(
+                        "Founder reward not found on this account yet. Open Google Play and try again in a moment."
+                    )
+                )
+            }
+            FounderTrialActivationResult.NotSignedIn -> {
+                growthAnalyticsTracker.logSubscriptionTrialBlocked("not_signed_in")
+                eventsChannel.send(
+                    SubscriptionEvent.Message("Sign in to activate your Founder reward.")
+                )
+            }
+            FounderTrialActivationResult.BackendUnavailable -> {
+                growthAnalyticsTracker.logSubscriptionTrialFailed("backend_unavailable")
+                eventsChannel.send(
+                    SubscriptionEvent.Message(
+                        "Unable to verify your Founder reward right now. Please check your connection and try again."
+                    )
+                )
+            }
+            FounderTrialActivationResult.AlreadyPremium -> {
+                growthAnalyticsTracker.logSubscriptionTrialBlocked("already_premium")
+                eventsChannel.send(
+                    SubscriptionEvent.Message(
+                        "You already have an active premium plan. Your Founder badge stays unlocked."
+                    )
+                )
+            }
+            is FounderTrialActivationResult.Failure -> {
+                growthAnalyticsTracker.logSubscriptionTrialFailed("founder_reward_failed")
+                eventsChannel.send(
+                    SubscriptionEvent.Message(
+                        result.message.ifBlank { "Unable to activate founder reward right now." }
+                    )
+                )
+            }
+        }
     }
 
     private fun calculateYearlySavingsPercent(

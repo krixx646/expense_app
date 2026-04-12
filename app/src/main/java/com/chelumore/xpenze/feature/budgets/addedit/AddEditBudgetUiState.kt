@@ -4,6 +4,7 @@ import com.chelumore.xpenze.core.common.Constants
 import com.chelumore.xpenze.domain.model.Account
 import com.chelumore.xpenze.domain.model.BudgetPeriod
 import com.chelumore.xpenze.domain.model.Category
+import com.chelumore.xpenze.domain.model.resolveBudgetEndDate
 
 data class AddEditBudgetUiState(
     val isLoading: Boolean = true,
@@ -13,6 +14,7 @@ data class AddEditBudgetUiState(
 
     val isEdit: Boolean = false,
     val budgetId: String? = null,
+    val cloneFromBudgetId: String? = null,
 
     // Form
     val name: String = "",
@@ -21,6 +23,8 @@ data class AddEditBudgetUiState(
     val period: BudgetPeriod = BudgetPeriod.MONTHLY,
     val alertThreshold: Float = 0.8f,
     val isActive: Boolean = true,
+    val isRecurring: Boolean = false,
+    val hasPremiumAccess: Boolean = false,
     val startDate: Long = System.currentTimeMillis(),
     val endDate: Long? = null,
 
@@ -37,8 +41,18 @@ data class AddEditBudgetUiState(
     val selectedAccount: Account?
         get() = accounts.firstOrNull { it.id == selectedAccountId }
 
+    val effectiveEndDate: Long?
+        get() = resolveBudgetEndDate(
+            period = period,
+            startDate = startDate,
+            explicitEndDate = endDate
+        )
+
+    val requiresExplicitEndDate: Boolean
+        get() = period == BudgetPeriod.CUSTOM
+
     val canSave: Boolean
-        get() = (amountText.toDoubleOrNull() ?: 0.0) > 0.0 && !isSaving
+        get() = (amountText.toDoubleOrNull() ?: 0.0) > 0.0 &&
+            !isSaving &&
+            (!requiresExplicitEndDate || effectiveEndDate != null)
 }
-
-

@@ -14,5 +14,9 @@ interface BillingService {
     ): BillingPurchaseResult
 
     suspend fun queryActiveSubscriptions(): BillingRestoreResult
+
+    suspend fun queryOwnedOneTimeProducts(
+        productIds: List<String>
+    ): BillingOneTimeRestoreResult
 }
 

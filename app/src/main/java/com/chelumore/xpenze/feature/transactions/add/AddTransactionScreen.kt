@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chelumore.xpenze.R
+import com.chelumore.xpenze.domain.model.CategoryType
 import com.chelumore.xpenze.domain.model.TransactionType
 import com.chelumore.xpenze.ui.theme.BlackBackground
 import com.chelumore.xpenze.ui.theme.YellowPrimary
@@ -37,6 +38,13 @@ fun AddTransactionScreen(
     val toAccountLabel = stringResource(R.string.transaction_form_to_account_label)
     val accountPlaceholder = stringResource(R.string.transaction_form_account_placeholder)
     val noItemsAvailableText = stringResource(R.string.common_no_items_available)
+    val selectableCategories = remember(uiState.type, uiState.categories) {
+        when (uiState.type) {
+            TransactionType.EXPENSE -> uiState.categories.filter { it.type == CategoryType.EXPENSE }
+            TransactionType.INCOME -> uiState.categories.filter { it.type == CategoryType.INCOME }
+            TransactionType.TRANSFER -> emptyList()
+        }
+    }
 
     // Handle initial type passed from navigation
     LaunchedEffect(transactionType) {
@@ -154,7 +162,7 @@ fun AddTransactionScreen(
             if (uiState.type != TransactionType.TRANSFER) {
                 SelectionDropdown(
                     label = categoryLabel,
-                    options = uiState.categories,
+                    options = selectableCategories,
                     selectedOption = uiState.selectedCategory,
                     onOptionSelected = { viewModel.setCategory(it) },
                     optionToString = { it?.name ?: categoryPlaceholder },

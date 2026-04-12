@@ -76,6 +76,7 @@ class SettingsViewModel @Inject constructor(
             hasPremiumAccess = entitlement.hasPremiumAccess,
             isTrialActive = entitlement.isTrialActive,
             trialExpiresAt = entitlement.trialExpiresAt,
+            hasFounderReward = prefs.hasFounderReward,
             appLanguageTag = AppLanguages.normalizeTag(prefs.appLanguageTag),
             accountCardStyle = prefs.accountCardStyle,
             currency = prefs.defaultCurrency,
@@ -94,6 +95,7 @@ class SettingsViewModel @Inject constructor(
             autoCaptureStatementImportEnabled = prefs.autoCaptureStatementImportEnabled,
             autoCaptureOcrEnabled = prefs.autoCaptureOcrEnabled,
             autoCaptureNotificationEnabled = prefs.autoCaptureNotificationEnabled,
+            autoCaptureNotificationAllowedPackages = prefs.autoCaptureNotificationAllowedPackages,
             autoCaptureMerchantMemoryEnabled = prefs.autoCaptureMerchantMemoryEnabled,
             autoCaptureRecurringSuggestionsEnabled = prefs.autoCaptureRecurringSuggestionsEnabled,
             autoCaptureDisclosureAccepted = prefs.autoCaptureDisclosureAccepted,
@@ -238,6 +240,12 @@ class SettingsViewModel @Inject constructor(
     fun toggleAutoCaptureNotification(enabled: Boolean) {
         viewModelScope.launch {
             preferencesDataStore.setAutoCaptureNotificationEnabled(enabled)
+        }
+    }
+
+    fun setAutoCaptureNotificationAllowedPackages(packageNames: Set<String>) {
+        viewModelScope.launch {
+            preferencesDataStore.setAutoCaptureNotificationAllowedPackages(packageNames)
         }
     }
 
