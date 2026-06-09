@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.ask-mochi]
 verify_jwt = false
+
+[functions.keep-alive]
+verify_jwt = false

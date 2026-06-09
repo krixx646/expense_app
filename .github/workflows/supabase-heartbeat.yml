@@ -1,0 +1,44 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # Every 3 days at 06:00 UTC. Supabase pauses free projects after ~7 days of inactivity.
+    - cron: "0 6 */3 * *"
+    # Extra safety ping on Monday and Thursday.
+    - cron: "0 6 * * 1,4"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Touch xpenze-billing database
+        env:
+          SUPABASE_PROJECT_URL: https://dglblftmgakhryfthxbh.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY}" ]; then
+            echo "Missing GitHub secret SUPABASE_SERVICE_ROLE_KEY."
+            echo "Add it from Supabase Dashboard -> Project Settings -> API -> service_role key."
+            exit 1
+          fi
+
+          response_file="$(mktemp)"
+          http_status="$(
+            curl --silent --show-error --output "${response_file}" --write-out "%{http_code}" \
+              "${SUPABASE_PROJECT_URL}/rest/v1/play_subscription_state?select=firebase_uid&limit=1" \
+              -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}"
+          )"
+
+          echo "HTTP ${http_status}"
+          cat "${response_file}"
+
+          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
+            echo "Supabase keep-alive request failed."
+            exit 1
+          fi
