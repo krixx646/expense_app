@@ -1,8 +1,6 @@
 name: Supabase Keep Alive
 
 on:
-  push:
-    branches: ["main"]
   schedule:
     # Every 3 days at 06:00 UTC. Supabase pauses free projects after ~7 days of inactivity.
     - cron: "0 6 */3 * *"
@@ -25,22 +23,54 @@ jobs:
 
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY}" ]; then
             echo "Missing GitHub secret SUPABASE_SERVICE_ROLE_KEY."
-            echo "Add it from Supabase Dashboard -> Project Settings -> API -> service_role key."
+            echo "Paste your Supabase Secret key (sb_secret_...) into that secret."
             exit 1
           fi
 
-          response_file="$(mktemp)"
-          http_status="$(
-            curl --silent --show-error --output "${response_file}" --write-out "%{http_code}" \
-              "${SUPABASE_PROJECT_URL}/rest/v1/play_subscription_state?select=firebase_uid&limit=1" \
-              -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
-              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}"
-          )"
+          ping_table() {
+            local table_name="$1"
+            local response_file http_status
 
-          echo "HTTP ${http_status}"
-          cat "${response_file}"
+            response_file="$(mktemp)"
 
-          if [ "${http_status}" -lt 200 ] || [ "${http_status}" -ge 300 ]; then
-            echo "Supabase keep-alive request failed."
-            exit 1
+            if [[ "${SUPABASE_SERVICE_ROLE_KEY}" == sb_* ]]; then
+              # New Supabase secret keys must go in apikey only.
+              http_status="$(
+                curl --silent --show-error --output "${response_file}" --write-out "%{http_code}" \
+                  "${SUPABASE_PROJECT_URL}/rest/v1/${table_name}?select=firebase_uid&limit=1" \
+                  -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}"
+              )"
+            else
+              # Legacy service_role JWT keys still need Authorization.
+              http_status="$(
+                curl --silent --show-error --output "${response_file}" --write-out "%{http_code}" \
+                  "${SUPABASE_PROJECT_URL}/rest/v1/${table_name}?select=firebase_uid&limit=1" \
+                  -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+                  -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}"
+              )"
+            fi
+
+            echo "Table: ${table_name}"
+            echo "HTTP ${http_status}"
+            cat "${response_file}"
+            echo
+
+            if [ "${http_status}" -ge 200 ] && [ "${http_status}" -lt 300 ]; then
+              return 0
+            fi
+
+            return 1
+          }
+
+          if ping_table "play_founder_reward_state"; then
+            echo "Supabase keep-alive succeeded."
+            exit 0
           fi
+
+          if ping_table "play_subscription_state"; then
+            echo "Supabase keep-alive succeeded."
+            exit 0
+          fi
+
+          echo "Supabase keep-alive failed for all billing tables."
+          exit 1
