@@ -78,7 +78,7 @@ data class SubscriptionUiState(
     val availablePlans: List<SubscriptionPlanUi> = emptyList(),
     val selectedPlanId: String? = null,
     val isPricingLoading: Boolean = true,
-    val monthlyReferencePriceText: String = "$9.99",
+    val monthlyReferencePriceText: String = Constants.DEFAULT_MONTHLY_PRICE_CENTS.toCurrencyString(),
     val nudgeVariant: PremiumEmotionVariant = PremiumEmotionVariant.PLAYFUL,
     val message: String? = null,
     val error: String? = null
@@ -190,7 +190,7 @@ class SubscriptionViewModel @Inject constructor(
             selectedPlanId = pricing.selectedProductId,
             isPricingLoading = pricing.isLoading,
             monthlyReferencePriceText = pricing.monthlyReferencePriceText
-                ?: DEFAULT_MONTHLY_PRICE_CENTS.toCurrencyString(paywall.currencyCode),
+                ?: Constants.DEFAULT_MONTHLY_PRICE_CENTS.toCurrencyString(paywall.currencyCode),
             nudgeVariant = paywall.nudgeVariant
         )
     }.stateIn(
@@ -656,8 +656,6 @@ class SubscriptionViewModel @Inject constructor(
     }
 
     private companion object {
-        const val DEFAULT_MONTHLY_PRICE_CENTS = 999L
-
         fun monthBounds(month: YearMonth): Pair<Long, Long> {
             val zone = ZoneId.systemDefault()
             val start = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()

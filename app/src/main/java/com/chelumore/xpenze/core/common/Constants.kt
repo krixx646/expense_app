@@ -33,4 +33,7 @@ object Constants {
     const val SUBSCRIPTION_YEARLY = "xpenze_premium_yearly"
     const val FOUNDER_REWARD_PRODUCT = "xpenze_preregister_founder_pack"
     const val FOUNDER_REWARD_TOTAL_TRIAL_DAYS = 14
+
+    // Shown only until live Play Store pricing loads; keep in sync with Play Console.
+    const val DEFAULT_MONTHLY_PRICE_CENTS = 399L
 }

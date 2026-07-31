@@ -1,5 +1,6 @@
 package com.chelumore.xpenze.core.growth
 
+import com.chelumore.xpenze.core.common.Constants
 import com.chelumore.xpenze.core.common.toCurrencyString
 
 data class MochiPremiumCopy(
@@ -22,7 +23,7 @@ object MochiPremiumCopywriter {
             null
         }
         val priceText = monthlyPriceText?.trim()?.takeIf { it.isNotBlank() }
-            ?: 999L.toCurrencyString(currencyCode)
+            ?: Constants.DEFAULT_MONTHLY_PRICE_CENTS.toCurrencyString(currencyCode)
 
         return when (variant) {
             PremiumEmotionVariant.PLAYFUL -> MochiPremiumCopy(
