@@ -377,8 +377,8 @@ class PlayBillingService @Inject constructor(
             .build()
 
         val result = suspendCancellableCoroutine<Pair<BillingResult, List<ProductDetails>>> { continuation ->
-            billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
-                continuation.resume(billingResult to productDetailsList)
+            billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
+                continuation.resume(billingResult to queryResult.productDetailsList)
             }
         }
 
