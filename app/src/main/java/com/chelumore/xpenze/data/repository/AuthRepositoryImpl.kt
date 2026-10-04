@@ -90,18 +90,10 @@ class AuthRepositoryImpl @Inject constructor(
             runCatching { user.updateProfile(profileUpdates).await() }
             runCatching { user.reload().await() }
         }
-        clearLocalStateForAccountSwitch(newUserId = user.uid)
-
         // Trigger email verification
         runCatching { user.sendEmailVerification().await() }
 
-        // Persist local session
-        preferencesDataStore.setUserInfo(
-            userId = user.uid,
-            email = user.email,
-            name = cleanedDisplayName ?: user.displayName,
-            photoUrl = user.photoUrl?.toString()
-        )
+        establishLocalSession(user, displayName = cleanedDisplayName)
 
         return user.toDomain()
     }
@@ -113,14 +105,7 @@ class AuthRepositoryImpl @Inject constructor(
         val auth = authOrThrow()
         val result = auth.signInWithEmailAndPassword(email.trim(), password).await()
         val user = result.user ?: throw IllegalStateException("Sign in failed")
-        clearLocalStateForAccountSwitch(newUserId = user.uid)
-
-        preferencesDataStore.setUserInfo(
-            userId = user.uid,
-            email = user.email,
-            name = user.displayName,
-            photoUrl = user.photoUrl?.toString()
-        )
+        establishLocalSession(user)
 
         return user.toDomain()
     }
@@ -161,14 +146,7 @@ class AuthRepositoryImpl @Inject constructor(
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val result = auth.signInWithCredential(credential).await()
         val user = result.user ?: throw IllegalStateException("Google sign in failed")
-        clearLocalStateForAccountSwitch(newUserId = user.uid)
-
-        preferencesDataStore.setUserInfo(
-            userId = user.uid,
-            email = user.email,
-            name = user.displayName,
-            photoUrl = user.photoUrl?.toString()
-        )
+        establishLocalSession(user)
 
         return user.toDomain()
     }
@@ -185,6 +163,7 @@ class AuthRepositoryImpl @Inject constructor(
             appDatabase.clearAllTables()
         }
         preferencesDataStore.clearUserData()
+        preferencesDataStore.clearTrialState()
         preferencesDataStore.setOnboardingComplete(false)
         preferencesDataStore.setDefaultAccountId(null)
         preferencesDataStore.setDefaultCurrency(Constants.DEFAULT_CURRENCY)
@@ -197,28 +176,70 @@ class AuthRepositoryImpl @Inject constructor(
             appDatabase.clearAllTables()
         }
         preferencesDataStore.clearUserData()
+        preferencesDataStore.clearTrialState()
         preferencesDataStore.setOnboardingComplete(false)
         preferencesDataStore.setDefaultAccountId(null)
         preferencesDataStore.setDefaultCurrency(Constants.DEFAULT_CURRENCY)
         preferencesDataStore.updateLastSyncTime(0L)
     }
 
-    private suspend fun clearLocalStateForAccountSwitch(newUserId: String) {
+    /**
+     * Establishes the local session for [user] after a successful authentication.
+     *
+     * Three cases, in order:
+     *  - Re-authenticating as the same account: refresh the stored profile only.
+     *  - A guest adopting an account: keep every local record, because it belongs to this same
+     *    person and [com.chelumore.xpenze.domain.repository.SyncRepository.fullSync] pushes it up
+     *    to the new account. Adoption is deferred while an email address is unverified, so an
+     *    unverified sign-up never strands the guest behind the verification wall.
+     *  - Anything else (a genuine account switch): never keep the prior account's records.
+     */
+    private suspend fun establishLocalSession(user: FirebaseUser, displayName: String? = null) {
         val currentPrefs = preferencesDataStore.userPreferences.first()
-        val previousUserId = currentPrefs.userId
-        if (!previousUserId.isNullOrBlank() && previousUserId == newUserId) return
+        val resolvedName = displayName ?: user.displayName
 
-        // Critical isolation: when moving from signed-out/local use into an account,
-        // or when switching between accounts, never keep prior local financial records.
-        withContext(Dispatchers.IO) {
-            appDatabase.clearAllTables()
+        val action = resolveLocalSessionAction(
+            previousUserId = currentPrefs.userId,
+            isGuestMode = currentPrefs.isGuestMode,
+            newUserId = user.uid,
+            hasEmail = user.email != null,
+            isEmailVerified = user.isEmailVerified
+        )
+
+        when (action) {
+            LocalSessionAction.DeferGuestAdoption -> return
+
+            LocalSessionAction.PromoteGuest -> {
+                preferencesDataStore.promoteGuestToUser(
+                    userId = user.uid,
+                    email = user.email,
+                    name = resolvedName,
+                    photoUrl = user.photoUrl?.toString()
+                )
+                return
+            }
+
+            LocalSessionAction.ResetForAccountSwitch -> {
+                withContext(Dispatchers.IO) {
+                    appDatabase.clearAllTables()
+                }
+                preferencesDataStore.setOnboardingComplete(false)
+                preferencesDataStore.setDefaultAccountId(null)
+                preferencesDataStore.setDefaultCurrency(Constants.DEFAULT_CURRENCY)
+                preferencesDataStore.updateLastSyncTime(0L)
+                preferencesDataStore.setPremium(false)
+                preferencesDataStore.clearTrialState()
+            }
+
+            LocalSessionAction.RefreshProfile -> Unit
         }
-        preferencesDataStore.setOnboardingComplete(false)
-        preferencesDataStore.setDefaultAccountId(null)
-        preferencesDataStore.setDefaultCurrency(Constants.DEFAULT_CURRENCY)
-        preferencesDataStore.updateLastSyncTime(0L)
-        preferencesDataStore.setPremium(false)
-        preferencesDataStore.clearTrialState()
+
+        preferencesDataStore.setUserInfo(
+            userId = user.uid,
+            email = user.email,
+            name = resolvedName,
+            photoUrl = user.photoUrl?.toString()
+        )
     }
 
     private fun FirebaseUser.toDomain(): AuthUser {

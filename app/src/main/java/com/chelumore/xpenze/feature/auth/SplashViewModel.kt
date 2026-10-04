@@ -1,39 +1,36 @@
 package com.chelumore.xpenze.feature.auth
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chelumore.xpenze.core.common.Constants
 import com.chelumore.xpenze.core.database.AppDatabase
-import com.chelumore.xpenze.domain.repository.AuthRepository
-import com.chelumore.xpenze.domain.repository.AccountRepository
-import com.chelumore.xpenze.domain.repository.SyncRepository
-import com.chelumore.xpenze.domain.repository.SyncState
-import com.chelumore.xpenze.domain.repository.SubscriptionRepository
-import com.chelumore.xpenze.domain.repository.UserRepository
-import com.chelumore.xpenze.domain.repository.UserPreferences
 import com.chelumore.xpenze.core.work.SyncScheduler
 import com.chelumore.xpenze.domain.model.Account
+import com.chelumore.xpenze.domain.repository.AccountRepository
+import com.chelumore.xpenze.domain.repository.AuthRepository
+import com.chelumore.xpenze.domain.repository.SubscriptionRepository
+import com.chelumore.xpenze.domain.repository.SyncRepository
+import com.chelumore.xpenze.domain.repository.SyncState
+import com.chelumore.xpenze.domain.repository.UserPreferences
+import com.chelumore.xpenze.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import javax.inject.Inject
 
 data class SplashUiState(
     val isLoading: Boolean = true,
-    val destination: SplashDestination? = null,
-    val error: SplashError? = null,
-    val errorMessage: String? = null
+    val destination: SplashDestination? = null
 )
 
 sealed interface SplashDestination {
@@ -41,10 +38,6 @@ sealed interface SplashDestination {
     data object Verification : SplashDestination
     data object Onboarding : SplashDestination
     data object Main : SplashDestination
-}
-
-enum class SplashError {
-    RESTORE_FAILED
 }
 
 @HiltViewModel
@@ -60,7 +53,6 @@ class SplashViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(SplashUiState())
     val uiState: StateFlow<SplashUiState> = _uiState
-    private val refreshRequests = MutableStateFlow(0)
 
     init {
         // Start/stop cloud sync based on auth state.
@@ -78,15 +70,31 @@ class SplashViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            combine(
-                authRepository.observeAuthState(),
-                refreshRequests
-            ) { user, refreshKey -> user to refreshKey }
+            authRepository.observeAuthState()
                 .distinctUntilChanged()
-                .collectLatest { (user, _) ->
+                .collectLatest { user ->
                     var prefs = userRepository.userPreferences.first()
+                    val isEmailVerificationPending =
+                        user != null && user.email != null && !user.isEmailVerified
+
+                    // Safety net for a guest whose adoption was deferred until they verified their
+                    // email: AuthRepository handles the sign-in itself. Must run before the generic
+                    // "different user" wipe below, which would otherwise delete their records.
+                    val isGuestAdoptingAccount = user != null &&
+                        prefs.isGuestMode &&
+                        prefs.userId.isNullOrBlank() &&
+                        !isEmailVerificationPending
+
                     // Keep local preferences in sync (covers "already signed in" sessions on app start).
-                    if (user == null && !prefs.userId.isNullOrBlank()) {
+                    if (isGuestAdoptingAccount) {
+                        userRepository.promoteGuestToUser(
+                            userId = user.uid,
+                            email = user.email,
+                            name = user.displayName,
+                            photoUrl = user.photoUrl
+                        )
+                        prefs = userRepository.userPreferences.first()
+                    } else if (user == null && !prefs.userId.isNullOrBlank()) {
                         withContext(Dispatchers.IO) {
                             appDatabase.clearAllTables()
                         }
@@ -98,7 +106,7 @@ class SplashViewModel @Inject constructor(
                         userRepository.setPremium(false)
                         userRepository.clearTrialState()
                         prefs = userRepository.userPreferences.first()
-                    } else if (user != null && prefs.userId != user.uid) {
+                    } else if (user != null && !prefs.isGuestMode && prefs.userId != user.uid) {
                         withContext(Dispatchers.IO) {
                             appDatabase.clearAllTables()
                         }
@@ -117,93 +125,108 @@ class SplashViewModel @Inject constructor(
                         prefs = userRepository.userPreferences.first()
                     }
 
+                    _uiState.value = SplashUiState(isLoading = true)
+
                     when {
+                        // Still a guest: either never signed in, or signed up but not yet verified.
+                        // Either way their data lives locally and they keep full access to it.
+                        prefs.isGuestMode -> {
+                            val localAccounts = accountRepository.getAll().first()
+                            if (!prefs.isOnboardingComplete && localAccounts.isEmpty()) {
+                                // Incomplete guest session: never auto-resume onboarding.
+                                // Require an explicit "Continue without account" choice again.
+                                userRepository.setGuestMode(false)
+                                userRepository.clearTrialState()
+                                userRepository.setPremium(false)
+                                _uiState.update {
+                                    it.copy(
+                                        isLoading = false,
+                                        destination = SplashDestination.Welcome
+                                    )
+                                }
+                            } else {
+                                resolveGuestDestination(prefs)
+                            }
+                        }
+
                         user == null -> {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    destination = SplashDestination.Welcome,
-                                    error = null,
-                                    errorMessage = null
+                                    destination = SplashDestination.Welcome
                                 )
                             }
                         }
-                        user.email != null && !user.isEmailVerified -> {
+
+                        isEmailVerificationPending -> {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    destination = SplashDestination.Verification,
-                                    error = null,
-                                    errorMessage = null
+                                    destination = SplashDestination.Verification
                                 )
                             }
                         }
-                        else -> {
-                            resolveSignedInDestination(prefs)
-                        }
+
+                        else -> resolveSignedInDestination(prefs)
                     }
                 }
         }
     }
 
-    fun retryRestore() {
-        refreshRequests.update { it + 1 }
+    /**
+     * Guests have no cloud account, so there is nothing to restore and no sync to wait on.
+     * Route straight off the splash using local state only.
+     */
+    private suspend fun resolveGuestDestination(prefs: UserPreferences) {
+        val localAccounts = accountRepository.getAll().first()
+        if (localAccounts.isNotEmpty()) {
+            syncDefaultAccountSelection(localAccounts, prefs)
+            if (!prefs.isOnboardingComplete) {
+                userRepository.setOnboardingComplete(true)
+            }
+        }
+
+        val destination = if (localAccounts.isNotEmpty() || prefs.isOnboardingComplete) {
+            SplashDestination.Main
+        } else {
+            SplashDestination.Onboarding
+        }
+
+        _uiState.update { it.copy(isLoading = false, destination = destination) }
     }
 
     private suspend fun resolveSignedInDestination(prefs: UserPreferences) {
-        _uiState.update { it.copy(isLoading = true, destination = null, error = null, errorMessage = null) }
+        _uiState.update { it.copy(isLoading = true, destination = null) }
+        ensureBackgroundSync()
 
-        val restoreResult = attemptRequiredStartupSync()
-        if (!restoreResult.syncCompleted) {
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    destination = null,
-                    error = SplashError.RESTORE_FAILED,
-                    errorMessage = restoreResult.errorMessage
-                )
-            }
+        val localAccounts = accountRepository.getAll().first()
+        if (localAccounts.isNotEmpty()) {
+            finalizeMainDestination(localAccounts, prefs)
             return
         }
 
+        val restoreResult = attemptInitialBootstrapSync()
         if (restoreResult.accounts.isNotEmpty()) {
             finalizeMainDestination(restoreResult.accounts, prefs)
             return
         }
 
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                destination = if (prefs.isOnboardingComplete) {
-                    SplashDestination.Main
-                } else {
-                    SplashDestination.Onboarding
-                },
-                error = null,
-                errorMessage = null
-            )
+        // No cloud/local accounts: a brand-new signed-in user must go through onboarding.
+        // Never skip setup just because restore timed out or failed — that left new Google
+        // accounts on an empty Main screen ("0.00") with no first-account flow.
+        val destination = if (prefs.isOnboardingComplete) {
+            SplashDestination.Main
+        } else {
+            SplashDestination.Onboarding
         }
+        finalizeSignedInFallbackDestination(destination)
     }
 
-    private suspend fun attemptRequiredStartupSync(): BootstrapRestoreResult {
-        var syncOutcome = SyncAttemptResult(
-            completed = false,
-            errorMessage = "Restore could not complete."
-        )
-        for (attemptIndex in 0 until MAX_REQUIRED_STARTUP_SYNC_ATTEMPTS) {
-            syncOutcome = runStartupSyncAttempt()
-            if (syncOutcome.completed) {
-                break
-            }
-            val hasMoreAttempts = attemptIndex < MAX_REQUIRED_STARTUP_SYNC_ATTEMPTS - 1
-            if (hasMoreAttempts) {
-                delay(AUTOMATIC_RETRY_DELAY_MS * (attemptIndex + 1L))
-            }
-        }
-
+    private suspend fun attemptInitialBootstrapSync(): BootstrapRestoreResult {
+        val syncOutcome = runStartupSyncAttempt(timeoutMs = INITIAL_BOOTSTRAP_SYNC_TIMEOUT_MS)
         val accounts = accountRepository.getAll().first()
             .takeIf { it.isNotEmpty() }
-            ?: withTimeoutOrNull(ACCOUNT_APPEAR_WAIT_TIMEOUT_MS) {
+            ?: withTimeoutOrNull(BOOTSTRAP_ACCOUNT_APPEAR_WAIT_TIMEOUT_MS) {
                 accountRepository.getAll()
                     .filter { it.isNotEmpty() }
                     .first()
@@ -212,8 +235,7 @@ class SplashViewModel @Inject constructor(
 
         return BootstrapRestoreResult(
             syncCompleted = syncOutcome.completed,
-            accounts = if (syncOutcome.completed) accounts else emptyList(),
-            errorMessage = syncOutcome.errorMessage
+            accounts = accounts
         )
     }
 
@@ -225,12 +247,14 @@ class SplashViewModel @Inject constructor(
         if (!prefs.isOnboardingComplete) {
             userRepository.setOnboardingComplete(true)
         }
+        finalizeSignedInFallbackDestination(SplashDestination.Main)
+    }
+
+    private fun finalizeSignedInFallbackDestination(destination: SplashDestination) {
         _uiState.update {
             it.copy(
                 isLoading = false,
-                destination = SplashDestination.Main,
-                error = null,
-                errorMessage = null
+                destination = destination
             )
         }
         refreshSubscriptionStateInBackground()
@@ -251,18 +275,15 @@ class SplashViewModel @Inject constructor(
 
     private data class BootstrapRestoreResult(
         val syncCompleted: Boolean,
-        val accounts: List<Account>,
-        val errorMessage: String? = null
+        val accounts: List<Account>
     )
 
     private data class SyncAttemptResult(
-        val completed: Boolean,
-        val errorMessage: String? = null,
-        val timedOut: Boolean = false
+        val completed: Boolean
     )
 
-    private suspend fun runStartupSyncAttempt(): SyncAttemptResult {
-        return withTimeoutOrNull(REQUIRED_STARTUP_SYNC_TIMEOUT_MS) {
+    private suspend fun runStartupSyncAttempt(timeoutMs: Long): SyncAttemptResult {
+        return withTimeoutOrNull(timeoutMs) {
             val currentState = syncRepository.syncState.first()
             val finalSyncState = when (currentState) {
                 is SyncState.Syncing -> {
@@ -270,14 +291,10 @@ class SplashViewModel @Inject constructor(
                         .filter { it !is SyncState.Syncing }
                         .first()
                 }
-                is SyncState.Success -> currentState
                 else -> {
                     val fullSyncResult = runCatching { syncRepository.fullSync() }
                     if (fullSyncResult.isFailure) {
-                        return@withTimeoutOrNull SyncAttemptResult(
-                            completed = false,
-                            errorMessage = fullSyncResult.exceptionOrNull()?.message
-                        )
+                        return@withTimeoutOrNull SyncAttemptResult(completed = false)
                     }
                     syncRepository.syncState.first()
                 }
@@ -285,17 +302,15 @@ class SplashViewModel @Inject constructor(
 
             when (finalSyncState) {
                 is SyncState.Success -> SyncAttemptResult(completed = true)
-                is SyncState.Error -> SyncAttemptResult(
-                    completed = false,
-                    errorMessage = finalSyncState.message
-                )
+                is SyncState.Error -> SyncAttemptResult(completed = false)
                 else -> SyncAttemptResult(completed = false)
             }
-        } ?: SyncAttemptResult(
-            completed = false,
-            errorMessage = "Sync is taking too long. Check your connection and try again.",
-            timedOut = true
-        )
+        } ?: SyncAttemptResult(completed = false)
+    }
+
+    private fun ensureBackgroundSync() {
+        syncScheduler.schedulePeriodic()
+        syncScheduler.scheduleNow()
     }
 
     private fun refreshSubscriptionStateInBackground() {
@@ -308,10 +323,8 @@ class SplashViewModel @Inject constructor(
     }
 
     private companion object {
-        const val REQUIRED_STARTUP_SYNC_TIMEOUT_MS = 45_000L
-        const val ACCOUNT_APPEAR_WAIT_TIMEOUT_MS = 10_000L
-        const val AUTOMATIC_RETRY_DELAY_MS = 1_500L
-        const val MAX_REQUIRED_STARTUP_SYNC_ATTEMPTS = 3
+        const val INITIAL_BOOTSTRAP_SYNC_TIMEOUT_MS = 6_000L
+        const val BOOTSTRAP_ACCOUNT_APPEAR_WAIT_TIMEOUT_MS = 2_000L
     }
 }
 

@@ -48,6 +48,7 @@ import kotlinx.coroutines.launch
 data class DraftInboxUiState(
     val isWorking: Boolean = false,
     val hasPremiumAccess: Boolean = false,
+    val isGuestMode: Boolean = false,
     val appLanguageTag: String = "en",
     val autoCaptureEnabled: Boolean = false,
     val autoCaptureDisclosureAccepted: Boolean = false,
@@ -97,6 +98,7 @@ class DraftInboxViewModel @Inject constructor(
             ?: accounts.firstOrNull()?.id
         state.copy(
             hasPremiumAccess = entitlement.hasPremiumAccess,
+            isGuestMode = prefs.isGuestMode || prefs.userId.isNullOrBlank(),
             appLanguageTag = prefs.appLanguageTag,
             autoCaptureEnabled = prefs.autoCaptureEnabled,
             autoCaptureDisclosureAccepted = prefs.autoCaptureDisclosureAccepted,
@@ -129,42 +131,49 @@ class DraftInboxViewModel @Inject constructor(
 
     fun toggleAutoCapture(enabled: Boolean) {
         viewModelScope.launch {
+            if (!canManageAutoCapture()) return@launch
             preferencesDataStore.setAutoCaptureEnabled(enabled)
         }
     }
 
     fun toggleAutoCaptureStatementImport(enabled: Boolean) {
         viewModelScope.launch {
+            if (!canManageAutoCapture()) return@launch
             preferencesDataStore.setAutoCaptureStatementImportEnabled(enabled)
         }
     }
 
     fun toggleAutoCaptureOcr(enabled: Boolean) {
         viewModelScope.launch {
+            if (!canManageAutoCapture()) return@launch
             preferencesDataStore.setAutoCaptureOcrEnabled(enabled)
         }
     }
 
     fun toggleAutoCaptureNotification(enabled: Boolean) {
         viewModelScope.launch {
+            if (!canManageAutoCapture()) return@launch
             preferencesDataStore.setAutoCaptureNotificationEnabled(enabled)
         }
     }
 
     fun setAutoCaptureNotificationAllowedPackages(packageNames: Set<String>) {
         viewModelScope.launch {
+            if (!canManageAutoCapture()) return@launch
             preferencesDataStore.setAutoCaptureNotificationAllowedPackages(packageNames)
         }
     }
 
     fun toggleAutoCaptureMerchantMemory(enabled: Boolean) {
         viewModelScope.launch {
+            if (!canManageAutoCapture()) return@launch
             preferencesDataStore.setAutoCaptureMerchantMemoryEnabled(enabled)
         }
     }
 
     fun toggleAutoCaptureRecurringSuggestions(enabled: Boolean) {
         viewModelScope.launch {
+            if (!canManageAutoCapture()) return@launch
             preferencesDataStore.setAutoCaptureRecurringSuggestionsEnabled(enabled)
         }
     }
@@ -337,6 +346,11 @@ class DraftInboxViewModel @Inject constructor(
                 baseState.update { it.copy(isWorking = false) }
             }
         }
+    }
+
+    private fun canManageAutoCapture(): Boolean {
+        val state = uiState.value
+        return state.hasPremiumAccess && !state.isGuestMode
     }
 
     private fun sendMessage(text: String) {

@@ -87,6 +87,8 @@ class SubscriptionRepositoryImpl @Inject constructor(
     override suspend fun syncTrialStateFromBackend() {
         withContext(ioDispatcher) {
             val user = authRepository.getCurrentUser() ?: return@withContext
+            val localPrefs = userRepository.userPreferences.first()
+            if (localPrefs.isGuestMode || localPrefs.userId.isNullOrBlank()) return@withContext
             val firestore = firestoreOrNull() ?: return@withContext
             val trialDoc = trialDocument(firestore, user.uid)
 
@@ -104,9 +106,16 @@ class SubscriptionRepositoryImpl @Inject constructor(
                     return@runCatching
                 }
 
-                // Migration path: if trial was consumed before backend enforcement, upload local state once.
+                // Migration path: upload only a complete local trial window for this signed-in user.
+                // Never invent a remote trial from leftover/zero dates after logout or clear-data.
                 val local = userRepository.userPreferences.first()
-                if (local.trialConsumed) {
+                if (
+                    local.trialConsumed &&
+                    !local.userId.isNullOrBlank() &&
+                    !local.isGuestMode &&
+                    local.trialStartedAt > 0L &&
+                    local.trialExpiresAt > local.trialStartedAt
+                ) {
                     val now = currentTimeMillis()
                     trialDoc.set(
                         mapOf(
@@ -124,6 +133,17 @@ class SubscriptionRepositoryImpl @Inject constructor(
 
     override suspend fun claimTrial(days: Int): TrialActivationResult = withContext(ioDispatcher) {
         val user = authRepository.getCurrentUser() ?: return@withContext TrialActivationResult.NotSignedIn
+        val localPrefs = userRepository.userPreferences.first()
+        if (localPrefs.isGuestMode) {
+            return@withContext TrialActivationResult.NotSignedIn
+        }
+        // Device-level memory: this UID already consumed a trial on this install.
+        if (localPrefs.trialConsumed) {
+            return@withContext TrialActivationResult.AlreadyConsumed(
+                startedAt = localPrefs.trialStartedAt,
+                expiresAt = localPrefs.trialExpiresAt
+            )
+        }
         val firestore = firestoreOrNull() ?: return@withContext TrialActivationResult.BackendUnavailable
         val now = currentTimeMillis()
         val expiresAt = now + days.coerceAtLeast(1).toLong() * DAY_MS
@@ -313,6 +333,9 @@ class SubscriptionRepositoryImpl @Inject constructor(
             authRepository.getCurrentUser() ?: return@withContext FounderTrialActivationResult.NotSignedIn
 
             val prefs = userRepository.userPreferences.first()
+            if (prefs.isGuestMode || prefs.userId.isNullOrBlank()) {
+                return@withContext FounderTrialActivationResult.NotSignedIn
+            }
             if (prefs.isPremium) {
                 return@withContext FounderTrialActivationResult.AlreadyPremium
             }

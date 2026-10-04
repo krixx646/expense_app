@@ -27,6 +27,7 @@ data class MochiWeeklyAlertCopy(
 fun premiumOpportunitySectionTitle(languageTag: String): String = whenLanguage(
     languageTag = languageTag,
     english = "Money-saving opportunities",
+    latvian = "Naudas taupīšanas iespējas",
     spanish = "Oportunidades para ahorrar dinero",
     french = "Opportunites d economie",
     german = "Sparmöglichkeiten",
@@ -41,6 +42,7 @@ fun premiumOpportunitySectionTitle(languageTag: String): String = whenLanguage(
 fun premiumOpportunityEmptyText(languageTag: String): String = whenLanguage(
     languageTag = languageTag,
     english = "Keep tracking for a bit longer and Xpenze will start spotting real money-saving moves for you.",
+    latvian = "Turpiniet sekot mazliet ilgāk, un Xpenze sāks pamanīt reālas naudas taupīšanas darbības jūsu vietā.",
     spanish = "Sigue registrando un poco mas y Xpenze empezara a detectar formas reales de ahorrarte dinero.",
     french = "Continuez a suivre un peu plus longtemps et Xpenze commencera a reperer de vraies occasions d economiser.",
     german = "Erfasse noch etwas mehr und Xpenze erkennt echte Sparchancen fur dich.",
@@ -59,6 +61,7 @@ fun premiumOpportunityDashboardMessage(
     whenLanguage(
         languageTag = languageTag,
         english = "Mochi found the clearest places you can save right now.",
+        latvian = "Mochi atrada skaidrākās vietas, kuras šobrīd varat ietaupīt.",
         spanish = "Mochi encontro los lugares mas claros donde puedes ahorrar ahora mismo.",
         french = "Mochi a repere les endroits les plus clairs ou vous pouvez economiser maintenant.",
         german = "Mochi hat die klarsten Stellen gefunden, an denen du jetzt sparen kannst.",
@@ -73,6 +76,7 @@ fun premiumOpportunityDashboardMessage(
     whenLanguage(
         languageTag = languageTag,
         english = "This is a preview of the savings guidance Premium unlocks with Mochi.",
+        latvian = "Šis ir ietaupījumu norādījumu priekšskatījums, ko Premium atbloķē ar Mochi.",
         spanish = "Esta es una vista previa de la guia de ahorro que Premium desbloquea con Mochi.",
         french = "Ceci est un apercu des conseils d economie que Premium debloque avec Mochi.",
         german = "Das ist eine Vorschau auf die Spartipps, die Premium mit Mochi freischaltet.",
@@ -92,6 +96,7 @@ fun premiumOpportunityPrimaryCta(
     whenLanguage(
         languageTag = languageTag,
         english = "Ask Mochi about this",
+        latvian = "Pajautājiet Mochi par to",
         spanish = "Preguntale a Mochi sobre esto",
         french = "Demandez a Mochi a ce sujet",
         german = "Frag Mochi danach",
@@ -106,6 +111,7 @@ fun premiumOpportunityPrimaryCta(
     whenLanguage(
         languageTag = languageTag,
         english = "Unlock Mochi",
+        latvian = "Atbloķējiet Mochi",
         spanish = "Desbloquear Mochi",
         french = "Debloquer Mochi",
         german = "Mochi freischalten",
@@ -125,6 +131,7 @@ fun premiumOpportunityActionLabel(
     whenLanguage(
         languageTag = languageTag,
         english = "Open in Mochi",
+        latvian = "Atvērts Moči",
         spanish = "Abrir en Mochi",
         french = "Ouvrir dans Mochi",
         german = "In Mochi offnen",
@@ -139,6 +146,7 @@ fun premiumOpportunityActionLabel(
     whenLanguage(
         languageTag = languageTag,
         english = "Unlock with Premium",
+        latvian = "Atbloķējiet, izmantojot Premium",
         spanish = "Desbloquear con Premium",
         french = "Debloquer avec Premium",
         german = "Mit Premium freischalten",
@@ -154,6 +162,7 @@ fun premiumOpportunityActionLabel(
 fun mochiSuggestedPromptTitle(languageTag: String): String = whenLanguage(
     languageTag = languageTag,
     english = "Try one of these",
+    latvian = "Izmēģiniet kādu no šiem",
     spanish = "Prueba una de estas",
     french = "Essayez l une de celles-ci",
     german = "Probiere eine davon",
@@ -177,6 +186,7 @@ fun buildMochiPromptForOpportunity(
             whenLanguage(
                 languageTag = languageTag,
                 english = "How can I reduce my ${opportunity.label} spending by about $impact this month?",
+                latvian = "Kā es varu samazināt savus ${opportunity.label} izdevumus par aptuveni $impact šajā mēnesī?",
                 spanish = "Como puedo reducir mi gasto en ${opportunity.label} en unos $impact este mes?",
                 french = "Comment puis-je reduire mes depenses en ${opportunity.label} d environ $impact ce mois-ci ?",
                 german = "Wie kann ich meine Ausgaben fur ${opportunity.label} diesen Monat um etwa $impact senken?",
@@ -192,6 +202,7 @@ fun buildMochiPromptForOpportunity(
         PremiumOpportunityType.CATEGORY_SPIKE -> whenLanguage(
             languageTag = languageTag,
             english = "Why did my ${opportunity.label} spending jump, and what should I do next?",
+            latvian = "Kāpēc mani ${opportunity.label} tēriņi pieauga, un kas man jādara tālāk?",
             spanish = "Por que subio mi gasto en ${opportunity.label} y que deberia hacer ahora?",
             french = "Pourquoi mes depenses en ${opportunity.label} ont-elles augmente, et que dois-je faire ensuite ?",
             german = "Warum sind meine ${opportunity.label}-Ausgaben gestiegen, und was sollte ich als Nächstes tun?",
@@ -206,6 +217,7 @@ fun buildMochiPromptForOpportunity(
         PremiumOpportunityType.BUDGET_PRESSURE -> whenLanguage(
             languageTag = languageTag,
             english = "Help me avoid going over my ${opportunity.label} budget.",
+            latvian = "Palīdziet man izvairīties no ${opportunity.label} budžeta pārsniegšanas.",
             spanish = "Ayudame a no pasarme de mi presupuesto de ${opportunity.label}.",
             french = "Aidez-moi a ne pas depasser mon budget ${opportunity.label}.",
             german = "Hilf mir, mein Budget ${opportunity.label} nicht zu uberschreiten.",
@@ -220,6 +232,7 @@ fun buildMochiPromptForOpportunity(
         PremiumOpportunityType.RECURRING_REVIEW -> whenLanguage(
             languageTag = languageTag,
             english = "Which recurring payments should I review first?",
+            latvian = "Kurus periodiskos maksājumus vispirms vajadzētu pārskatīt?",
             spanish = "Que pagos recurrentes deberia revisar primero?",
             french = "Quels paiements recurrents devrais-je verifier en premier ?",
             german = "Welche wiederkehrenden Zahlungen sollte ich zuerst prufen?",
@@ -234,6 +247,7 @@ fun buildMochiPromptForOpportunity(
         PremiumOpportunityType.BUDGET_SUGGESTION -> whenLanguage(
             languageTag = languageTag,
             english = "Help me set a realistic ${opportunity.label} budget.",
+            latvian = "Palīdziet man iestatīt reālistisku ${opportunity.label} budžetu.",
             spanish = "Ayudame a fijar un presupuesto realista para ${opportunity.label}.",
             french = "Aidez-moi a definir un budget realiste pour ${opportunity.label}.",
             german = "Hilf mir, ein realistisches Budget fur ${opportunity.label} festzulegen.",
@@ -281,6 +295,7 @@ fun formatPremiumOutcomeSummary(
             headline = whenLanguage(
                 languageTag = languageTag,
                 english = "Mochi is watching about $monthlyAmount each month",
+                latvian = "Mochi katru mēnesi skatās par $monthlyAmount",
                 spanish = "Mochi esta vigilando unos $monthlyAmount cada mes",
                 french = "Mochi surveille environ $monthlyAmount chaque mois",
                 german = "Mochi beobachtet etwa $monthlyAmount pro Monat",
@@ -294,6 +309,7 @@ fun formatPremiumOutcomeSummary(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "That is spread across $count concrete savings opportunities already found in your data.",
+                latvian = "Tas ir izplatīts pa $count betona ietaupījuma iespējām, kas jau ir atrodamas jūsu datos.",
                 spanish = "Eso se reparte en $count oportunidades concretas de ahorro que ya encontro en tus datos.",
                 french = "Cela correspond a $count occasions concretes d economiser deja reperees dans vos donnees.",
                 german = "Das verteilt sich auf $count konkrete Sparchancen, die bereits in deinen Daten gefunden wurden.",
@@ -310,6 +326,7 @@ fun formatPremiumOutcomeSummary(
             headline = whenLanguage(
                 languageTag = languageTag,
                 english = "Premium is already spotting about $monthlyAmount a month",
+                latvian = "Premium jau fiksē aptuveni $monthlyAmount mēnesī",
                 spanish = "Premium ya esta detectando unos $monthlyAmount al mes",
                 french = "Premium repere deja environ $monthlyAmount par mois",
                 german = "Premium erkennt bereits etwa $monthlyAmount pro Monat",
@@ -323,6 +340,7 @@ fun formatPremiumOutcomeSummary(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "Mochi found $count clear savings moves in your real spending data, not generic tips.",
+                latvian = "Mochi atklāja, ka $count jūsu reālajos tēriņu datos ir skaidras ietaupījumu kustības, nevis vispārīgi padomi.",
                 spanish = "Mochi encontro $count movimientos claros de ahorro en tus datos reales, no consejos genericos.",
                 french = "Mochi a trouve $count pistes claires d economie dans vos vraies donnees, pas des conseils generiques.",
                 german = "Mochi hat $count klare Sparschritte in deinen echten Ausgabendaten gefunden, keine generischen Tipps.",
@@ -369,6 +387,7 @@ fun formatPremiumValueTracker(
             title = whenLanguage(
                 languageTag = languageTag,
                 english = "Money Mochi can protect this month",
+                latvian = "Nauda Mochi var aizsargāt šomēnes",
                 spanish = "Dinero que Mochi puede proteger este mes",
                 french = "Argent que Mochi peut proteger ce mois-ci",
                 german = "Geld, das Mochi diesen Monat schutzen kann",
@@ -383,6 +402,7 @@ fun formatPremiumValueTracker(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "Mochi has $count clear savings moves on your radar right now.",
+                latvian = "Šobrīd Mochi radarā ir skaidri redzami $count ietaupījumi.",
                 spanish = "Mochi tiene $count movimientos claros de ahorro en tu radar ahora mismo.",
                 french = "Mochi a $count pistes claires d economie sur votre radar en ce moment.",
                 german = "Mochi hat gerade $count klare Sparchancen fur dich im Blick.",
@@ -399,6 +419,7 @@ fun formatPremiumValueTracker(
             title = whenLanguage(
                 languageTag = languageTag,
                 english = "Money Premium can help protect this month",
+                latvian = "Money Premium var palīdzēt aizsargāt šomēnes",
                 spanish = "Dinero que Premium puede ayudar a proteger este mes",
                 french = "Argent que Premium peut aider a proteger ce mois-ci",
                 german = "Geld, das Premium diesen Monat schutzen kann",
@@ -413,6 +434,7 @@ fun formatPremiumValueTracker(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "Mochi already found $count real savings moves in your spending data.",
+                latvian = "Mochi jau atrada $count reālus ietaupījumus jūsu tēriņu datos.",
                 spanish = "Mochi ya encontro $count movimientos reales de ahorro en tus datos.",
                 french = "Mochi a deja trouve $count vraies pistes d economie dans vos donnees.",
                 german = "Mochi hat bereits $count echte Sparchancen in deinen Daten gefunden.",
@@ -461,6 +483,7 @@ fun formatMochiWeeklyAlert(
         PremiumOpportunityType.CATEGORY_CUTBACK -> whenLanguage(
             languageTag = languageTag,
             english = "${summary.headline}. ${primaryOpportunity.label} is the clearest place to start.",
+            latvian = "${summary.headline}. ${primaryOpportunity.label} ir skaidrākā vieta, kur sākt.",
             spanish = "${summary.headline}. ${primaryOpportunity.label} es el lugar mas claro para empezar.",
             french = "${summary.headline}. ${primaryOpportunity.label} est l endroit le plus clair pour commencer.",
             german = "${summary.headline}. ${primaryOpportunity.label} ist der klarste Startpunkt.",
@@ -474,6 +497,7 @@ fun formatMochiWeeklyAlert(
         PremiumOpportunityType.BUDGET_PRESSURE -> whenLanguage(
             languageTag = languageTag,
             english = "${primaryOpportunity.label} is under pressure. Open Xpenze and Mochi will help you protect it early.",
+            latvian = "${primaryOpportunity.label} ir zem spiediena. Open Xpenze un Mochi palīdzēs jums to aizsargāt agri.",
             spanish = "${primaryOpportunity.label} esta bajo presion. Abre Xpenze y Mochi te ayudara a protegerlo a tiempo.",
             french = "${primaryOpportunity.label} est sous pression. Ouvrez Xpenze et Mochi vous aidera a le proteger a temps.",
             german = "${primaryOpportunity.label} steht unter Druck. Offne Xpenze und Mochi hilft dir, es rechtzeitig zu schutzen.",
@@ -487,6 +511,7 @@ fun formatMochiWeeklyAlert(
         else -> whenLanguage(
             languageTag = languageTag,
             english = "${summary.headline}. Open Xpenze and ask Mochi what to do first.",
+            latvian = "${summary.headline}. Atveriet Xpenze un jautājiet Mochi, kas vispirms jādara.",
             spanish = "${summary.headline}. Abre Xpenze y preguntale a Mochi que hacer primero.",
             french = "${summary.headline}. Ouvrez Xpenze et demandez a Mochi quoi faire d abord.",
             german = "${summary.headline}. Offne Xpenze und frag Mochi, was du zuerst tun solltest.",
@@ -506,6 +531,7 @@ fun defaultMochiSuggestedPrompts(languageTag: String): List<String> = listOf(
     whenLanguage(
         languageTag = languageTag,
         english = "Where did most of my money go this month?",
+        latvian = "Kur šomēnes aizgāja lielākā daļa manas naudas?",
         spanish = "En que se fue la mayor parte de mi dinero este mes?",
         french = "Ou est parti l essentiel de mon argent ce mois-ci ?",
         german = "Wofur ist der Grossteil meines Geldes diesen Monat draufgegangen?",
@@ -519,6 +545,7 @@ fun defaultMochiSuggestedPrompts(languageTag: String): List<String> = listOf(
     whenLanguage(
         languageTag = languageTag,
         english = "Which budget needs attention first?",
+        latvian = "Kuram budžetam vispirms jāpievērš uzmanība?",
         spanish = "Que presupuesto necesita atencion primero?",
         french = "Quel budget a besoin d attention en premier ?",
         german = "Welches Budget braucht zuerst Aufmerksamkeit?",
@@ -532,6 +559,7 @@ fun defaultMochiSuggestedPrompts(languageTag: String): List<String> = listOf(
     whenLanguage(
         languageTag = languageTag,
         english = "What is the fastest way for me to save money this week?",
+        latvian = "Kāds ir ātrākais veids, kā šonedēļ ietaupīt naudu?",
         spanish = "Cual es la forma mas rapida de ahorrar dinero esta semana?",
         french = "Quel est le moyen le plus rapide pour moi d economiser cette semaine ?",
         german = "Wie kann ich diese Woche am schnellsten Geld sparen?",
@@ -559,6 +587,7 @@ fun formatPremiumOpportunity(
             title = whenLanguage(
                 languageTag = languageTag,
                 english = "Quick save in ${opportunity.label}",
+                latvian = "Ātra saglabāšana ${opportunity.label}",
                 spanish = "Ahorro rapido en ${opportunity.label}",
                 french = "Economie rapide sur ${opportunity.label}",
                 german = "Schnelle Ersparnis bei ${opportunity.label}",
@@ -572,6 +601,7 @@ fun formatPremiumOpportunity(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "${opportunity.label} cost $amount recently. Cutting about 10% could save roughly $impact a month.",
+                latvian = "${opportunity.label} nesen maksāja $amount. Samazinot aptuveni 10%, mēnesī varētu ietaupīt aptuveni $impact.",
                 spanish = "${opportunity.label} costo $amount recientemente. Reducir cerca del 10% podria ahorrarte unos $impact al mes.",
                 french = "${opportunity.label} a coute $amount recemment. Reduire d environ 10% pourrait vous faire economiser environ $impact par mois.",
                 german = "${opportunity.label} kostete zuletzt $amount. Wenn du dort etwa 10% reduzierst, konntest du rund $impact im Monat sparen.",
@@ -588,6 +618,7 @@ fun formatPremiumOpportunity(
             title = whenLanguage(
                 languageTag = languageTag,
                 english = "${opportunity.label} is rising",
+                latvian = "${opportunity.label} aug",
                 spanish = "${opportunity.label} esta subiendo",
                 french = "${opportunity.label} augmente",
                 german = "${opportunity.label} steigt an",
@@ -601,6 +632,7 @@ fun formatPremiumOpportunity(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "You spent $amount here, up ${opportunity.percentValue}% from $comparison last month.",
+                latvian = "Jūs šeit iztērējāt $amount — par par XVAR1ZX% vairāk nekā pagājušajā mēnesī $comparison.",
                 spanish = "Gastaste $amount aqui, un ${opportunity.percentValue}% mas que los $comparison del mes pasado.",
                 french = "Vous avez depense $amount ici, soit ${opportunity.percentValue}% de plus que les $comparison du mois dernier.",
                 german = "Du hast hier $amount ausgegeben, also ${opportunity.percentValue}% mehr als die $comparison im letzten Monat.",
@@ -617,6 +649,7 @@ fun formatPremiumOpportunity(
             title = whenLanguage(
                 languageTag = languageTag,
                 english = "${opportunity.label} is under pressure",
+                latvian = "${opportunity.label} ir zem spiediena",
                 spanish = "${opportunity.label} esta bajo presion",
                 french = "${opportunity.label} est sous pression",
                 german = "${opportunity.label} steht unter Druck",
@@ -630,6 +663,7 @@ fun formatPremiumOpportunity(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "You have already used ${opportunity.percentValue}% of this budget: $amount out of $comparison.",
+                latvian = "Jūs jau esat izmantojis ${opportunity.percentValue}% no šī budžeta: $amount no $comparison.",
                 spanish = "Ya usaste el ${opportunity.percentValue}% de este presupuesto: $amount de $comparison.",
                 french = "Vous avez deja utilise ${opportunity.percentValue}% de ce budget : $amount sur $comparison.",
                 german = "Du hast bereits ${opportunity.percentValue}% dieses Budgets verbraucht: $amount von $comparison.",
@@ -646,6 +680,7 @@ fun formatPremiumOpportunity(
             title = whenLanguage(
                 languageTag = languageTag,
                 english = "Recurring bills are adding up",
+                latvian = "Periodiskie rēķini summējas",
                 spanish = "Los pagos recurrentes se estan acumulando",
                 french = "Les depenses recurrentes s accumulent",
                 german = "Wiederkehrende Kosten summieren sich",
@@ -659,6 +694,7 @@ fun formatPremiumOpportunity(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "${opportunity.countValue} repeating payments cost $amount recently. Reviewing them could free about $impact a month.",
+                latvian = "${opportunity.countValue} atkārtoti maksājumi nesen maksāja $amount. Pārskatot tos, mēnesī var tikt atbrīvota aptuveni $impact.",
                 spanish = "${opportunity.countValue} pagos repetidos costaron $amount recientemente. Revisarlos podria liberar unos $impact al mes.",
                 french = "${opportunity.countValue} paiements repetes ont coute $amount recemment. Les revoir pourrait liberer environ $impact par mois.",
                 german = "${opportunity.countValue} wiederkehrende Zahlungen kosteten zuletzt $amount. Eine Prufung konnte etwa $impact im Monat freimachen.",
@@ -675,6 +711,7 @@ fun formatPremiumOpportunity(
             title = whenLanguage(
                 languageTag = languageTag,
                 english = "A ${opportunity.label} budget would help",
+                latvian = "${opportunity.label} budžets palīdzētu",
                 spanish = "Un presupuesto para ${opportunity.label} ayudaria",
                 french = "Un budget ${opportunity.label} aiderait",
                 german = "Ein Budget fur ${opportunity.label} wurde helfen",
@@ -688,6 +725,7 @@ fun formatPremiumOpportunity(
             body = whenLanguage(
                 languageTag = languageTag,
                 english = "Your recent average is $comparison. A starting budget around $amount would fit your pattern better.",
+                latvian = "Jūsu nesenais vidējais rādītājs ir $comparison. Sākuma budžets aptuveni $amount labāk atbilstu jūsu modelim.",
                 spanish = "Tu promedio reciente es $comparison. Un presupuesto inicial cerca de $amount encajaria mejor con tu patron.",
                 french = "Votre moyenne recente est de $comparison. Un budget de depart autour de $amount correspondrait mieux a votre tendance.",
                 german = "Dein aktueller Durchschnitt liegt bei $comparison. Ein Startbudget von etwa $amount passt besser zu deinem Muster.",
@@ -705,6 +743,7 @@ fun formatPremiumOpportunity(
 private fun whenLanguage(
     languageTag: String,
     english: String,
+    latvian: String = english,
     spanish: String,
     french: String,
     german: String,
@@ -715,6 +754,7 @@ private fun whenLanguage(
     swahili: String,
     chinese: String
 ): String = when {
+    languageTag.startsWith("lv") -> latvian
     languageTag.startsWith("es") -> spanish
     languageTag.startsWith("fr") -> french
     languageTag.startsWith("de") -> german

@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +20,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,6 +42,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,8 +57,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chelumore.xpenze.R
+import com.chelumore.xpenze.core.autocapture.NotificationCaptureListenerService
 import com.chelumore.xpenze.core.ui.components.input.AmountInputField
 import com.chelumore.xpenze.core.ui.components.input.CurrencyPicker
 import com.chelumore.xpenze.core.ui.components.input.DropdownItem
@@ -58,8 +70,10 @@ import com.chelumore.xpenze.core.ui.components.input.DropdownSelector
 import com.chelumore.xpenze.core.ui.components.input.ExpenseTextField
 import com.chelumore.xpenze.core.ui.components.input.LanguagePicker
 import com.chelumore.xpenze.core.ui.util.SystemBars
+import com.chelumore.xpenze.core.ui.util.hasNotificationListenerAccess
 import com.chelumore.xpenze.core.ui.util.hasNotificationsPermissionEnabled
 import com.chelumore.xpenze.core.ui.util.openAppNotificationSettings
+import com.chelumore.xpenze.core.ui.util.openNotificationListenerSettings
 import com.chelumore.xpenze.domain.model.AccountType
 import com.chelumore.xpenze.domain.model.BudgetPeriod
 import com.chelumore.xpenze.ui.theme.BlackBackground
@@ -103,6 +117,29 @@ fun OnboardingScreen(
             }
         }
 
+        val lifecycleOwner = LocalLifecycleOwner.current
+        DisposableEffect(lifecycleOwner, uiState.step) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME &&
+                    uiState.step == OnboardingStep.AUTO_CAPTURE
+                ) {
+                    val granted = context.hasNotificationListenerAccess()
+                    viewModel.refreshNotificationListenerAccess(granted)
+                    if (granted) {
+                        NotificationCaptureListenerService.requestRebindIfAllowed(context)
+                    }
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        }
+
+        LaunchedEffect(uiState.step) {
+            if (uiState.step == OnboardingStep.AUTO_CAPTURE) {
+                viewModel.refreshNotificationListenerAccess(context.hasNotificationListenerAccess())
+            }
+        }
+
         val canGoBack = uiState.step != OnboardingStep.INTRO && !uiState.isSaving
         val canContinue = when (uiState.step) {
             OnboardingStep.INTRO -> true
@@ -110,6 +147,7 @@ fun OnboardingScreen(
             OnboardingStep.CURRENCY -> uiState.currencyCode.isNotBlank()
             OnboardingStep.ACCOUNT -> true
             OnboardingStep.BUDGET -> true
+            OnboardingStep.AUTO_CAPTURE -> true
             OnboardingStep.DONE -> !uiState.isSaving
         } && !uiState.isSaving
 
@@ -264,7 +302,13 @@ fun OnboardingScreen(
                             onBudgetAmount = viewModel::setBudgetAmount,
                             onBudgetPeriod = viewModel::setBudgetPeriod
                         )
-                        OnboardingStep.DONE -> DoneStep()
+                        OnboardingStep.AUTO_CAPTURE -> AutoCaptureStep(
+                            uiState = uiState,
+                            onEnableCapture = {
+                                context.openNotificationListenerSettings()
+                            }
+                        )
+                        OnboardingStep.DONE -> DoneStep(uiState = uiState)
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -574,7 +618,244 @@ private fun BudgetStep(
 }
 
 @Composable
-private fun DoneStep() {
+private fun AutoCaptureStep(
+    uiState: OnboardingUiState,
+    onEnableCapture: () -> Unit
+) {
+    Text(
+        text = stringResource(R.string.onboarding_auto_capture_title),
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+    )
+    Spacer(modifier = Modifier.height(10.dp))
+    Text(
+        text = stringResource(R.string.onboarding_auto_capture_body),
+        style = MaterialTheme.typography.bodyMedium,
+        color = Color.Gray
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+
+    when (uiState.trialBanner) {
+        OnboardingTrialBanner.STARTED -> TrialBanner(
+            text = stringResource(R.string.onboarding_auto_capture_trial_started)
+        )
+        OnboardingTrialBanner.FOUNDER_STARTED -> TrialBanner(
+            text = stringResource(R.string.onboarding_auto_capture_founder_started)
+        )
+        OnboardingTrialBanner.ALREADY_ACTIVE -> TrialBanner(
+            text = stringResource(R.string.onboarding_auto_capture_trial_active)
+        )
+        OnboardingTrialBanner.SIGN_IN_NEEDED -> TrialBanner(
+            text = stringResource(R.string.onboarding_auto_capture_guest_hint),
+            accent = Color(0xFFFFB74D)
+        )
+        OnboardingTrialBanner.NONE -> Unit
+    }
+
+    if (uiState.isClaimingTrial) {
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                color = YellowPrimary,
+                strokeWidth = 2.dp
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = stringResource(R.string.onboarding_auto_capture_claiming_trial),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(18.dp))
+    AutoCaptureDiagram()
+    Spacer(modifier = Modifier.height(18.dp))
+
+    if (uiState.notificationListenerGranted && uiState.notificationCaptureEnabled) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = Color(0xFF81C784)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.onboarding_auto_capture_enabled),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF81C784),
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    } else {
+        Button(
+            onClick = onEnableCapture,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = MaterialTheme.shapes.large,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = YellowPrimary,
+                contentColor = BlackBackground
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.onboarding_auto_capture_enable_cta),
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.onboarding_auto_capture_skip_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray
+        )
+    }
+}
+
+@Composable
+private fun TrialBanner(
+    text: String,
+    accent: Color = YellowPrimary
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(accent.copy(alpha = 0.14f), RoundedCornerShape(16.dp))
+            .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+            .padding(14.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White
+        )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+@Composable
+private fun AutoCaptureDiagram() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(DarkSurface, RoundedCornerShape(20.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.onboarding_auto_capture_diagram_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = YellowPrimary,
+            fontWeight = FontWeight.Bold
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BlackBackground, RoundedCornerShape(14.dp))
+                .padding(12.dp)
+        ) {
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .background(YellowPrimary.copy(alpha = 0.2f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = null,
+                            tint = YellowPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = stringResource(R.string.onboarding_auto_capture_diagram_notif_app),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = stringResource(R.string.onboarding_auto_capture_diagram_notif_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = YellowPrimary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.onboarding_auto_capture_diagram_arrow),
+                style = MaterialTheme.typography.labelMedium,
+                color = YellowPrimary,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BlackBackground, RoundedCornerShape(14.dp))
+                .padding(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .background(YellowPrimary.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Inbox,
+                        contentDescription = null,
+                        tint = YellowPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = stringResource(R.string.onboarding_auto_capture_diagram_draft_title),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = stringResource(R.string.onboarding_auto_capture_diagram_draft_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DoneStep(uiState: OnboardingUiState) {
     Text(
         text = stringResource(R.string.onboarding_done_title),
         style = MaterialTheme.typography.headlineSmall,
@@ -583,7 +864,15 @@ private fun DoneStep() {
     )
     Spacer(modifier = Modifier.height(10.dp))
     Text(
-        text = stringResource(R.string.onboarding_done_subtitle),
+        text = when {
+            uiState.isTrialActive ||
+                uiState.trialBanner == OnboardingTrialBanner.STARTED ||
+                uiState.trialBanner == OnboardingTrialBanner.FOUNDER_STARTED ||
+                uiState.trialBanner == OnboardingTrialBanner.ALREADY_ACTIVE -> {
+                stringResource(R.string.onboarding_done_subtitle_trial)
+            }
+            else -> stringResource(R.string.onboarding_done_subtitle)
+        },
         style = MaterialTheme.typography.bodyMedium,
         color = Color.Gray
     )
@@ -591,12 +880,13 @@ private fun DoneStep() {
 
 @Composable
 private fun stepLabel(step: OnboardingStep): String = when (step) {
-    OnboardingStep.INTRO -> "1/6"
-    OnboardingStep.LANGUAGE -> "2/6"
-    OnboardingStep.CURRENCY -> "3/6"
-    OnboardingStep.ACCOUNT -> "4/6"
-    OnboardingStep.BUDGET -> "5/6"
-    OnboardingStep.DONE -> "6/6"
+    OnboardingStep.INTRO -> "1/7"
+    OnboardingStep.LANGUAGE -> "2/7"
+    OnboardingStep.CURRENCY -> "3/7"
+    OnboardingStep.ACCOUNT -> "4/7"
+    OnboardingStep.BUDGET -> "5/7"
+    OnboardingStep.AUTO_CAPTURE -> "6/7"
+    OnboardingStep.DONE -> "7/7"
 }
 
 @Composable

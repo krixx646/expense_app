@@ -53,6 +53,7 @@ import com.chelumore.xpenze.core.ui.components.layout.ConfirmationDialog
 import com.chelumore.xpenze.core.ui.util.hasNotificationListenerAccess
 import com.chelumore.xpenze.core.ui.util.openNotificationListenerSettings
 import com.chelumore.xpenze.domain.repository.AccountCardStyle
+import com.chelumore.xpenze.feature.autocapture.AutoCaptureTutorialDialog
 import com.chelumore.xpenze.feature.autocapture.NotificationCaptureAppFilterCard
 import com.chelumore.xpenze.feature.autocapture.NotificationCaptureAppSelectionSheet
 import com.chelumore.xpenze.feature.autocapture.rememberNotificationCaptureAppOptions
@@ -66,6 +67,7 @@ fun SettingsScreen(
     onNavigateToCategories: () -> Unit = {},
     onNavigateToExportData: () -> Unit = {},
     onNavigateToDraftInbox: () -> Unit = {},
+    onNavigateToDraftInboxAppPicker: () -> Unit = {},
     onNavigateToAutoCaptureSetup: () -> Unit = {},
     onNavigateToSubscription: () -> Unit = {},
     onNavigateToRecurringRules: () -> Unit = {},
@@ -75,6 +77,7 @@ fun SettingsScreen(
     onNavigateToLicenses: () -> Unit = {},
     onNavigateToHelp: () -> Unit = {},
     onSignedOut: () -> Unit = {},
+    onNavigateToSignIn: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -88,6 +91,7 @@ fun SettingsScreen(
     var confirmContact by remember { mutableStateOf(false) }
     var showEditProfile by remember { mutableStateOf(false) }
     var showNotificationAppPicker by remember { mutableStateOf(false) }
+    var showAutoCaptureTutorial by rememberSaveable { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
     var notificationPermissionTarget by remember { mutableStateOf<NotificationPermissionTarget?>(null) }
     var showNotificationListenerDialog by remember { mutableStateOf(false) }
@@ -209,6 +213,7 @@ fun SettingsScreen(
                     onSignOut = {
                         confirmSignOut = true
                     },
+                    onSignIn = onNavigateToSignIn,
                     onEditProfile = {
                         editName = uiState.userName
                         showEditProfile = true
@@ -352,6 +357,14 @@ fun SettingsScreen(
                             iconColor = YellowPrimary,
                             onClick = onNavigateToAutoCaptureSetup
                         )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                        IconSettingsItem(
+                            icon = Icons.AutoMirrored.Filled.Help,
+                            label = stringResource(R.string.auto_capture_tutorial_replay_label),
+                            subtitle = stringResource(R.string.auto_capture_tutorial_replay_subtitle),
+                            iconColor = YellowPrimary,
+                            onClick = { showAutoCaptureTutorial = true }
+                        )
                     } else {
                         SwitchSettingsItem(
                             label = stringResource(R.string.auto_capture_master_label),
@@ -409,9 +422,15 @@ fun SettingsScreen(
                             installedApps = installedNotificationApps,
                             enabled = uiState.autoCaptureEnabled,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-                            onChooseApps = { showNotificationAppPicker = true },
+                            onChooseApps = {
+                                if (uiState.isSignedIn && uiState.hasPremiumAccess) {
+                                    showNotificationAppPicker = true
+                                }
+                            },
                             onClearSelection = {
-                                viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
+                                if (uiState.isSignedIn && uiState.hasPremiumAccess) {
+                                    viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
+                                }
                             }
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
@@ -437,6 +456,14 @@ fun SettingsScreen(
                             subtitle = stringResource(R.string.auto_capture_draft_inbox_subtitle),
                             iconColor = InfoBlue,
                             onClick = onNavigateToDraftInbox
+                        )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                        IconSettingsItem(
+                            icon = Icons.AutoMirrored.Filled.Help,
+                            label = stringResource(R.string.auto_capture_tutorial_replay_label),
+                            subtitle = stringResource(R.string.auto_capture_tutorial_replay_subtitle),
+                            iconColor = YellowPrimary,
+                            onClick = { showAutoCaptureTutorial = true }
                         )
                     }
                 }
@@ -506,6 +533,8 @@ fun SettingsScreen(
                         isPremium = uiState.isPremium,
                         hasPremiumAccess = uiState.hasPremiumAccess,
                         isTrialActive = uiState.isTrialActive,
+                        isTrialEndingSoon = uiState.isTrialEndingSoon,
+                        trialDaysRemaining = uiState.trialDaysRemaining,
                         trialExpiresAt = uiState.trialExpiresAt,
                         onManage = onNavigateToSubscription
                     )
@@ -543,13 +572,15 @@ fun SettingsScreen(
                     ) {
                         Text(stringResource(R.string.settings_clear_all_data))
                     }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-                    TextButton(
-                        onClick = { confirmDeleteAccount = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.textButtonColors(contentColor = ErrorRed)
-                    ) {
-                        Text(stringResource(R.string.settings_delete_account))
+                    if (uiState.isSignedIn) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                        TextButton(
+                            onClick = { confirmDeleteAccount = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.textButtonColors(contentColor = ErrorRed)
+                        ) {
+                            Text(stringResource(R.string.settings_delete_account))
+                        }
                     }
                 }
             }
@@ -580,6 +611,20 @@ fun SettingsScreen(
             onSaveSelection = { packageNames ->
                 viewModel.setAutoCaptureNotificationAllowedPackages(packageNames)
                 showNotificationAppPicker = false
+            }
+        )
+    }
+
+    if (showAutoCaptureTutorial) {
+        val canChooseBankApps = uiState.isSignedIn && uiState.hasPremiumAccess
+        AutoCaptureTutorialDialog(
+            canChooseBankApps = canChooseBankApps,
+            onDismiss = { showAutoCaptureTutorial = false },
+            onChooseBankApps = {
+                showAutoCaptureTutorial = false
+                if (canChooseBankApps) {
+                    onNavigateToDraftInboxAppPicker()
+                }
             }
         )
     }
@@ -707,6 +752,7 @@ fun SettingsScreen(
 private fun ProfileCard(
     state: SettingsUiState,
     onSignOut: () -> Unit,
+    onSignIn: () -> Unit,
     onEditProfile: () -> Unit,
     onChangePhoto: () -> Unit
 ) {
@@ -744,23 +790,37 @@ private fun ProfileCard(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     Text(
-                        text = state.userName,
+                        text = if (state.isSignedIn) {
+                            state.userName
+                        } else {
+                            stringResource(R.string.settings_guest_backup_title)
+                        },
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = state.userEmail,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (state.isSignedIn) {
+                        Text(
+                            text = state.userEmail,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 Box(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surface)
-                        .clickable { onChangePhoto() },
+                        // Removing a photo lives in the Edit Profile dialog, which guests do not
+                        // get, so don't let them set one they could never clear.
+                        .then(
+                            if (state.isSignedIn) {
+                                Modifier.clickable { onChangePhoto() }
+                            } else {
+                                Modifier
+                            }
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     if (!state.userPhotoUrl.isNullOrBlank()) {
@@ -781,22 +841,39 @@ private fun ProfileCard(
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (state.isSignedIn) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(
+                        onClick = onEditProfile,
+                        colors = ButtonDefaults.buttonColors(containerColor = YellowPrimary, contentColor = BlackBackground),
+                        shape = RoundedCornerShape(100),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.settings_edit_profile), fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = onSignOut,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                        shape = RoundedCornerShape(100),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.common_sign_out), fontWeight = FontWeight.Bold)
+                    }
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.settings_guest_backup_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Button(
-                    onClick = onEditProfile,
+                    onClick = onSignIn,
                     colors = ButtonDefaults.buttonColors(containerColor = YellowPrimary, contentColor = BlackBackground),
                     shape = RoundedCornerShape(100),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(stringResource(R.string.settings_edit_profile), fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = onSignOut,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
-                    shape = RoundedCornerShape(100),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(R.string.common_sign_out), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_guest_sign_in), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1013,9 +1090,31 @@ private fun SubscriptionCard(
     isPremium: Boolean,
     hasPremiumAccess: Boolean,
     isTrialActive: Boolean,
+    isTrialEndingSoon: Boolean,
+    trialDaysRemaining: Int,
     trialExpiresAt: Long,
     onManage: () -> Unit
 ) {
+    val statusText = when {
+        isPremium -> stringResource(R.string.settings_subscription_status_premium)
+        isTrialEndingSoon -> stringResource(
+            R.string.settings_subscription_status_trial_ending,
+            trialDaysRemaining
+        )
+        isTrialActive -> stringResource(
+            R.string.settings_subscription_status_trial,
+            trialExpiresAt.toFormattedDateTime()
+        )
+        hasPremiumAccess -> stringResource(R.string.settings_subscription_status_access)
+        else -> stringResource(R.string.settings_subscription_status_free)
+    }
+    val ctaText = when {
+        isPremium -> stringResource(R.string.settings_manage_subscription)
+        isTrialEndingSoon -> stringResource(R.string.settings_keep_premium)
+        isTrialActive -> stringResource(R.string.settings_manage_subscription)
+        else -> stringResource(R.string.settings_upgrade_to_premium)
+    }
+
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1029,17 +1128,9 @@ private fun SubscriptionCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = when {
-                        isPremium -> stringResource(R.string.settings_subscription_status_premium)
-                        isTrialActive -> stringResource(
-                            R.string.settings_subscription_status_trial,
-                            trialExpiresAt.toFormattedDateTime()
-                        )
-                        hasPremiumAccess -> stringResource(R.string.settings_subscription_status_access)
-                        else -> stringResource(R.string.settings_subscription_status_free)
-                    },
+                    text = statusText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isTrialEndingSoon) WarningOrange else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(
@@ -1055,7 +1146,7 @@ private fun SubscriptionCard(
             colors = ButtonDefaults.buttonColors(containerColor = YellowPrimary, contentColor = BlackBackground),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(stringResource(R.string.settings_manage_subscription), fontWeight = FontWeight.Bold)
+            Text(ctaText, fontWeight = FontWeight.Bold)
         }
     }
 }

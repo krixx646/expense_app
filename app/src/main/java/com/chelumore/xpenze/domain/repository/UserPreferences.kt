@@ -11,10 +11,15 @@ data class UserPreferences(
     val dailySummaryEnabled: Boolean = true,
     val notificationPermissionPromptLastShownAt: Long = 0L,
     val appOpenCount: Int = 0,
+    // Counts successful "value" actions (e.g. creating a transaction or budget) used to
+    // avoid asking for a rating before the user has done something useful.
+    val rateEligibleActionCount: Int = 0,
     val rateAppPromptLastShownAt: Long = 0L,
     val hasRatedOnPlayStore: Boolean = false,
     val lastSyncTime: Long = 0L,
     val userId: String? = null,
+    // Set when the user chose to use the app without an account. Local-only until they sign in.
+    val isGuestMode: Boolean = false,
     val userEmail: String? = null,
     val userName: String? = null,
     val userPhotoUrl: String? = null,
@@ -24,6 +29,7 @@ data class UserPreferences(
     val accountCardStyleUpdatedAt: Long = 0L,
     val areBalancesHidden: Boolean = false,
     val hasSeenAiCoachCta: Boolean = false,
+    val hasSeenAutoCaptureTutorial: Boolean = false,
     // Paid premium entitlement (separate from free trial).
     val isPremium: Boolean = false,
     val trialStartedAt: Long = 0L,
@@ -43,12 +49,26 @@ data class UserPreferences(
 )
 
 fun UserPreferences.isTrialActive(nowMillis: Long = System.currentTimeMillis()): Boolean {
+    // Guests / signed-out sessions never inherit leftover trial access from a prior login.
+    if (userId.isNullOrBlank() || isGuestMode) return false
     return trialConsumed && trialExpiresAt > nowMillis
 }
 
 fun UserPreferences.hasPremiumAccess(nowMillis: Long = System.currentTimeMillis()): Boolean {
     return isPremium || isTrialActive(nowMillis)
 }
+
+/** True when an active trial has at most [windowMs] remaining (default: 2 days). */
+fun UserPreferences.isTrialEndingSoon(
+    nowMillis: Long = System.currentTimeMillis(),
+    windowMs: Long = TRIAL_ENDING_SOON_WINDOW_MS
+): Boolean {
+    if (!isTrialActive(nowMillis)) return false
+    val remaining = trialExpiresAt - nowMillis
+    return remaining in 1L..windowMs
+}
+
+const val TRIAL_ENDING_SOON_WINDOW_MS: Long = 2L * 24L * 60L * 60L * 1000L
 
 enum class ThemeMode {
     SYSTEM, LIGHT, DARK

@@ -61,7 +61,9 @@ data class SubscriptionUiState(
     val isPremium: Boolean = false,
     // Paid subscription OR active trial.
     val hasPremiumAccess: Boolean = false,
+    val isGuestMode: Boolean = false,
     val isTrialActive: Boolean = false,
+    val isTrialEndingSoon: Boolean = false,
     val trialConsumed: Boolean = false,
     val trialExpiresAt: Long = 0L,
     val hasFounderReward: Boolean = false,
@@ -104,6 +106,7 @@ class SubscriptionViewModel @Inject constructor(
     private var hasLoggedPaywallView = false
 
     private data class PaywallValueData(
+        val isGuestMode: Boolean = false,
         val currencyCode: String = "USD",
         val appLanguageTag: String = "en",
         val topCategoryName: String? = null,
@@ -145,6 +148,7 @@ class SubscriptionViewModel @Inject constructor(
         val strongestImpact = opportunities.maxOfOrNull { it.impactCents } ?: 0L
 
         PaywallValueData(
+            isGuestMode = prefs.isGuestMode || prefs.userId.isNullOrBlank(),
             currencyCode = currency,
             appLanguageTag = appLanguageTag,
             topCategoryName = topCutback?.label,
@@ -172,7 +176,9 @@ class SubscriptionViewModel @Inject constructor(
             isLoading = false,
             isPremium = isPremium,
             hasPremiumAccess = entitlement.hasPremiumAccess,
+            isGuestMode = paywall.isGuestMode,
             isTrialActive = entitlement.isTrialActive,
+            isTrialEndingSoon = entitlement.isTrialEndingSoon,
             trialConsumed = entitlement.trialConsumed,
             trialExpiresAt = entitlement.trialExpiresAt,
             hasFounderReward = entitlement.hasFounderReward,
@@ -237,7 +243,7 @@ class SubscriptionViewModel @Inject constructor(
             try {
                 growthAnalyticsTracker.logSubscriptionTrialClick()
                 val prefs = userRepository.userPreferences.first()
-                if (prefs.userId.isNullOrBlank()) {
+                if (prefs.userId.isNullOrBlank() || prefs.isGuestMode) {
                     growthAnalyticsTracker.logSubscriptionTrialBlocked("not_signed_in")
                     eventsChannel.send(SubscriptionEvent.Message("Sign in to start your trial."))
                     return@launch

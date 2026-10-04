@@ -2,6 +2,10 @@ package com.chelumore.xpenze.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.chelumore.xpenze.core.analytics.GrowthAnalyticsTracker
+import com.chelumore.xpenze.core.analytics.GrowthAnalyticsTracker.Companion.AUTH_FLOW_SIGN_UP
+import com.chelumore.xpenze.core.analytics.GrowthAnalyticsTracker.Companion.AUTH_METHOD_EMAIL
+import com.chelumore.xpenze.core.analytics.GrowthAnalyticsTracker.Companion.AUTH_METHOD_GOOGLE
 import com.chelumore.xpenze.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,12 +17,15 @@ import javax.inject.Inject
 data class SignUpUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    // Email sign-up always sends a verification link; Google accounts arrive already verified.
+    val requiresVerification: Boolean = false
 )
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val growthAnalyticsTracker: GrowthAnalyticsTracker
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SignUpUiState())
@@ -41,8 +48,12 @@ class SignUpViewModel @Inject constructor(
                     password = password,
                     displayName = name.trim()
                 )
-                _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+                growthAnalyticsTracker.logAuthResult(AUTH_FLOW_SIGN_UP, AUTH_METHOD_EMAIL, success = true)
+                _uiState.update {
+                    it.copy(isLoading = false, isSuccess = true, requiresVerification = true)
+                }
             } catch (e: Exception) {
+                growthAnalyticsTracker.logAuthResult(AUTH_FLOW_SIGN_UP, AUTH_METHOD_EMAIL, success = false, error = e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -58,8 +69,12 @@ class SignUpViewModel @Inject constructor(
             try {
                 _uiState.update { it.copy(isLoading = true, error = null, isSuccess = false) }
                 authRepository.signInWithGoogle(idToken)
-                _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+                growthAnalyticsTracker.logAuthResult(AUTH_FLOW_SIGN_UP, AUTH_METHOD_GOOGLE, success = true)
+                _uiState.update {
+                    it.copy(isLoading = false, isSuccess = true, requiresVerification = false)
+                }
             } catch (e: Exception) {
+                growthAnalyticsTracker.logAuthResult(AUTH_FLOW_SIGN_UP, AUTH_METHOD_GOOGLE, success = false, error = e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -79,7 +94,7 @@ class SignUpViewModel @Inject constructor(
     }
 
     fun consumeSuccess() {
-        _uiState.update { it.copy(isSuccess = false) }
+        _uiState.update { it.copy(isSuccess = false, requiresVerification = false) }
     }
 }
 

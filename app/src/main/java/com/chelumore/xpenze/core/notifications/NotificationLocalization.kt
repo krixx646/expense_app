@@ -64,6 +64,7 @@ internal fun notificationChannelCopy(
             name = pickLanguage(
                 languageTag,
                 en = "Budget alerts",
+                lv = "Budžeta brīdinājumi",
                 es = "Alertas de presupuesto",
                 fr = "Alertes budget",
                 de = "Budgetwarnungen",
@@ -77,6 +78,7 @@ internal fun notificationChannelCopy(
             description = pickLanguage(
                 languageTag,
                 en = "Alerts when a budget reaches its warning level.",
+                lv = "Brīdina, kad budžets sasniedz brīdinājuma līmeni.",
                 es = "Alertas cuando un presupuesto llega a su nivel de aviso.",
                 fr = "Alertes lorsqu'un budget atteint son niveau d'avertissement.",
                 de = "Warnungen, wenn ein Budget seinen Hinweiswert erreicht.",
@@ -93,6 +95,7 @@ internal fun notificationChannelCopy(
             name = pickLanguage(
                 languageTag,
                 en = "Daily summary",
+                lv = "Dienas kopsavilkums",
                 es = "Resumen diario",
                 fr = "Résumé quotidien",
                 de = "Tagesübersicht",
@@ -106,6 +109,7 @@ internal fun notificationChannelCopy(
             description = pickLanguage(
                 languageTag,
                 en = "Daily money check-ins and reminders.",
+                lv = "Ikdienas naudas reģistrēšanās un atgādinājumi.",
                 es = "Recordatorios y revisiones diarias de tu dinero.",
                 fr = "Rappels et bilans quotidiens de vos finances.",
                 de = "Tägliche Geld-Check-ins und Erinnerungen.",
@@ -122,6 +126,7 @@ internal fun notificationChannelCopy(
             name = pickLanguage(
                 languageTag,
                 en = "Mochi insights",
+                lv = "Moči ieskati",
                 es = "Ideas de Mochi",
                 fr = "Insights de Mochi",
                 de = "Mochi-Einblicke",
@@ -135,6 +140,7 @@ internal fun notificationChannelCopy(
             description = pickLanguage(
                 languageTag,
                 en = "Useful money nudges and opportunities from Mochi.",
+                lv = "Noderīgi Mochi naudas pamudinājumi un iespējas.",
                 es = "Recordatorios útiles y oportunidades detectadas por Mochi.",
                 fr = "Conseils utiles et opportunités détectées par Mochi.",
                 de = "Nützliche Geldhinweise und Chancen von Mochi.",
@@ -151,6 +157,7 @@ internal fun notificationChannelCopy(
             name = pickLanguage(
                 languageTag,
                 en = "Draft capture alerts",
+                lv = "Melnrakstu uztveršanas brīdinājumi",
                 es = "Alertas de borradores capturados",
                 fr = "Alertes de brouillons captures",
                 de = "Hinweise zu erfassten Entwurfen",
@@ -164,6 +171,7 @@ internal fun notificationChannelCopy(
             description = pickLanguage(
                 languageTag,
                 en = "Alerts when Xpenze captures a new transaction draft from your automatic tools.",
+                lv = "Brīdina, kad Xpenze tver jaunu darījuma melnrakstu no jūsu automātiskajiem rīkiem.",
                 es = "Alertas cuando Xpenze captura un nuevo borrador de transaccion desde tus herramientas automaticas.",
                 fr = "Alertes lorsque Xpenze capture un nouveau brouillon de transaction a partir de vos outils automatiques.",
                 de = "Hinweise, wenn Xpenze einen neuen Transaktionsentwurf aus Ihren automatischen Tools erfasst.",
@@ -191,6 +199,7 @@ internal fun budgetAlertCopy(
         pickLanguage(
             languageTag,
             en = "Budget exceeded: $budgetName",
+            lv = "Pārsniegts budžets: $budgetName",
             es = "Presupuesto excedido: $budgetName",
             fr = "Budget dépassé : $budgetName",
             de = "Budget überschritten: $budgetName",
@@ -205,6 +214,7 @@ internal fun budgetAlertCopy(
         pickLanguage(
             languageTag,
             en = "Budget alert: $budgetName",
+            lv = "Budžeta brīdinājums: $budgetName",
             es = "Alerta de presupuesto: $budgetName",
             fr = "Alerte budget : $budgetName",
             de = "Budgetwarnung: $budgetName",
@@ -221,6 +231,7 @@ internal fun budgetAlertCopy(
         pickLanguage(
             languageTag,
             en = "Overspent by $overspentText • $percentUsed% used ($spentText of $limitText)",
+            lv = "Pārtērēts par $overspentText â¢ Izlietots $percentUsed% ($spentText no $limitText)",
             es = "Te pasaste por $overspentText • $percentUsed%% usado ($spentText de $limitText)",
             fr = "Dépassement de $overspentText • $percentUsed%% utilisé ($spentText sur $limitText)",
             de = "Um $overspentText überschritten • $percentUsed%% genutzt ($spentText von $limitText)",
@@ -235,6 +246,7 @@ internal fun budgetAlertCopy(
         pickLanguage(
             languageTag,
             en = "$percentUsed% used • Threshold $alertThresholdPercent% ($spentText of $limitText)",
+            lv = "$percentUsed% izmantots â¢ Slieksnis $alertThresholdPercent% ($spentText no $limitText)",
             es = "$percentUsed%% usado • Umbral $alertThresholdPercent%% ($spentText de $limitText)",
             fr = "$percentUsed%% utilisé • Seuil $alertThresholdPercent%% ($spentText sur $limitText)",
             de = "$percentUsed%% genutzt • Schwelle $alertThresholdPercent%% ($spentText von $limitText)",
@@ -361,6 +373,7 @@ private fun buildBudgetFocusedAlert(
         body = pickLanguage(
             languageTag,
             en = "${budget.name} is the budget I would check first. It is at $usedPercent% ($spent of $limit).",
+            lv = "${budget.name} ir budžets, kuru es vispirms pārbaudītu. Tas ir $usedPercent% ($spent no $limit).",
             es = "${budget.name} es el presupuesto que yo revisaría primero. Va en $usedPercent%% ($spent de $limit).",
             fr = "${budget.name} est le budget à vérifier en premier. Il est à $usedPercent%% ($spent sur $limit).",
             de = "${budget.name} ist das Budget, das ich zuerst prüfen würde. Es liegt bei $usedPercent%% ($spent von $limit).",
@@ -374,6 +387,7 @@ private fun buildBudgetFocusedAlert(
         prompt = pickLanguage(
             languageTag,
             en = "Review my budgets and tell me which one needs attention first and what to cut this week.",
+            lv = "Pārskatiet manus budžetus un pastāstiet man, kuram vispirms jāpievērš uzmanība un ko samazināt šonedēļ.",
             es = "Revisa mis presupuestos y dime cual necesita atencion primero y que debo recortar esta semana.",
             fr = "Passe en revue mes budgets et dis-moi lequel demande de l'attention en premier et quoi réduire cette semaine.",
             de = "Prüfe meine Budgets und sag mir, welches zuerst Aufmerksamkeit braucht und was ich diese Woche kürzen sollte.",
@@ -406,6 +420,7 @@ private fun buildCashFlowAlert(
         body = pickLanguage(
             languageTag,
             en = "Last 30 days: income ${income.toCurrencyString(currencyCode)}, expense ${expense.toCurrencyString(currencyCode)}, net ${net.toCurrencyString(currencyCode)}.",
+            lv = "Pēdējās 30 dienas: ienākumi ${income.toCurrencyString(currencyCode)}, izdevumi ${expense.toCurrencyString(currencyCode)}, neto ${net.toCurrencyString(currencyCode)}.",
             es = "Ultimos 30 dias: ingresos ${income.toCurrencyString(currencyCode)}, gastos ${expense.toCurrencyString(currencyCode)}, neto ${net.toCurrencyString(currencyCode)}.",
             fr = "30 derniers jours : revenus ${income.toCurrencyString(currencyCode)}, dépenses ${expense.toCurrencyString(currencyCode)}, net ${net.toCurrencyString(currencyCode)}.",
             de = "Letzte 30 Tage: Einnahmen ${income.toCurrencyString(currencyCode)}, Ausgaben ${expense.toCurrencyString(currencyCode)}, netto ${net.toCurrencyString(currencyCode)}.",
@@ -419,6 +434,7 @@ private fun buildCashFlowAlert(
         prompt = pickLanguage(
             languageTag,
             en = "Review my cash flow and tell me what is getting better and what is risky right now.",
+            lv = "Pārskatiet manu naudas plūsmu un pastāstiet man, kas šobrīd kļūst labāks un kas ir riskants.",
             es = "Revisa mi flujo de caja y dime que esta mejorando y que riesgo ves ahora.",
             fr = "Passe en revue mon flux de trésorerie et dis-moi ce qui s'améliore et ce qui est risqué en ce moment.",
             de = "Prüfe meinen Cashflow und sag mir, was besser wird und was gerade riskant ist.",
@@ -447,6 +463,7 @@ private fun buildRecurringAlert(
         body = pickLanguage(
             languageTag,
             en = "You have ${recurringExpenses.size} active recurring expenses. ${biggest.title} is the biggest at ${biggest.money.amountCents.toCurrencyString(currencyCode)}.",
+            lv = "Jums ir aktīvi ${recurringExpenses.size} regulārie izdevumi. ${biggest.title} ir lielākais no ${biggest.money.amountCents.toCurrencyString(currencyCode)}.",
             es = "Tienes ${recurringExpenses.size} gastos recurrentes activos. ${biggest.title} es el mayor con ${biggest.money.amountCents.toCurrencyString(currencyCode)}.",
             fr = "Vous avez ${recurringExpenses.size} dépenses récurrentes actives. ${biggest.title} est la plus importante à ${biggest.money.amountCents.toCurrencyString(currencyCode)}.",
             de = "Du hast ${recurringExpenses.size} aktive wiederkehrende Ausgaben. ${biggest.title} ist mit ${biggest.money.amountCents.toCurrencyString(currencyCode)} die größte.",
@@ -460,6 +477,7 @@ private fun buildRecurringAlert(
         prompt = pickLanguage(
             languageTag,
             en = "Review my recurring payments and tell me what to keep, cut, or renegotiate first.",
+            lv = "Pārskatiet manus periodiskos maksājumus un pastāstiet man, ko vispirms paturēt, samazināt vai pārrunāt.",
             es = "Revisa mis pagos recurrentes y dime que debo mantener, recortar o renegociar primero.",
             fr = "Passe en revue mes paiements récurrents et dis-moi quoi garder, réduire ou renégocier d'abord.",
             de = "Prüfe meine wiederkehrenden Zahlungen und sag mir, was ich zuerst behalten, kürzen oder neu verhandeln sollte.",
@@ -497,6 +515,7 @@ private fun buildCategoryCleanupAlert(
             body = pickLanguage(
                 languageTag,
                 en = "Uncategorized spending still hides ${uncategorizedAmount.toCurrencyString(currencyCode)} in the last 45 days.",
+                lv = "Nekategorizētie izdevumi joprojām slēpj ${uncategorizedAmount.toCurrencyString(currencyCode)} pēdējo 45 dienu laikā.",
                 es = "El gasto sin categoría todavía esconde ${uncategorizedAmount.toCurrencyString(currencyCode)} en los últimos 45 días.",
                 fr = "Les dépenses non classées cachent encore ${uncategorizedAmount.toCurrencyString(currencyCode)} sur les 45 derniers jours.",
                 de = "Nicht zugeordnete Ausgaben verbergen in den letzten 45 Tagen noch ${uncategorizedAmount.toCurrencyString(currencyCode)}.",
@@ -510,6 +529,7 @@ private fun buildCategoryCleanupAlert(
             prompt = pickLanguage(
                 languageTag,
                 en = "Show me my uncategorized spending and tell me how to clean it up fast.",
+                lv = "Parādiet man savus tēriņus bez kategorijas un pastāstiet man, kā tos ātri iztīrīt.",
                 es = "Muestrame mis gastos sin categoría y dime como ordenarlos rápido.",
                 fr = "Montre-moi mes dépenses non classées et dis-moi comment les ranger vite.",
                 de = "Zeig mir meine nicht zugeordneten Ausgaben und sag mir, wie ich sie schnell aufräume.",
@@ -531,6 +551,7 @@ private fun buildCategoryCleanupAlert(
         ?: pickLanguage(
             languageTag,
             en = "Uncategorized",
+            lv = "Bez kategorijas",
             es = "Sin categoría",
             fr = "Non classé",
             de = "Nicht zugeordnet",
@@ -548,6 +569,7 @@ private fun buildCategoryCleanupAlert(
         body = pickLanguage(
             languageTag,
             en = "$categoryName is leading your recent spending at $amount.",
+            lv = "$categoryName nosaka jūsu nesenos tēriņus vietnē $amount.",
             es = "$categoryName lidera tu gasto reciente con $amount.",
             fr = "$categoryName mène vos dépenses récentes avec $amount.",
             de = "$categoryName führt deine jüngsten Ausgaben mit $amount an.",
@@ -561,6 +583,7 @@ private fun buildCategoryCleanupAlert(
         prompt = pickLanguage(
             languageTag,
             en = "Break down my recent spending by category and tell me where the easiest reduction is.",
+            lv = "Sadaliet manus nesenos izdevumus pa kategorijām un pastāstiet man, kur ir visvieglāk samazināt.",
             es = "Desglosa mis gastos recientes por categoría y dime dónde está el recorte más fácil.",
             fr = "Décompose mes dépenses récentes par catégorie et dis-moi où la réduction la plus simple se trouve.",
             de = "Schlüssle meine jüngsten Ausgaben nach Kategorien auf und sag mir, wo die einfachste Kürzung liegt.",
@@ -604,6 +627,7 @@ private fun buildSavingsFallbackAlert(
     val categoryName = topCategory.key?.let { categoriesById[it]?.name } ?: pickLanguage(
         languageTag,
         en = "Uncategorized",
+        lv = "Bez kategorijas",
         es = "Sin categoría",
         fr = "Non classé",
         de = "Nicht zugeordnet",
@@ -621,6 +645,7 @@ private fun buildSavingsFallbackAlert(
         body = pickLanguage(
             languageTag,
             en = "$categoryName is still your biggest recent spending area at $amount.",
+            lv = "$categoryName joprojām ir jūsu lielākā pēdējā laika izdevumu daļa uzņēmumā $amount.",
             es = "$categoryName sigue siendo tu mayor área de gasto reciente con $amount.",
             fr = "$categoryName reste votre plus grand poste de dépense récent avec $amount.",
             de = "$categoryName bleibt dein größter jüngster Ausgabenbereich mit $amount.",
@@ -634,6 +659,7 @@ private fun buildSavingsFallbackAlert(
         prompt = pickLanguage(
             languageTag,
             en = "Show me the best savings move in my data right now and how to act on it this week.",
+            lv = "Parādiet man pašlaik labākos ietaupījumus manos datos un kā rīkoties šajā nedēļā.",
             es = "Muestrame la mejor oportunidad de ahorro en mis datos ahora y como actuar esta semana.",
             fr = "Montre-moi la meilleure économie possible dans mes données maintenant et comment agir cette semaine.",
             de = "Zeig mir die beste Sparchance in meinen Daten und wie ich diese Woche darauf reagieren sollte.",
@@ -749,6 +775,7 @@ private fun mochiTopicTitle(
         MochiConversationTopic.BUDGETS -> pickLanguage(
             languageTag,
             en = "Mochi found budget pressure",
+            lv = "Moči atrada budžeta spiedienu",
             es = "Mochi encontró presión en tu presupuesto",
             fr = "Mochi a trouvé une pression budgétaire",
             de = "Mochi hat Budgetdruck gefunden",
@@ -763,6 +790,7 @@ private fun mochiTopicTitle(
         MochiConversationTopic.CASH_FLOW -> pickLanguage(
             languageTag,
             en = "Mochi spotted a cash flow signal",
+            lv = "Moči pamanīja naudas plūsmas signālu",
             es = "Mochi detectó una señal en tu flujo de caja",
             fr = "Mochi a repéré un signal de trésorerie",
             de = "Mochi hat ein Cashflow-Signal erkannt",
@@ -777,6 +805,7 @@ private fun mochiTopicTitle(
         MochiConversationTopic.RECURRING -> pickLanguage(
             languageTag,
             en = "Mochi found a recurring payment to review",
+            lv = "Mochi atrada periodisku maksājumu, kas jāpārskata",
             es = "Mochi encontró un pago recurrente para revisar",
             fr = "Mochi a trouvé un paiement récurrent à revoir",
             de = "Mochi hat eine wiederkehrende Zahlung zum Prüfen gefunden",
@@ -791,6 +820,7 @@ private fun mochiTopicTitle(
         MochiConversationTopic.CATEGORY_CLEANUP -> pickLanguage(
             languageTag,
             en = "Mochi found where your money is clustering",
+            lv = "Mochi atklāja, kur uzkrājas jūsu nauda",
             es = "Mochi encontró dónde se está concentrando tu dinero",
             fr = "Mochi a trouvé où votre argent se concentre",
             de = "Mochi hat gefunden, wo sich dein Geld sammelt",
@@ -805,6 +835,7 @@ private fun mochiTopicTitle(
         MochiConversationTopic.SAVINGS -> pickLanguage(
             languageTag,
             en = "Mochi found a savings move",
+            lv = "Moči atrada ietaupījumu",
             es = "Mochi encontró una oportunidad de ahorro",
             fr = "Mochi a trouvé une piste d'économie",
             de = "Mochi hat eine Sparchance gefunden",
@@ -819,6 +850,7 @@ private fun mochiTopicTitle(
         MochiConversationTopic.GENERAL -> pickLanguage(
             languageTag,
             en = "Mochi has a useful money nudge",
+            lv = "Močim ir noderīgs naudas dūriens",
             es = "Mochi tiene un recordatorio útil para tu dinero",
             fr = "Mochi a un rappel utile pour vos finances",
             de = "Mochi hat einen nützlichen Geldhinweis",
@@ -835,6 +867,7 @@ private fun mochiTopicTitle(
 private fun pickLanguage(
     languageTag: String,
     en: String,
+    lv: String = en,
     es: String,
     fr: String,
     de: String,
@@ -846,6 +879,7 @@ private fun pickLanguage(
     zh: String
 ): String {
     return when {
+        languageTag.startsWith("lv") -> lv
         languageTag.startsWith("es") -> es
         languageTag.startsWith("fr") -> fr
         languageTag.startsWith("de") -> de

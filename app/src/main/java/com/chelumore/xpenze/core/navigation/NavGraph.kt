@@ -20,6 +20,7 @@ import com.chelumore.xpenze.feature.transactions.detail.TransactionDetailScreen
 import com.chelumore.xpenze.feature.auth.LoginScreen
 import com.chelumore.xpenze.feature.auth.SignUpScreen
 import com.chelumore.xpenze.feature.auth.ForgotPasswordScreen
+import com.chelumore.xpenze.feature.auth.GuestSessionDestination
 import com.chelumore.xpenze.feature.auth.VerificationScreen
 import com.chelumore.xpenze.feature.auth.SplashScreen
 import com.chelumore.xpenze.feature.auth.WelcomeScreen
@@ -70,15 +71,18 @@ fun XpenzeNavGraph(
                             launchSingleTop = true
                         }
                     },
+                    // Pop the whole graph, not just AuthGraph: a guest reaches sign-in from
+                    // MainGraph, so popping only AuthGraph would leave their pre-sign-in
+                    // Dashboard and Settings entries stranded underneath.
                     onNavigateToOnboarding = {
                         navController.navigate(OnboardingGraph) {
-                            popUpTo(AuthGraph) { inclusive = true }
+                            popUpTo(navController.graph.id) { inclusive = true }
                             launchSingleTop = true
                         }
                     },
                     onNavigateToMain = {
                         navController.navigate(MainGraph) {
-                            popUpTo(AuthGraph) { inclusive = true }
+                            popUpTo(navController.graph.id) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -88,7 +92,17 @@ fun XpenzeNavGraph(
             composable<Screen.Welcome> {
                 WelcomeScreen(
                     onNavigateToSignUp = { navController.navigate(Screen.SignUp) },
-                    onNavigateToLogin = { navController.navigate(Screen.Login) }
+                    onNavigateToLogin = { navController.navigate(Screen.Login) },
+                    onContinueAsGuest = { destination ->
+                        val target = when (destination) {
+                            GuestSessionDestination.Onboarding -> OnboardingGraph
+                            GuestSessionDestination.Main -> MainGraph
+                        }
+                        navController.navigate(target) {
+                            popUpTo(AuthGraph) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
 
@@ -131,7 +145,10 @@ fun XpenzeNavGraph(
                             popUpTo(AuthGraph) { inclusive = true }
                             launchSingleTop = true
                         }
-                    }
+                    },
+                    // Pushed rather than replacing the stack so the user can back out of
+                    // verification without losing access to data they already have locally.
+                    onRequireVerification = { navController.navigate(Screen.Verification) }
                 )
             }
 
@@ -192,7 +209,10 @@ fun XpenzeNavGraph(
                         navController.navigate(Screen.Accounts)
                     },
                     onNavigateToDraftInbox = {
-                        navController.navigate(Screen.DraftInbox)
+                        navController.navigate(Screen.DraftInbox())
+                    },
+                    onNavigateToDraftInboxAppPicker = {
+                        navController.navigate(Screen.DraftInbox(openAppPicker = true))
                     },
                     onNavigateToAutoCaptureSetup = {
                         navController.navigate(Screen.AutoCaptureSetup)
@@ -246,7 +266,10 @@ fun XpenzeNavGraph(
                     onNavigateToAccounts = { navController.navigate(Screen.Accounts) },
                     onNavigateToCategories = { navController.navigate(Screen.Categories) },
                     onNavigateToExportData = { navController.navigate(Screen.ExportData) },
-                    onNavigateToDraftInbox = { navController.navigate(Screen.DraftInbox) },
+                    onNavigateToDraftInbox = { navController.navigate(Screen.DraftInbox()) },
+                    onNavigateToDraftInboxAppPicker = {
+                        navController.navigate(Screen.DraftInbox(openAppPicker = true))
+                    },
                     onNavigateToAutoCaptureSetup = { navController.navigate(Screen.AutoCaptureSetup) },
                     onNavigateToSubscription = { navController.navigate(Screen.Subscription) },
                     onNavigateToRecurringRules = { navController.navigate(Screen.RecurringRules) },
@@ -260,7 +283,8 @@ fun XpenzeNavGraph(
                             popUpTo(MainGraph) { inclusive = true }
                             launchSingleTop = true
                         }
-                    }
+                    },
+                    onNavigateToSignIn = { navController.navigate(Screen.Login) }
                 )
             }
 
@@ -322,8 +346,10 @@ fun XpenzeNavGraph(
                 )
             }
 
-            composable<Screen.DraftInbox> {
+            composable<Screen.DraftInbox> { backStackEntry ->
+                val args = backStackEntry.toRoute<Screen.DraftInbox>()
                 DraftInboxScreen(
+                    openAppPicker = args.openAppPicker,
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToSubscription = { navController.navigate(Screen.Subscription) },
                     onNavigateToAutoCaptureSetup = { navController.navigate(Screen.AutoCaptureSetup) },
@@ -338,7 +364,7 @@ fun XpenzeNavGraph(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToSubscription = { navController.navigate(Screen.Subscription) },
                     onNavigateToDraftInbox = {
-                        navController.navigate(Screen.DraftInbox) {
+                        navController.navigate(Screen.DraftInbox()) {
                             popUpTo(Screen.AutoCaptureSetup) { inclusive = true }
                             launchSingleTop = true
                         }

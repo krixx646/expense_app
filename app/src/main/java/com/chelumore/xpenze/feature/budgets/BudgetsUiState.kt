@@ -29,8 +29,15 @@ data class BudgetsUiState(
     val pastCount: Int = 0,
     val activeCount: Int = 0,
     val warningCount: Int = 0,
-    val exceededCount: Int = 0
-)
+    val exceededCount: Int = 0,
+
+    // Totals across every current budget, ignoring the active filters
+    val totalLimitAmount: Long = 0L,
+    val totalSpentAmount: Long = 0L
+) {
+    val totalProgress: Float
+        get() = if (totalLimitAmount <= 0L) 0f else totalSpentAmount.toFloat() / totalLimitAmount.toFloat()
+}
 
 data class BudgetUiModel(
     val id: String,

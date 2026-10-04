@@ -1,8 +1,10 @@
 [versions]
 # Android & Kotlin
-agp = "8.13.1"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.27"
+# AGP 9.3.1 + Gradle 9.5.0. Built-in Kotlin replaces org.jetbrains.kotlin.android.
+# kotlin version still drives compose + serialization plugins; AGP brings its own KGP runtime.
+agp = "9.3.1"
+kotlin = "2.4.10"
+ksp = "2.3.11"
 
 # AndroidX Core
 coreKtx = "1.15.0"
@@ -20,10 +22,10 @@ lifecycleRuntimeKtx = "2.8.7"
 lifecycleViewmodelCompose = "2.8.7"
 
 # Room Database
-room = "2.6.1"
+room = "2.8.4"
 
-# Hilt Dependency Injection
-hilt = "2.53.1"
+# Hilt Dependency Injection (2.59.2+ required for AGP 9)
+hilt = "2.60.1"
 hiltNavigationCompose = "1.2.0"
 
 # Coroutines
@@ -250,7 +252,7 @@ vico = [
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+# kotlin-android removed: AGP 9 built-in Kotlin replaces it
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

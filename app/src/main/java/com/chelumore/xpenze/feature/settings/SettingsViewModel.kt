@@ -75,6 +75,15 @@ class SettingsViewModel @Inject constructor(
             isPremium = entitlement.isPremium,
             hasPremiumAccess = entitlement.hasPremiumAccess,
             isTrialActive = entitlement.isTrialActive,
+            isTrialEndingSoon = entitlement.isTrialEndingSoon,
+            trialDaysRemaining = if (entitlement.isTrialActive) {
+                val dayMs = 24L * 60L * 60L * 1000L
+                ((entitlement.millisUntilTrialExpiry + dayMs - 1L) / dayMs)
+                    .toInt()
+                    .coerceAtLeast(1)
+            } else {
+                0
+            },
             trialExpiresAt = entitlement.trialExpiresAt,
             hasFounderReward = prefs.hasFounderReward,
             appLanguageTag = AppLanguages.normalizeTag(prefs.appLanguageTag),
@@ -245,6 +254,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setAutoCaptureNotificationAllowedPackages(packageNames: Set<String>) {
         viewModelScope.launch {
+            val prefs = preferencesDataStore.userPreferences.first()
+            if (prefs.isGuestMode || prefs.userId.isNullOrBlank() || !uiState.value.hasPremiumAccess) {
+                return@launch
+            }
             preferencesDataStore.setAutoCaptureNotificationAllowedPackages(packageNames)
         }
     }
@@ -294,6 +307,7 @@ class SettingsViewModel @Inject constructor(
     fun clearAllData() {
         viewModelScope.launch {
             try {
+                val wasGuest = preferencesDataStore.userPreferences.first().isGuestMode
                 budgetAlertScheduler.cancelAll()
                 dailySummaryScheduler.cancelAll()
                 weeklySavingsAlertScheduler.cancelAll()
@@ -303,11 +317,15 @@ class SettingsViewModel @Inject constructor(
 
                 // Reset user/session-related prefs + onboarding so app can start fresh.
                 preferencesDataStore.clearUserData()
+                preferencesDataStore.clearTrialState()
                 preferencesDataStore.setOnboardingComplete(false)
                 preferencesDataStore.setDefaultAccountId(null)
                 preferencesDataStore.setDefaultCurrency(Constants.DEFAULT_CURRENCY)
                 preferencesDataStore.setPremium(false)
                 preferencesDataStore.updateLastSyncTime(0L)
+                // Clearing data is not signing out: a guest stays a guest rather than being
+                // bounced back to the Welcome wall on next launch.
+                if (wasGuest) preferencesDataStore.setGuestMode(true)
 
                 eventsChannel.send(SettingsEvent.Message("All local data cleared."))
             } catch (e: Exception) {
@@ -327,6 +345,7 @@ class SettingsViewModel @Inject constructor(
                 recurringRuleScheduler.cancelAll()
                 appDatabase.clearAllTables()
                 preferencesDataStore.clearUserData()
+                preferencesDataStore.clearTrialState()
                 preferencesDataStore.setOnboardingComplete(false)
                 preferencesDataStore.setDefaultAccountId(null)
                 preferencesDataStore.setDefaultCurrency(Constants.DEFAULT_CURRENCY)

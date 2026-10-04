@@ -141,7 +141,9 @@ class BudgetsViewModel @Inject constructor(
             pastCount = pastAll.size,
             activeCount = currentAll.count { it.status == BudgetStatus.ON_TRACK },
             warningCount = currentAll.count { it.status == BudgetStatus.WARNING },
-            exceededCount = currentAll.count { it.status == BudgetStatus.EXCEEDED }
+            exceededCount = currentAll.count { it.status == BudgetStatus.EXCEEDED },
+            totalLimitAmount = currentAll.sumOf { it.limitAmount },
+            totalSpentAmount = currentAll.sumOf { it.spentAmount }
         )
     }.stateIn(
         scope = viewModelScope,

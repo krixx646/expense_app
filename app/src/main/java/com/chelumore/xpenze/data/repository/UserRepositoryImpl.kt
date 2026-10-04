@@ -70,6 +70,10 @@ class UserRepositoryImpl @Inject constructor(
         preferencesDataStore.incrementAppOpenCount()
     }
 
+    override suspend fun incrementRateEligibleActionCount() {
+        preferencesDataStore.incrementRateEligibleActionCount()
+    }
+
     override suspend fun setRateAppPromptLastShownAt(timestampMillis: Long) {
         preferencesDataStore.setRateAppPromptLastShownAt(timestampMillis)
     }
@@ -82,12 +86,34 @@ class UserRepositoryImpl @Inject constructor(
         preferencesDataStore.updateLastSyncTime(time)
     }
 
+    override suspend fun setGuestMode(enabled: Boolean) {
+        preferencesDataStore.setGuestMode(enabled)
+    }
+
+    override suspend fun promoteGuestToUser(
+        userId: String,
+        email: String?,
+        name: String?,
+        photoUrl: String?
+    ) {
+        preferencesDataStore.promoteGuestToUser(
+            userId = userId,
+            email = email,
+            name = name,
+            photoUrl = photoUrl
+        )
+    }
+
     override suspend fun setUserInfo(userId: String?, email: String?, name: String?, photoUrl: String?) {
         preferencesDataStore.setUserInfo(userId, email, name, photoUrl)
     }
 
     override suspend fun setAiCoachCtaSeen(seen: Boolean) {
         preferencesDataStore.setAiCoachCtaSeen(seen)
+    }
+
+    override suspend fun setAutoCaptureTutorialSeen(seen: Boolean) {
+        preferencesDataStore.setAutoCaptureTutorialSeen(seen)
     }
 
     override suspend fun setPremium(isPremium: Boolean) {

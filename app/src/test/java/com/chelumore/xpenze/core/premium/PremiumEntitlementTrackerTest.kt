@@ -24,6 +24,7 @@ class PremiumEntitlementTrackerTest {
         var now = 1_000L
         val repository = FakeUserRepository(
             UserPreferences(
+                userId = "user-1",
                 isPremium = false,
                 trialConsumed = true,
                 trialStartedAt = 500L,
@@ -57,10 +58,149 @@ class PremiumEntitlementTrackerTest {
     }
 
     @Test
+    fun `guest leftover trial dates do not grant premium access`() = runTest {
+        var now = 1_000L
+        val repository = FakeUserRepository(
+            UserPreferences(
+                userId = null,
+                isGuestMode = true,
+                isPremium = false,
+                trialConsumed = true,
+                trialStartedAt = 500L,
+                trialExpiresAt = 50_000L
+            )
+        )
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val tracker = PremiumEntitlementTracker(
+            userRepository = repository,
+            defaultDispatcher = dispatcher,
+            nowProvider = { now },
+            tickMs = 100L
+        )
+
+        try {
+            tracker.entitlement.test {
+                val first = awaitItem()
+                val stable = if (!first.hasPremiumAccess && !first.isTrialActive) first else awaitItem()
+                assertFalse(stable.isTrialActive)
+                assertFalse(stable.hasPremiumAccess)
+                assertFalse(stable.isTrialEndingSoon)
+            }
+        } finally {
+            tracker.cancelForTests()
+        }
+    }
+
+    @Test
+    fun `trial ending soon is true inside final two day window`() = runTest {
+        val dayMs = 24L * 60L * 60L * 1000L
+        var now = 1_000L
+        val repository = FakeUserRepository(
+            UserPreferences(
+                userId = "user-1",
+                isPremium = false,
+                trialConsumed = true,
+                trialStartedAt = 500L,
+                trialExpiresAt = now + dayMs
+            )
+        )
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val tracker = PremiumEntitlementTracker(
+            userRepository = repository,
+            defaultDispatcher = dispatcher,
+            nowProvider = { now },
+            tickMs = 100L
+        )
+
+        try {
+            tracker.entitlement.test {
+                val first = awaitItem()
+                val active = if (first.isTrialActive) first else awaitItem()
+                assertTrue(active.isTrialActive)
+                assertTrue(active.isTrialEndingSoon)
+            }
+        } finally {
+            tracker.cancelForTests()
+        }
+    }
+
+    @Test
+    fun `go premium cta follows full seven day trial lifecycle without app restart`() = runTest {
+        val dayMs = 24L * 60L * 60L * 1000L
+        val trialStart = 1_000_000L
+        var now = trialStart
+        val repository = FakeUserRepository(
+            UserPreferences(
+                userId = "user-1",
+                isPremium = false,
+                trialConsumed = true,
+                trialStartedAt = trialStart,
+                trialExpiresAt = trialStart + 7 * dayMs
+            )
+        )
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val tracker = PremiumEntitlementTracker(
+            userRepository = repository,
+            defaultDispatcher = dispatcher,
+            nowProvider = { now },
+            tickMs = 100L
+        )
+
+        try {
+            tracker.entitlement.test {
+                // Day 1: trial active, CTA hidden.
+                var state = awaitItem()
+                if (!state.isTrialActive) state = awaitItem()
+                assertTrue(state.isTrialActive)
+                assertFalse(shouldShowPremiumCta(state.hasPremiumAccess, state.isTrialEndingSoon))
+
+                // Day 4: still mid-trial, CTA hidden. Same state, so no new emission expected.
+                now = trialStart + 4 * dayMs
+                advanceTimeBy(100L)
+                state = tracker.entitlement.value
+                assertTrue(state.isTrialActive)
+                assertFalse(state.isTrialEndingSoon)
+                assertFalse(shouldShowPremiumCta(state.hasPremiumAccess, state.isTrialEndingSoon))
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // Day 6: last two days, "Keep Premium" CTA visible.
+            now = trialStart + 6 * dayMs
+            advanceTimeBy(100L)
+            var state = tracker.entitlement.value
+            assertTrue(state.isTrialActive)
+            assertTrue(state.isTrialEndingSoon)
+            assertTrue(shouldShowPremiumCta(state.hasPremiumAccess, state.isTrialEndingSoon))
+
+            // Day 8: trial over, access gone, "Go Premium" CTA back.
+            now = trialStart + 8 * dayMs
+            advanceTimeBy(100L)
+            state = tracker.entitlement.value
+            assertFalse(state.isTrialActive)
+            assertFalse(state.hasPremiumAccess)
+            assertFalse(state.isTrialEndingSoon)
+            assertTrue(shouldShowPremiumCta(state.hasPremiumAccess, state.isTrialEndingSoon))
+        } finally {
+            tracker.cancelForTests()
+        }
+    }
+
+    @Test
+    fun `go premium cta hidden for paid subscribers`() {
+        assertFalse(shouldShowPremiumCta(hasPremiumAccess = true, isTrialEndingSoon = false))
+    }
+
+    @Test
+    fun `go premium cta visible for free users with no trial`() {
+        assertTrue(shouldShowPremiumCta(hasPremiumAccess = false, isTrialEndingSoon = false))
+    }
+
+    @Test
     fun `paid premium remains active even after trial expiry`() = runTest {
         var now = 5_000L
         val repository = FakeUserRepository(
             UserPreferences(
+                userId = "user-1",
                 isPremium = true,
                 trialConsumed = true,
                 trialStartedAt = 1_000L,
@@ -148,6 +288,12 @@ class PremiumEntitlementTrackerTest {
             prefs.value = prefs.value.copy(appOpenCount = prefs.value.appOpenCount + 1)
         }
 
+        override suspend fun incrementRateEligibleActionCount() {
+            prefs.value = prefs.value.copy(
+                rateEligibleActionCount = prefs.value.rateEligibleActionCount + 1
+            )
+        }
+
         override suspend fun setRateAppPromptLastShownAt(timestampMillis: Long) {
             prefs.value = prefs.value.copy(rateAppPromptLastShownAt = timestampMillis)
         }
@@ -158,6 +304,25 @@ class PremiumEntitlementTrackerTest {
 
         override suspend fun updateLastSyncTime(time: Long) {
             prefs.value = prefs.value.copy(lastSyncTime = time)
+        }
+
+        override suspend fun setGuestMode(enabled: Boolean) {
+            prefs.value = prefs.value.copy(isGuestMode = enabled)
+        }
+
+        override suspend fun promoteGuestToUser(
+            userId: String,
+            email: String?,
+            name: String?,
+            photoUrl: String?
+        ) {
+            prefs.value = prefs.value.copy(
+                isGuestMode = false,
+                userId = userId,
+                userEmail = email,
+                userName = name,
+                userPhotoUrl = photoUrl
+            )
         }
 
         override suspend fun setUserInfo(userId: String?, email: String?, name: String?, photoUrl: String?) {
@@ -171,6 +336,10 @@ class PremiumEntitlementTrackerTest {
 
         override suspend fun setAiCoachCtaSeen(seen: Boolean) {
             prefs.value = prefs.value.copy(hasSeenAiCoachCta = seen)
+        }
+
+        override suspend fun setAutoCaptureTutorialSeen(seen: Boolean) {
+            prefs.value = prefs.value.copy(hasSeenAutoCaptureTutorial = seen)
         }
 
         override suspend fun setPremium(isPremium: Boolean) {

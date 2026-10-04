@@ -249,10 +249,10 @@ fun SubscriptionScreen(
                 )
                 MochiPremiumNudgeCard(
                     copy = mochiCopy,
-                    primaryCtaText = if (uiState.isTrialActive) {
-                        stringResource(R.string.subscription_subscribe_now)
-                    } else {
-                        stringResource(R.string.subscription_checkout_cta)
+                    primaryCtaText = when {
+                        uiState.isTrialEndingSoon -> stringResource(R.string.trial_ending_soon_cta)
+                        uiState.isTrialActive -> stringResource(R.string.subscription_subscribe_now)
+                        else -> stringResource(R.string.subscription_checkout_cta)
                     },
                     onPrimaryCta = {
                         viewModel.onMochiNudgeClick(
@@ -268,12 +268,14 @@ fun SubscriptionScreen(
                         }
                     },
                     secondaryCtaText = when {
+                        uiState.isGuestMode -> null
                         uiState.hasFounderReward && !uiState.founderTrialActivated ->
                             stringResource(R.string.subscription_activate_founder_reward)
                         uiState.trialConsumed -> null
                         else -> stringResource(R.string.subscription_start_trial)
                     },
                     onSecondaryCta = when {
+                        uiState.isGuestMode -> null
                         uiState.hasFounderReward && !uiState.founderTrialActivated -> {
                             {
                                 viewModel.onMochiNudgeClick(

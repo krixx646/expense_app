@@ -107,7 +107,7 @@ sealed interface Screen {
     data object ExportData : Screen
 
     @Serializable
-    data object DraftInbox : Screen
+    data class DraftInbox(val openAppPicker: Boolean = false) : Screen
 
     @Serializable
     data object AutoCaptureSetup : Screen

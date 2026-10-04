@@ -17,6 +17,7 @@ object AppLanguages {
         AppLanguageOption(tag = "es", label = "Espanol"),
         AppLanguageOption(tag = "fr", label = "Francais"),
         AppLanguageOption(tag = "de", label = "Deutsch"),
+        AppLanguageOption(tag = "lv", label = "Latviešu"),
         AppLanguageOption(tag = "pt", label = "Portugues"),
         AppLanguageOption(tag = "ar", label = "العربية"),
         AppLanguageOption(tag = "sw", label = "Kiswahili"),

@@ -46,6 +46,9 @@ class BudgetRepositoryImpl @Inject constructor(
     override fun getCurrentBudgets(): Flow<List<Budget>> =
         budgetDao.getCurrentBudgets(currentTimeMillis()).map { list -> list.map { it.toDomain() } }
 
+    override fun getPastBudgets(): Flow<List<Budget>> =
+        budgetDao.getPastBudgets(currentTimeMillis()).map { list -> list.map { it.toDomain() } }
+
     override fun getAllWithProgress(): Flow<List<BudgetWithProgress>> =
         budgetsWithProgressFlow(budgetDao.getAll().map { list -> list.map { it.toDomain() } })
 

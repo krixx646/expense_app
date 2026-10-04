@@ -13,6 +13,8 @@ data class SettingsUiState(
     val isPremium: Boolean = false,
     val hasPremiumAccess: Boolean = false,
     val isTrialActive: Boolean = false,
+    val isTrialEndingSoon: Boolean = false,
+    val trialDaysRemaining: Int = 0,
     val trialExpiresAt: Long = 0L,
     val hasFounderReward: Boolean = false,
     

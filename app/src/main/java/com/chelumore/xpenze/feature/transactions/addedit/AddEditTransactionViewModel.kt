@@ -4,6 +4,7 @@ import android.content.Context
 import com.chelumore.xpenze.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.chelumore.xpenze.core.analytics.GrowthAnalyticsTracker
 import com.chelumore.xpenze.core.work.BudgetAlertScheduler
 import com.chelumore.xpenze.core.work.RecurringRuleScheduler
 import com.chelumore.xpenze.core.common.toEpochMillis
@@ -59,7 +60,8 @@ class AddEditTransactionViewModel @Inject constructor(
     private val recurringRuleRepository: RecurringRuleRepository,
     private val recurringRuleScheduler: RecurringRuleScheduler,
     private val autoCaptureDraftRepository: AutoCaptureDraftRepository,
-    private val getMerchantMemorySuggestionUseCase: GetMerchantMemorySuggestionUseCase
+    private val getMerchantMemorySuggestionUseCase: GetMerchantMemorySuggestionUseCase,
+    private val growthAnalyticsTracker: GrowthAnalyticsTracker
 ) : ViewModel() {
 
     private val _formState = MutableStateFlow(AddEditTransactionUiState())
@@ -433,6 +435,13 @@ class AddEditTransactionViewModel @Inject constructor(
                 }
 
                 budgetAlertScheduler.scheduleNow()
+                if (!state.isEdit) {
+                    runCatching { preferencesDataStore.incrementRateEligibleActionCount() }
+                    val lifetimeActions = runCatching {
+                        preferencesDataStore.userPreferences.first().rateEligibleActionCount
+                    }.getOrDefault(0)
+                    growthAnalyticsTracker.logTransactionCreated(state.type.name, lifetimeActions)
+                }
                 _formState.update { it.copy(isSaving = false, isSaved = true) }
             } catch (e: Exception) {
                 _formState.update {

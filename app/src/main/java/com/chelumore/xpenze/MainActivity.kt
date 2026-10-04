@@ -101,6 +101,8 @@ import com.chelumore.xpenze.core.work.SyncScheduler
 import com.chelumore.xpenze.domain.repository.UserRepository
 import com.chelumore.xpenze.domain.repository.UserPreferences
 import com.chelumore.xpenze.domain.repository.ThemeMode
+import com.chelumore.xpenze.core.premium.PremiumEntitlementTracker
+import com.chelumore.xpenze.core.premium.shouldShowPremiumCta
 import com.chelumore.xpenze.ui.theme.XpenzeTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -125,6 +127,9 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var syncScheduler: SyncScheduler
+
+    @Inject
+    lateinit var premiumEntitlementTracker: PremiumEntitlementTracker
 
     private var lastForegroundSyncAtMs: Long = 0L
     private var externalMochiPrompt by mutableStateOf<String?>(null)
@@ -166,6 +171,7 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             val prefs by userRepository.userPreferences.collectAsState(initial = UserPreferences())
+            val entitlement by premiumEntitlementTracker.entitlement.collectAsState()
             val appScope = rememberCoroutineScope()
             val darkTheme = when (prefs.themeMode) {
                 ThemeMode.DARK -> true
@@ -173,17 +179,27 @@ class MainActivity : AppCompatActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
+            LaunchedEffect(prefs.isGuestMode, prefs.userId) {
+                growthAnalyticsTracker.setAccountType(
+                    isGuest = prefs.isGuestMode,
+                    isSignedIn = !prefs.userId.isNullOrBlank()
+                )
+            }
+
             XpenzeTheme(darkTheme = darkTheme) {
                 // Always start in AuthGraph -> Splash decides where to go (Welcome / Verification / Onboarding / Main).
                 XpenzeApp(
                     startDestination = AuthGraph,
-                    isPaidPremium = prefs.isPremium,
+                    hasPremiumAccess = entitlement.hasPremiumAccess,
+                    isTrialEndingSoon = entitlement.isTrialEndingSoon,
                     showAiCoachNewBadge = !prefs.hasSeenAiCoachCta,
                     userId = prefs.userId,
+                    isGuestMode = prefs.isGuestMode,
                     isOnboardingComplete = prefs.isOnboardingComplete,
                     notificationsEnabled = prefs.notificationsEnabled,
                     notificationPermissionPromptLastShownAt = prefs.notificationPermissionPromptLastShownAt,
                     appOpenCount = prefs.appOpenCount,
+                    rateEligibleActionCount = prefs.rateEligibleActionCount,
                     hasRatedOnPlayStore = prefs.hasRatedOnPlayStore,
                     rateAppPromptLastShownAt = prefs.rateAppPromptLastShownAt,
                     onMarkAiCoachCtaSeen = {
@@ -220,6 +236,7 @@ class MainActivity : AppCompatActivity() {
                             isNewBadgeVisible = isNewBadgeVisible
                         )
                     },
+                    onScreenView = growthAnalyticsTracker::logScreenView,
                     onAiCtaClick = { route, isNewBadgeVisible ->
                         growthAnalyticsTracker.logAiCtaClick(
                             screenRoute = route,
@@ -254,16 +271,21 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val prefs = userRepository.userPreferences.first()
             val now = System.currentTimeMillis()
-            if (!prefs.userId.isNullOrBlank()) {
-                // Keep app-open count for rate prompt logic only after onboarding is complete.
-                if (prefs.isOnboardingComplete) {
-                    runCatching { userRepository.incrementAppOpenCount() }
-                }
-                syncScheduler.schedulePeriodic()
-                if (now - lastForegroundSyncAtMs > FOREGROUND_SYNC_THROTTLE_MS) {
-                    lastForegroundSyncAtMs = now
-                    syncScheduler.scheduleNow()
-                }
+            val isSignedIn = !prefs.userId.isNullOrBlank()
+            if (!isSignedIn && !prefs.isGuestMode) return@launch
+
+            // Keep app-open count for rate prompt logic only after onboarding is complete.
+            if (prefs.isOnboardingComplete) {
+                runCatching { userRepository.incrementAppOpenCount() }
+            }
+
+            // Guests have no cloud account, so there is nothing to sync.
+            if (!isSignedIn) return@launch
+
+            syncScheduler.schedulePeriodic()
+            if (now - lastForegroundSyncAtMs > FOREGROUND_SYNC_THROTTLE_MS) {
+                lastForegroundSyncAtMs = now
+                syncScheduler.scheduleNow()
             }
         }
     }
@@ -279,18 +301,22 @@ class MainActivity : AppCompatActivity() {
 private const val NOTIFICATION_PERMISSION_NUDGE_INTERVAL_MS = 3L * 24L * 60L * 60L * 1000L
 private const val RATE_PROMPT_INTERVAL_MS = 14L * 24L * 60L * 60L * 1000L
 private const val RATE_PROMPT_MIN_APP_OPENS = 5
+private const val RATE_PROMPT_MIN_ELIGIBLE_ACTIONS = 1
 
 @Composable
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 fun XpenzeApp(
     startDestination: Any,
-    isPaidPremium: Boolean,
+    hasPremiumAccess: Boolean,
+    isTrialEndingSoon: Boolean,
     showAiCoachNewBadge: Boolean,
     userId: String?,
+    isGuestMode: Boolean,
     isOnboardingComplete: Boolean,
     notificationsEnabled: Boolean,
     notificationPermissionPromptLastShownAt: Long,
     appOpenCount: Int,
+    rateEligibleActionCount: Int,
     hasRatedOnPlayStore: Boolean,
     rateAppPromptLastShownAt: Long,
     onMarkAiCoachCtaSeen: () -> Unit,
@@ -301,6 +327,7 @@ fun XpenzeApp(
     onPremiumCtaClick: (String?) -> Unit,
     onAiCtaImpression: (String?, Boolean) -> Unit,
     onAiCtaClick: (String?, Boolean) -> Unit,
+    onScreenView: (String?) -> Unit,
     externalMochiPrompt: String?,
     onExternalMochiPromptConsumed: () -> Unit,
     externalReviewDraftId: String?,
@@ -323,6 +350,10 @@ fun XpenzeApp(
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    LaunchedEffect(currentRoute) {
+        onScreenView(currentRoute)
+    }
 
     // Hide BottomBar and FAB on Auth/Onboarding screens
     val isAuthScreen = currentRoute == null ||
@@ -351,13 +382,14 @@ fun XpenzeApp(
     LaunchedEffect(
         isAuthScreen,
         userId,
+        isGuestMode,
         isOnboardingComplete,
         notificationsEnabled,
         hasNotificationsPermissionEnabled,
         notificationPermissionPromptLastShownAt
     ) {
         val shouldPrompt = !isAuthScreen &&
-            !userId.isNullOrBlank() &&
+            (!userId.isNullOrBlank() || isGuestMode) &&
             isOnboardingComplete &&
             !hasNotificationsPermissionEnabled
 
@@ -375,10 +407,10 @@ fun XpenzeApp(
         }
     }
 
-    LaunchedEffect(externalMochiPrompt, userId, isAuthScreen) {
+    LaunchedEffect(externalMochiPrompt, userId, isGuestMode, isAuthScreen) {
         val prompt = externalMochiPrompt?.trim().orEmpty()
         if (prompt.isBlank()) return@LaunchedEffect
-        if (userId.isNullOrBlank() || isAuthScreen) return@LaunchedEffect
+        if ((userId.isNullOrBlank() && !isGuestMode) || isAuthScreen) return@LaunchedEffect
 
         navController.navigate(Screen.AiCoachChat(prompt = prompt)) {
             launchSingleTop = true
@@ -386,10 +418,10 @@ fun XpenzeApp(
         onExternalMochiPromptConsumed()
     }
 
-    LaunchedEffect(externalReviewDraftId, externalReviewDraftType, userId, isAuthScreen) {
+    LaunchedEffect(externalReviewDraftId, externalReviewDraftType, userId, isGuestMode, isAuthScreen) {
         val draftId = externalReviewDraftId?.trim().orEmpty()
         if (draftId.isBlank()) return@LaunchedEffect
-        if (userId.isNullOrBlank() || isAuthScreen) return@LaunchedEffect
+        if ((userId.isNullOrBlank() && !isGuestMode) || isAuthScreen) return@LaunchedEffect
 
         navController.navigate(
             Screen.ReviewDraft(
@@ -405,16 +437,19 @@ fun XpenzeApp(
     LaunchedEffect(
         isAuthScreen,
         userId,
+        isGuestMode,
         isOnboardingComplete,
         appOpenCount,
+        rateEligibleActionCount,
         hasRatedOnPlayStore,
         rateAppPromptLastShownAt,
         showNotificationPermissionPrompt
     ) {
         val shouldPrompt = !isAuthScreen &&
-            !userId.isNullOrBlank() &&
+            (!userId.isNullOrBlank() || isGuestMode) &&
             isOnboardingComplete &&
             appOpenCount >= RATE_PROMPT_MIN_APP_OPENS &&
+            rateEligibleActionCount >= RATE_PROMPT_MIN_ELIGIBLE_ACTIONS &&
             !hasRatedOnPlayStore &&
             !showNotificationPermissionPrompt
 
@@ -492,7 +527,8 @@ fun XpenzeApp(
             if (!isAuthScreen && !useNavRail) {
                 Column {
                     GrowthBottomActionRow(
-                        isPaidPremium = isPaidPremium,
+                        hasPremiumAccess = hasPremiumAccess,
+                        isTrialEndingSoon = isTrialEndingSoon,
                         currentRoute = currentRoute,
                         showAiCoachNewBadge = showAiCoachNewBadge,
                         onNavigateToPremium = {
@@ -586,7 +622,8 @@ fun XpenzeApp(
                         }
                         Spacer(modifier = Modifier.weight(1f))
                         GrowthRailActions(
-                            isPaidPremium = isPaidPremium,
+                            hasPremiumAccess = hasPremiumAccess,
+                            isTrialEndingSoon = isTrialEndingSoon,
                             currentRoute = currentRoute,
                             showAiCoachNewBadge = showAiCoachNewBadge,
                             onNavigateToPremium = {
@@ -697,7 +734,8 @@ fun XpenzeApp(
 
 @Composable
 private fun GrowthBottomActionRow(
-    isPaidPremium: Boolean,
+    hasPremiumAccess: Boolean,
+    isTrialEndingSoon: Boolean,
     currentRoute: String?,
     showAiCoachNewBadge: Boolean,
     onNavigateToPremium: () -> Unit,
@@ -709,7 +747,7 @@ private fun GrowthBottomActionRow(
     onAiCtaClick: (String?, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val shouldShowPremium = !isPaidPremium
+    val shouldShowPremium = shouldShowPremiumCta(hasPremiumAccess, isTrialEndingSoon)
     val shouldShowAi = currentRoute?.contains("AiCoachChat") != true
     if (!shouldShowPremium && !shouldShowAi) return
 
@@ -770,7 +808,13 @@ private fun GrowthBottomActionRow(
                 },
                 text = {
                     Text(
-                        text = stringResource(R.string.ai_chat_go_premium),
+                        text = stringResource(
+                            if (isTrialEndingSoon) {
+                                R.string.trial_ending_soon_cta
+                            } else {
+                                R.string.ai_chat_go_premium
+                            }
+                        ),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -836,7 +880,8 @@ private fun GrowthBottomActionRow(
 
 @Composable
 private fun GrowthRailActions(
-    isPaidPremium: Boolean,
+    hasPremiumAccess: Boolean,
+    isTrialEndingSoon: Boolean,
     currentRoute: String?,
     showAiCoachNewBadge: Boolean,
     onNavigateToPremium: () -> Unit,
@@ -847,7 +892,7 @@ private fun GrowthRailActions(
     onAiCtaImpression: (String?, Boolean) -> Unit,
     onAiCtaClick: (String?, Boolean) -> Unit
 ) {
-    val shouldShowPremium = !isPaidPremium
+    val shouldShowPremium = shouldShowPremiumCta(hasPremiumAccess, isTrialEndingSoon)
     val shouldShowAi = currentRoute?.contains("AiCoachChat") != true
     if (!shouldShowPremium && !shouldShowAi) return
 
@@ -894,7 +939,17 @@ private fun GrowthRailActions(
                     contentDescription = stringResource(R.string.settings_cd_premium)
                 )
             },
-            label = { Text(stringResource(R.string.ai_chat_go_premium)) },
+            label = {
+                Text(
+                    stringResource(
+                        if (isTrialEndingSoon) {
+                            R.string.trial_ending_soon_cta
+                        } else {
+                            R.string.ai_chat_go_premium
+                        }
+                    )
+                )
+            },
             alwaysShowLabel = true,
             colors = NavigationRailItemDefaults.colors(
                 selectedIconColor = com.chelumore.xpenze.ui.theme.YellowPrimary,

@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    // AGP 9 built-in Kotlin — do not apply org.jetbrains.kotlin.android
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -17,8 +17,8 @@ android {
         applicationId = "com.chelumore.xpenze"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.0.14"
+        versionCode = 23
+        versionName = "1.0.22"
         fun String.escapeForBuildConfig(): String = replace("\\", "\\\\").replace("\"", "\\\"")
 
         val geminiApiKey = (project.findProperty("GEMINI_API_KEY") as String?)
@@ -149,10 +149,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    // With built-in Kotlin, jvmTarget defaults to compileOptions.targetCompatibility.
 
     buildFeatures {
         compose = true
@@ -165,6 +162,14 @@ android {
             // Needed for androidTest APK packaging (some test deps bundle duplicate LICENSE.md files).
             excludes += "META-INF/LICENSE.md"
             excludes += "META-INF/LICENSE-notice.md"
+        }
+    }
+
+    bundle {
+        language {
+            // The in-app language switcher can select any supported locale, not just the device one.
+            // Play must therefore install every language with the base APK instead of splitting them out.
+            enableSplit = false
         }
     }
 

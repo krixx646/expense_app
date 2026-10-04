@@ -12,19 +12,19 @@ class BudgetPeriodWindowTest {
     private val utc: ZoneId = ZoneId.of("UTC")
 
     @Test
-    fun `monthly budget resolves to current calendar month`() {
+    fun `monthly budget resolves to its configured calendar month`() {
         val budget = sampleBudget(
             period = BudgetPeriod.MONTHLY,
             startDate = utcMillis(2026, 1, 1)
         )
-        val now = utcMillis(2026, 3, 15, 10, 30, 0, 0)
+        val now = utcMillis(2026, 1, 15, 10, 30, 0, 0)
 
         val window = budget.currentPeriodWindow(nowMillis = now, zoneId = utc)
 
         requireNotNull(window)
-        assertEquals(utcMillis(2026, 3, 1), window.periodStartMillis)
-        assertEquals(utcMillis(2026, 3, 31, 23, 59, 59, 999), window.periodEndMillis)
-        assertEquals(utcMillis(2026, 3, 1), window.spentRange.startMillis)
+        assertEquals(utcMillis(2026, 1, 1), window.periodStartMillis)
+        assertEquals(utcMillis(2026, 1, 31, 23, 59, 59, 999), window.periodEndMillis)
+        assertEquals(utcMillis(2026, 1, 1), window.spentRange.startMillis)
         assertEquals(now, window.spentRange.endMillis)
     }
 
@@ -85,6 +85,37 @@ class BudgetPeriodWindowTest {
         val window = budget.currentPeriodWindow(nowMillis = now, zoneId = utc)
 
         assertNull(window)
+    }
+
+    @Test
+    fun `monthly budget resolves the next period after its closed timeframe`() {
+        val budget = sampleBudget(
+            period = BudgetPeriod.MONTHLY,
+            startDate = utcMillis(2026, 3, 1),
+            endDate = utcMillis(2026, 3, 31, 23, 59, 59, 999)
+        )
+
+        val next = budget.nextTimeframeRange(zoneId = utc)
+
+        requireNotNull(next)
+        assertEquals(utcMillis(2026, 4, 1), next.startMillis)
+        assertEquals(utcMillis(2026, 4, 30, 23, 59, 59, 999), next.endMillis)
+    }
+
+    @Test
+    fun `budget timeframe range closes at resolved end date for past budgets`() {
+        val budget = sampleBudget(
+            period = BudgetPeriod.WEEKLY,
+            startDate = utcMillis(2026, 3, 2),
+            endDate = utcMillis(2026, 3, 8, 23, 59, 59, 999)
+        )
+        val now = utcMillis(2026, 3, 12)
+
+        val range = budget.timeframeRange(nowMillis = now, zoneId = utc)
+
+        requireNotNull(range)
+        assertEquals(utcMillis(2026, 3, 2), range.startMillis)
+        assertEquals(utcMillis(2026, 3, 8, 23, 59, 59, 999), range.endMillis)
     }
 
     private fun sampleBudget(

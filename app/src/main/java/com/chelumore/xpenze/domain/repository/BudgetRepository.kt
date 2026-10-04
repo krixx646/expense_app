@@ -10,6 +10,7 @@ interface BudgetRepository {
     fun getById(id: String): Flow<Budget?>
     fun getByCategory(categoryId: String): Flow<List<Budget>>
     fun getCurrentBudgets(): Flow<List<Budget>>
+    fun getPastBudgets(): Flow<List<Budget>>
 
     /**
      * Derived data: budgets with computed progress/spent from transactions.

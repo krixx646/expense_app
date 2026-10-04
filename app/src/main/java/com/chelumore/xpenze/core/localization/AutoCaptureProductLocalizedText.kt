@@ -37,6 +37,7 @@ internal fun localizedAutoCaptureHomeCopy(
         !hasPremiumAccess -> pickAutoCaptureUxText(
             normalized,
             en = "Stop typing every expense manually",
+            lv = "Pārtrauciet rakstīt katru izdevumu manuāli",
             es = "Deja de escribir cada gasto a mano",
             fr = "N'ecrivez plus chaque depense a la main",
             de = "Schreiben Sie nicht mehr jede Ausgabe von Hand",
@@ -54,6 +55,7 @@ internal fun localizedAutoCaptureHomeCopy(
         !hasPremiumAccess -> pickAutoCaptureUxText(
             normalized,
             en = "Premium turns statement files, screenshots, receipts, familiar merchants, and supported money alerts into safe drafts you review first.",
+            lv = "Premium pārvērš izrakstu failus, ekrānuzņēmumus, kvītis, pazīstamus tirgotājus un atbalstītos naudas brīdinājumus drošos melnrakstos, kurus vispirms pārskatāt.",
             es = "Premium convierte extractos, capturas, recibos, comercios conocidos y alertas de dinero compatibles en borradores seguros para revisar primero.",
             fr = "Premium transforme releves, captures, recus, marchands connus et alertes d'argent compatibles en brouillons surs a verifier d'abord.",
             de = "Premium macht aus Auszugen, Screenshots, Belegen, bekannten Handlern und passenden Geldalarmen sichere Entwurfe zur Prufung.",
@@ -67,6 +69,7 @@ internal fun localizedAutoCaptureHomeCopy(
         autoCaptureEnabled && pendingDraftCount > 0 -> pickAutoCaptureUxText(
             normalized,
             en = "$pendingDraftCount draft(s) are waiting in your Draft Inbox.",
+            lv = "$pendingDraftCount melnraksts(-i) gaida melnrakstu iesūtnē.",
             es = "Hay $pendingDraftCount borrador(es) esperandote en tu Bandeja de borradores.",
             fr = "$pendingDraftCount brouillon(s) vous attendent dans votre Boite de brouillons.",
             de = "$pendingDraftCount Entwurf(e) warten in Ihrem Entwurfs-Posteingang.",
@@ -80,6 +83,7 @@ internal fun localizedAutoCaptureHomeCopy(
         autoCaptureEnabled -> pickAutoCaptureUxText(
             normalized,
             en = "Automatic mode is on. Import a statement, scan a receipt, or turn on notification capture to start filling your Draft Inbox.",
+            lv = "Automātiskais režīms ir ieslēgts. Importējiet izrakstu, skenējiet kvīti vai ieslēdziet paziņojumu tveršanu, lai sāktu aizpildīt melnrakstu iesūtni.",
             es = "El modo automatico esta activado. Importa un extracto, escanea un recibo o activa la captura de notificaciones para llenar tu Bandeja de borradores.",
             fr = "Le mode automatique est active. Importez un releve, scannez un recu ou activez la capture des notifications pour remplir votre Boite de brouillons.",
             de = "Der automatische Modus ist aktiviert. Importieren Sie einen Auszug, scannen Sie einen Beleg oder aktivieren Sie die Benachrichtigungserfassung, um Entwurfe zu sammeln.",
@@ -93,6 +97,7 @@ internal fun localizedAutoCaptureHomeCopy(
         else -> pickAutoCaptureUxText(
             normalized,
             en = "Automatic mode is off. Turn it on to let Xpenze collect possible transactions as drafts instead of making you start from scratch.",
+            lv = "Automātiskais režīms ir izslēgts. Ieslēdziet to, lai ļautu Xpenze apkopot iespējamos darījumus kā melnrakstus, nevis likt jums sākt no nulles.",
             es = "El modo automatico esta apagado. Activalo para que Xpenze recopile posibles transacciones como borradores en lugar de hacerte empezar desde cero.",
             fr = "Le mode automatique est desactive. Activez-le pour que Xpenze recueille les transactions possibles sous forme de brouillons.",
             de = "Der automatische Modus ist aus. Aktivieren Sie ihn, damit Xpenze mogliche Transaktionen als Entwurfe sammelt, statt Sie bei null anfangen zu lassen.",
@@ -108,6 +113,7 @@ internal fun localizedAutoCaptureHomeCopy(
         !hasPremiumAccess -> pickAutoCaptureUxText(
             normalized,
             en = "See how it works",
+            lv = "Skatiet, kā tas darbojas",
             es = "Ver como funciona",
             fr = "Voir comment cela marche",
             de = "So funktioniert es",
@@ -122,6 +128,7 @@ internal fun localizedAutoCaptureHomeCopy(
         else -> pickAutoCaptureUxText(
             normalized,
             en = "Set up automatic capture",
+            lv = "Iestatiet automātisko uztveršanu",
             es = "Configurar captura automatica",
             fr = "Configurer la capture automatique",
             de = "Automatische Erfassung einrichten",
@@ -150,6 +157,7 @@ internal fun localizedAutoCaptureSetupCopy(
         screenTitle = pickAutoCaptureUxText(
             normalized,
             en = "How Automatic Capture Works",
+            lv = "Kā darbojas automātiskā tveršana",
             es = "Como funciona la captura automatica",
             fr = "Comment fonctionne la capture automatique",
             de = "So funktioniert die automatische Erfassung",
@@ -163,6 +171,7 @@ internal fun localizedAutoCaptureSetupCopy(
         heroTitle = pickAutoCaptureUxText(
             normalized,
             en = "Simple version: Xpenze helps you collect money events, but you stay in control.",
+            lv = "Vienkārša versija: Xpenze palīdz iekasēt naudas notikumus, taču jūs saglabājat kontroli.",
             es = "Version simple: Xpenze te ayuda a reunir movimientos de dinero, pero tu mantienes el control.",
             fr = "Version simple : Xpenze vous aide a rassembler les mouvements d'argent, mais vous gardez le controle.",
             de = "Kurz gesagt: Xpenze sammelt mogliche Geldbewegungen, aber Sie behalten die Kontrolle.",
@@ -176,6 +185,7 @@ internal fun localizedAutoCaptureSetupCopy(
         heroBody = pickAutoCaptureUxText(
             normalized,
             en = "It does not move money. It does not approve payments. It does not change your balances on its own. It only creates drafts for you to review, edit, save, or ignore.",
+            lv = "Tas naudu nepārvieto. Tas neapstiprina maksājumus. Tas pats par sevi nemaina jūsu atlikumus. Tas veido tikai melnrakstus, ko varat pārskatīt, rediģēt, saglabāt vai ignorēt.",
             es = "No mueve dinero. No aprueba pagos. No cambia tus saldos por si solo. Solo crea borradores para que los revises, edites, guardes o ignores.",
             fr = "Il ne deplace pas d'argent. Il n'approuve pas les paiements. Il ne change pas vos soldes tout seul. Il cree seulement des brouillons a verifier, modifier, enregistrer ou ignorer.",
             de = "Es bewegt kein Geld. Es genehmigt keine Zahlungen. Es andert Ihre Salden nicht selbststandig. Es erstellt nur Entwurfe zum Prufen, Bearbeiten, Speichern oder Ignorieren.",
@@ -189,6 +199,7 @@ internal fun localizedAutoCaptureSetupCopy(
         whatItDoesTitle = pickAutoCaptureUxText(
             normalized,
             en = "What it does",
+            lv = "Ko tas dara",
             es = "Lo que hace",
             fr = "Ce que cela fait",
             de = "Was es tut",
@@ -203,6 +214,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Imports statement CSV files into a Draft Inbox instead of posting transactions directly.",
+                lv = "Importē izraksta CSV failus melnrakstu iesūtnē, nevis tieši publicē darījumus.",
                 es = "Importa archivos CSV de extractos a una Bandeja de borradores en lugar de registrar transacciones directamente.",
                 fr = "Importe les fichiers CSV de releves dans une Boite de brouillons au lieu d'ajouter directement des transactions.",
                 de = "Importiert Auszugs-CSV-Dateien in einen Entwurfs-Posteingang, statt Transaktionen direkt zu verbuchen.",
@@ -216,6 +228,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Reads screenshots and receipts to pull out likely amounts, merchants, and dates.",
+                lv = "Nolasa ekrānuzņēmumus un kvītis, lai noskaidrotu iespējamās summas, tirgotājus un datumus.",
                 es = "Lee capturas y recibos para extraer importes, comercios y fechas probables.",
                 fr = "Lit les captures et recus pour extraire les montants, marchands et dates probables.",
                 de = "Liest Screenshots und Belege, um wahrscheinliche Betrage, Handler und Daten zu erkennen.",
@@ -229,6 +242,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Optionally watches supported transaction notifications and saves matching ones as drafts.",
+                lv = "Pēc izvēles skatās atbalstītos darījumu paziņojumus un saglabā atbilstošos paziņojumus kā melnrakstus.",
                 es = "Opcionalmente vigila notificaciones de transacciones compatibles y guarda las que coincidan como borradores.",
                 fr = "Peut surveiller les notifications de transaction compatibles et enregistrer les correspondances en brouillons.",
                 de = "Kann passende Transaktionsbenachrichtigungen uberwachen und als Entwurfe speichern.",
@@ -243,6 +257,7 @@ internal fun localizedAutoCaptureSetupCopy(
         whatItNeverDoesTitle = pickAutoCaptureUxText(
             normalized,
             en = "What it never does",
+            lv = "Ko tas nekad nedara",
             es = "Lo que nunca hace",
             fr = "Ce qu'il ne fait jamais",
             de = "Was es niemals tut",
@@ -257,6 +272,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "It never sends money, takes loans, pays bills, or approves transfers for you.",
+                lv = "Tā nekad nesūta naudu, neņem aizdevumus, nemaksā rēķinus vai neapstiprina pārskaitījumus jūsu vietā.",
                 es = "Nunca envia dinero, toma prestamos, paga facturas ni aprueba transferencias por ti.",
                 fr = "Il n'envoie jamais d'argent, ne prend pas de pret, ne paie pas de factures et n'approuve pas de virements a votre place.",
                 de = "Es sendet niemals Geld, nimmt keine Kredite auf, bezahlt keine Rechnungen und genehmigt keine Uberweisungen fur Sie.",
@@ -270,6 +286,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Nothing touches your real money history until you review it and save it yourself.",
+                lv = "Nekas neskar jūsu īstās naudas vēsturi, kamēr neesat to pārskatījis un saglabājis pats.",
                 es = "Nada toca tu historial real de dinero hasta que lo revises y lo guardes tu mismo.",
                 fr = "Rien ne touche a votre historique financier reel tant que vous ne l'avez pas verifie et enregistre vous-meme.",
                 de = "Nichts verandert Ihre echte Geldhistorie, bis Sie es selbst prufen und speichern.",
@@ -284,6 +301,7 @@ internal fun localizedAutoCaptureSetupCopy(
         mistakesTitle = pickAutoCaptureUxText(
             normalized,
             en = "How Xpenze reduces mistakes",
+            lv = "Kā Xpenze samazina kļūdas",
             es = "Como reduce errores Xpenze",
             fr = "Comment Xpenze reduit les erreurs",
             de = "So reduziert Xpenze Fehler",
@@ -298,6 +316,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Unclear or risky items stay in Needs review instead of pretending certainty.",
+                lv = "Neskaidri vai riskanti priekšmeti paliek sadaļā Nepieciešams pārskatīt, nevis izlikties par noteiktību.",
                 es = "Los elementos poco claros o riesgosos se quedan en Necesita revision en lugar de fingir certeza.",
                 fr = "Les elements flous ou risqués restent dans A verifier au lieu de faire semblant d'etre certains.",
                 de = "Unklare oder riskante Elemente bleiben unter Prufung statt falsche Sicherheit vorzutauschen.",
@@ -311,6 +330,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "You choose whether a draft is an expense, income, transfer, reimbursement, pass-through, or excluded.",
+                lv = "Jūs izvēlaties, vai melnraksts ir izdevumi, ienākumi, pārvedums, atlīdzība, caurlaide vai izslēgta.",
                 es = "Tu eliges si un borrador es gasto, ingreso, transferencia, reembolso, paso temporal o excluido.",
                 fr = "C'est vous qui decidez si un brouillon est une depense, un revenu, un transfert, un remboursement, un pass-through ou une exclusion.",
                 de = "Sie entscheiden, ob ein Entwurf Ausgabe, Einnahme, Transfer, Erstattung, Durchlaufposten oder ausgeschlossen ist.",
@@ -324,6 +344,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Duplicate checks help stop the same statement row or alert from showing up again and again.",
+                lv = "Dublētas pārbaudes palīdz novērst vienas un tās pašas paziņojuma rindas vai brīdinājuma rādīšanu atkal un atkal.",
                 es = "Las comprobaciones de duplicados ayudan a evitar que la misma fila o alerta aparezca una y otra vez.",
                 fr = "Les verifications de doublons evitent que la meme ligne ou alerte revienne encore et encore.",
                 de = "Dublettenkontrollen helfen, dieselbe Auszugszeile oder Warnung nicht immer wieder anzuzeigen.",
@@ -338,6 +359,7 @@ internal fun localizedAutoCaptureSetupCopy(
         permissionsTitle = pickAutoCaptureUxText(
             normalized,
             en = "Permissions and access",
+            lv = "Atļaujas un piekļuve",
             es = "Permisos y acceso",
             fr = "Autorisations et acces",
             de = "Berechtigungen und Zugriff",
@@ -352,6 +374,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Statement import and receipt scan only work when you choose a file or image yourself.",
+                lv = "Izrakstu importēšana un kvīšu skenēšana darbojas tikai tad, ja pats izvēlaties failu vai attēlu.",
                 es = "La importacion de extractos y el escaneo de recibos solo funcionan cuando eliges un archivo o imagen por tu cuenta.",
                 fr = "L'import de releves et le scan de recus ne fonctionnent que lorsque vous choisissez vous-meme un fichier ou une image.",
                 de = "Auszugsimport und Belegscan funktionieren nur, wenn Sie selbst eine Datei oder ein Bild auswahlen.",
@@ -365,6 +388,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Notification capture needs Android notification access, and it stays off until you grant that access.",
+                lv = "Paziņojumu tveršanai ir nepieciešama Android paziņojumu piekļuve, un tā paliek izslēgta, līdz piešķirat šo piekļuvi.",
                 es = "La captura de notificaciones necesita acceso de Android a las notificaciones, y seguira apagada hasta que lo concedas.",
                 fr = "La capture des notifications a besoin de l'acces Android aux notifications et reste desactivee jusqu'a votre autorisation.",
                 de = "Die Benachrichtigungserfassung benotigt Android-Benachrichtigungszugriff und bleibt aus, bis Sie ihn erlauben.",
@@ -379,6 +403,7 @@ internal fun localizedAutoCaptureSetupCopy(
         turnOnNowTitle = pickAutoCaptureUxText(
             normalized,
             en = "What turns on now",
+            lv = "Kas tagad ieslēdzas",
             es = "Lo que se activara ahora",
             fr = "Ce qui s'active maintenant",
             de = "Das wird jetzt eingeschaltet",
@@ -393,6 +418,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Automatic mode",
+                lv = "Automātiskais režīms",
                 es = "Modo automatico",
                 fr = "Mode automatique",
                 de = "Automatischer Modus",
@@ -406,6 +432,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Statement import",
+                lv = "Izrakstu importēšana",
                 es = "Importacion de extractos",
                 fr = "Import de releves",
                 de = "Auszugsimport",
@@ -419,6 +446,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Screenshot and receipt OCR",
+                lv = "Ekrānuzņēmums un kvīts OCR",
                 es = "OCR de capturas y recibos",
                 fr = "OCR de captures et recus",
                 de = "Screenshot- und Beleg-OCR",
@@ -432,6 +460,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Merchant memory and recurring suggestions",
+                lv = "Tirgotāja atmiņa un regulāri ieteikumi",
                 es = "Memoria de comercios y sugerencias recurrentes",
                 fr = "Memoire des marchands et suggestions recurrentes",
                 de = "Handler-Merkhilfe und Wiederholungsvorschlage",
@@ -445,6 +474,7 @@ internal fun localizedAutoCaptureSetupCopy(
             pickAutoCaptureUxText(
                 normalized,
                 en = "Notification capture is available on this page too. After you continue, Xpenze can ask Android for access and it still stays off unless you allow it.",
+                lv = "Paziņojumu uztveršana ir pieejama arī šajā lapā. Pēc tam, kad turpināsiet, Xpenze var lūgt Android piekļuvi, un tas joprojām ir izslēgts, ja vien jūs to neatļaujat.",
                 es = "La captura de notificaciones tambien esta en esta pagina. Despues de continuar, Xpenze puede pedir acceso a Android y seguira apagada si no lo permites.",
                 fr = "La capture des notifications est aussi disponible sur cette page. Apres avoir continue, Xpenze peut demander l'acces Android et elle reste desactivee sans votre accord.",
                 de = "Die Benachrichtigungserfassung ist auch auf dieser Seite verfugbar. Nach dem Fortfahren kann Xpenze Android-Zugriff anfragen und sie bleibt aus, wenn Sie nicht zustimmen.",
@@ -462,6 +492,7 @@ internal fun localizedAutoCaptureSetupCopy(
             else -> pickAutoCaptureUxText(
                 normalized,
                 en = "I understand, turn it on",
+                lv = "Es saprotu, ieslēdziet to",
                 es = "Lo entiendo, activalo",
                 fr = "J'ai compris, activez-le",
                 de = "Ich verstehe, jetzt einschalten",
@@ -476,6 +507,7 @@ internal fun localizedAutoCaptureSetupCopy(
         secondaryCta = pickAutoCaptureUxText(
             normalized,
             en = "Not now",
+            lv = "Ne tagad",
             es = "Ahora no",
             fr = "Pas maintenant",
             de = "Jetzt nicht",
@@ -493,6 +525,7 @@ internal fun localizedAutoCaptureNotificationSetupPromptMessage(languageTag: Str
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "When you tap the button below, Xpenze will immediately offer notification capture here too. Android access is still required before supported money alerts can become drafts.",
+        lv = "Pieskaroties zemāk esošajai pogai, Xpenze nekavējoties piedāvās paziņojumu tveršanu arī šeit. Lai atbalstītie naudas brīdinājumi varētu kļūt par melnrakstiem, joprojām ir nepieciešama Android piekļuve.",
         es = "Cuando toques el boton de abajo, Xpenze te ofrecera aqui mismo la captura de notificaciones. Aun hace falta acceso de Android antes de que las alertas compatibles se conviertan en borradores.",
         fr = "Quand vous appuierez sur le bouton ci-dessous, Xpenze proposera aussi ici la capture des notifications. L'acces Android reste necessaire avant que les alertes compatibles deviennent des brouillons.",
         de = "Wenn Sie unten auf die Schaltflache tippen, bietet Xpenze die Benachrichtigungserfassung auch hier sofort an. Android-Zugriff ist weiterhin erforderlich, bevor passende Geldalarme zu Entwurfen werden.",
@@ -508,6 +541,7 @@ internal fun localizedAutoCapturePremiumBundleLabel(languageTag: String): String
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Automatic capture, Mochi, and recurring reports",
+        lv = "Automātiska uztveršana, Mochi un periodiski pārskati",
         es = "Captura automatica, Mochi y reportes recurrentes",
         fr = "Capture automatique, Mochi et rapports recurrents",
         de = "Automatische Erfassung, Mochi und wiederkehrende Berichte",
@@ -523,6 +557,7 @@ internal fun localizedAutoCapturePremiumFeatureLabel(languageTag: String): Strin
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Automatic capture",
+        lv = "Automātiska uztveršana",
         es = "Captura automatica",
         fr = "Capture automatique",
         de = "Automatische Erfassung",
@@ -538,6 +573,7 @@ internal fun localizedAutoCapturePremiumBenefit(languageTag: String): String =
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Automatic capture: statements, receipts, and alert drafts",
+        lv = "Automātiska uztveršana: izraksti, kvītis un brīdinājumu melnraksti",
         es = "Captura automatica: extractos, recibos y borradores desde alertas",
         fr = "Capture automatique : releves, recus et brouillons depuis les alertes",
         de = "Automatische Erfassung: Auszuge, Belege und Alarm-Entwurfe",
@@ -553,6 +589,7 @@ internal fun localizedAutoCapturePremiumComparisonBody(languageTag: String): Str
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Premium should save you time, reduce manual typing, and help you catch more of your real money activity.",
+        lv = "Premium ietaupa jūsu laiku, samazina manuālo rakstīšanu un palīdzēs jums iegūt vairāk no reālās naudas darbībām.",
         es = "Premium debe ahorrarte tiempo, reducir el trabajo manual y ayudarte a captar mejor tu actividad real de dinero.",
         fr = "Premium doit vous faire gagner du temps, reduire la saisie manuelle et mieux capturer vos vraies activites d'argent.",
         de = "Premium soll Zeit sparen, manuelle Eingaben reduzieren und mehr Ihrer echten Geldbewegungen erfassen.",
@@ -568,6 +605,7 @@ internal fun localizedAutoCapturePremiumFreeValue(languageTag: String): String =
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Manual entry",
+        lv = "Manuāla ievade",
         es = "Entrada manual",
         fr = "Saisie manuelle",
         de = "Manuelle Eingabe",
@@ -583,6 +621,7 @@ internal fun localizedAutoCapturePremiumValue(languageTag: String): String =
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Statements, OCR, alerts",
+        lv = "Paziņojumi, OCR, brīdinājumi",
         es = "Extractos, OCR, alertas",
         fr = "Releves, OCR, alertes",
         de = "Auszuge, OCR, Alarme",
@@ -598,6 +637,7 @@ internal fun localizedAutoCaptureNotificationAccessMessage(languageTag: String):
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Android will open notification access settings. If you allow Xpenze here, it can read matching money alerts and turn them into drafts for review. It still cannot move money or add real transactions by itself.",
+        lv = "Android atvērs paziņojumu piekļuves iestatījumus. Ja šeit atļausiet Xpenze, tas var nolasīt atbilstošos naudas brīdinājumus un pārvērst tos melnrakstos pārskatīšanai. Tas joprojām nevar pārvietot naudu vai pievienot reālus darījumus.",
         es = "Android abrira los ajustes de acceso a notificaciones. Si permites Xpenze aqui, podra leer alertas de dinero compatibles y convertirlas en borradores para revisar. Aun asi no puede mover dinero ni agregar transacciones reales por si solo.",
         fr = "Android ouvrira les parametres d'acces aux notifications. Si vous autorisez Xpenze ici, il pourra lire les alertes d'argent correspondantes et les transformer en brouillons a verifier. Il ne peut toujours ni deplacer de l'argent ni ajouter de vraies transactions tout seul.",
         de = "Android offnet die Einstellungen fur den Benachrichtigungszugriff. Wenn Sie Xpenze hier erlauben, kann es passende Geldalarme lesen und als Entwurfe zur Prufung speichern. Geld bewegen oder echte Transaktionen selbststandig anlegen kann es trotzdem nicht.",
@@ -613,6 +653,7 @@ private fun localizedAutoCaptureSettingsTitle(languageTag: String): String =
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Automatic capture",
+        lv = "Automātiska uztveršana",
         es = "Captura automatica",
         fr = "Capture automatique",
         de = "Automatische Erfassung",
@@ -628,6 +669,7 @@ private fun localizedAutoCaptureDraftInboxTitle(languageTag: String): String =
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Open Draft Inbox",
+        lv = "Atveriet Melnrakstu iesūtni",
         es = "Abrir Bandeja de borradores",
         fr = "Ouvrir la Boite de brouillons",
         de = "Entwurfs-Posteingang offnen",
@@ -643,6 +685,7 @@ private fun localizedAutoCaptureUpgradeButtonText(languageTag: String): String =
     pickAutoCaptureUxText(
         normalizeAutoCaptureUxTag(languageTag),
         en = "Unlock Premium",
+        lv = "Atbloķējiet Premium",
         es = "Desbloquear Premium",
         fr = "Debloquer Premium",
         de = "Premium freischalten",
@@ -661,6 +704,7 @@ private fun normalizeAutoCaptureUxTag(languageTag: String?): String {
 private fun pickAutoCaptureUxText(
     normalizedTag: String,
     en: String,
+    lv: String = en,
     es: String,
     fr: String,
     de: String,
@@ -672,6 +716,7 @@ private fun pickAutoCaptureUxText(
     zh: String
 ): String {
     return when (normalizedTag) {
+        "lv" -> lv
         "es" -> es
         "fr" -> fr
         "de" -> de

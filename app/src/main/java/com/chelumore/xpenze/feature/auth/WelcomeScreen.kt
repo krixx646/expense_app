@@ -1,6 +1,6 @@
 package com.chelumore.xpenze.feature.auth
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,9 +19,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chelumore.xpenze.R
 import com.chelumore.xpenze.core.ui.util.SystemBars
 import com.chelumore.xpenze.ui.theme.BlackBackground
@@ -40,10 +45,21 @@ import com.chelumore.xpenze.ui.theme.YellowPrimary
 @Composable
 fun WelcomeScreen(
     onNavigateToSignUp: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    onContinueAsGuest: (GuestSessionDestination) -> Unit,
+    viewModel: WelcomeViewModel = hiltViewModel()
 ) {
     // Keep system bars aligned with this screen (prevents white cut-off bars)
     SystemBars(color = BlackBackground, darkIcons = false)
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.guestSessionDestination) {
+        uiState.guestSessionDestination?.let { destination ->
+            onContinueAsGuest(destination)
+            viewModel.onGuestSessionNavigated()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -117,7 +133,10 @@ fun WelcomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(
-                    onClick = onNavigateToSignUp,
+                    onClick = {
+                        viewModel.onSignUpSelected()
+                        onNavigateToSignUp()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -138,7 +157,10 @@ fun WelcomeScreen(
                 }
 
                 TextButton(
-                    onClick = onNavigateToLogin
+                    onClick = {
+                        viewModel.onLogInSelected()
+                        onNavigateToLogin()
+                    }
                 ) {
                     Text(
                         text = stringResource(R.string.welcome_screen_log_in),
@@ -147,6 +169,34 @@ fun WelcomeScreen(
                         fontSize = 16.sp
                     )
                 }
+
+                OutlinedButton(
+                    onClick = viewModel::continueWithoutAccount,
+                    enabled = !uiState.isStartingGuestSession,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color.White,
+                        disabledContentColor = Color.White.copy(alpha = 0.5f)
+                    ),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.welcome_screen_continue_without_account),
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp
+                    )
+                }
+
+                Text(
+                    text = stringResource(R.string.welcome_screen_guest_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

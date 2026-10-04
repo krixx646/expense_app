@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  google-services generates `default_web_client_id`, and googleWebClientIdOrNull() resolves it via
+  Resources.getIdentifier(). The shrinker sees no static reference and strips it, which makes Google
+  sign-in fail at runtime with a null Web client ID.
+-->
+<resources
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@string/default_web_client_id" />

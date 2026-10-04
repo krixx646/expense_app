@@ -202,9 +202,24 @@ class DashboardViewModel @Inject constructor(
             userPhotoUrl = prefs.userPhotoUrl,
             hasFounderReward = entitlement.hasFounderReward,
             hasPremiumAccess = entitlement.hasPremiumAccess,
+            isGuestMode = prefs.isGuestMode || prefs.userId.isNullOrBlank(),
             currencyCode = currency,
             appLanguageTag = AppLanguages.normalizeTag(prefs.appLanguageTag),
             autoCaptureEnabled = prefs.autoCaptureEnabled,
+            showAutoCaptureTutorial = prefs.isOnboardingComplete &&
+                !prefs.hasSeenAutoCaptureTutorial &&
+                !prefs.isGuestMode &&
+                !prefs.userId.isNullOrBlank(),
+            isTrialActive = entitlement.isTrialActive,
+            isTrialEndingSoon = entitlement.isTrialEndingSoon,
+            trialDaysRemaining = if (entitlement.isTrialActive) {
+                val dayMs = 24L * 60L * 60L * 1000L
+                ((entitlement.millisUntilTrialExpiry + dayMs - 1L) / dayMs)
+                    .toInt()
+                    .coerceAtLeast(1)
+            } else {
+                0
+            },
             pendingAutoCaptureDraftCount = pendingDraftCount,
             accountCardStyle = prefs.accountCardStyle,
             accountCardStyleOverrides = prefs.accountCardStyleOverrides,
@@ -232,6 +247,12 @@ class DashboardViewModel @Inject constructor(
     fun toggleBalanceVisibility() {
         viewModelScope.launch {
             userRepository.setBalancesHidden(!uiState.value.areBalancesHidden)
+        }
+    }
+
+    fun markAutoCaptureTutorialSeen() {
+        viewModelScope.launch {
+            userRepository.setAutoCaptureTutorialSeen(true)
         }
     }
 

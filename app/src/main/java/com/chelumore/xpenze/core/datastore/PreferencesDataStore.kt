@@ -48,16 +48,20 @@ class PreferencesDataStore @Inject constructor(
         val DAILY_SUMMARY_ENABLED = booleanPreferencesKey("daily_summary_enabled")
         val NOTIFICATION_PERMISSION_PROMPT_LAST_SHOWN_AT = longPreferencesKey("notification_permission_prompt_last_shown_at")
         val APP_OPEN_COUNT = intPreferencesKey("app_open_count")
+        val RATE_ELIGIBLE_ACTION_COUNT = intPreferencesKey("rate_eligible_action_count")
         val RATE_APP_PROMPT_LAST_SHOWN_AT = longPreferencesKey("rate_app_prompt_last_shown_at")
         val HAS_RATED_ON_PLAY_STORE = booleanPreferencesKey("has_rated_on_play_store")
         val BUDGET_ALERT_ACTIVE_IDS = stringPreferencesKey("budget_alert_active_ids")
         val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
         val USER_ID = stringPreferencesKey("user_id")
+        val IS_GUEST_MODE = booleanPreferencesKey("is_guest_mode")
         val USER_EMAIL = stringPreferencesKey("user_email")
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_PHOTO_URL = stringPreferencesKey("user_photo_url")
         val AI_CHAT_HISTORY_JSON = stringPreferencesKey("ai_chat_history_json")
         val HAS_SEEN_AI_COACH_CTA = booleanPreferencesKey("has_seen_ai_coach_cta")
+        val HAS_SEEN_AUTO_CAPTURE_TUTORIAL =
+            booleanPreferencesKey("has_seen_auto_capture_tutorial")
         val IS_PREMIUM = booleanPreferencesKey("is_premium")
         val TRIAL_STARTED_AT = longPreferencesKey("trial_started_at")
         val TRIAL_EXPIRES_AT = longPreferencesKey("trial_expires_at")
@@ -88,8 +92,10 @@ class PreferencesDataStore @Inject constructor(
         val userId = prefs[Keys.USER_ID]
         val consumedUserIds = decodeConsumedUserIds(prefs[Keys.TRIAL_CONSUMED_USER_IDS].orEmpty())
         val legacyConsumed = prefs[Keys.TRIAL_CONSUMED] ?: false
+        // Never treat signed-out / guest sessions as trial-consumed for the current identity.
+        // Device-level history stays in TRIAL_CONSUMED_USER_IDS for signed-in UIDs only.
         val consumedForCurrentUser = when {
-            userId.isNullOrBlank() -> legacyConsumed
+            userId.isNullOrBlank() -> false
             else -> consumedUserIds.contains(userId)
                 || (legacyConsumed && consumedUserIds.isEmpty())
         }
@@ -112,14 +118,17 @@ class PreferencesDataStore @Inject constructor(
             dailySummaryEnabled = prefs[Keys.DAILY_SUMMARY_ENABLED] ?: true,
             notificationPermissionPromptLastShownAt = prefs[Keys.NOTIFICATION_PERMISSION_PROMPT_LAST_SHOWN_AT] ?: 0L,
             appOpenCount = prefs[Keys.APP_OPEN_COUNT] ?: 0,
+            rateEligibleActionCount = prefs[Keys.RATE_ELIGIBLE_ACTION_COUNT] ?: 0,
             rateAppPromptLastShownAt = prefs[Keys.RATE_APP_PROMPT_LAST_SHOWN_AT] ?: 0L,
             hasRatedOnPlayStore = prefs[Keys.HAS_RATED_ON_PLAY_STORE] ?: false,
             lastSyncTime = prefs[Keys.LAST_SYNC_TIME] ?: 0L,
             userId = userId,
+            isGuestMode = (prefs[Keys.IS_GUEST_MODE] ?: false) && userId.isNullOrBlank(),
             userEmail = prefs[Keys.USER_EMAIL],
             userName = prefs[Keys.USER_NAME],
             userPhotoUrl = prefs[Keys.USER_PHOTO_URL],
             hasSeenAiCoachCta = prefs[Keys.HAS_SEEN_AI_COACH_CTA] ?: false,
+            hasSeenAutoCaptureTutorial = prefs[Keys.HAS_SEEN_AUTO_CAPTURE_TUTORIAL] ?: false,
             isPremium = prefs[Keys.IS_PREMIUM] ?: false,
             trialStartedAt = prefs[Keys.TRIAL_STARTED_AT] ?: 0L,
             trialExpiresAt = prefs[Keys.TRIAL_EXPIRES_AT] ?: 0L,
@@ -271,6 +280,13 @@ class PreferencesDataStore @Inject constructor(
         }
     }
 
+    suspend fun incrementRateEligibleActionCount() {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.RATE_ELIGIBLE_ACTION_COUNT] ?: 0
+            prefs[Keys.RATE_ELIGIBLE_ACTION_COUNT] = current + 1
+        }
+    }
+
     suspend fun setRateAppPromptLastShownAt(timestampMillis: Long) {
         context.dataStore.edit { prefs ->
             prefs[Keys.RATE_APP_PROMPT_LAST_SHOWN_AT] = timestampMillis
@@ -308,6 +324,51 @@ class PreferencesDataStore @Inject constructor(
         }
     }
 
+    /**
+     * Turns a guest session into a signed-in one in a single edit, so no observer can ever see
+     * the half-written state where the guest flag is gone but the user id is not yet set.
+     *
+     * Unlike [setUserInfo] this deliberately keeps preferences the guest already chose (card
+     * styles, app-open count, rate-prompt history): it is the same person adopting an account,
+     * not a switch to a different one.
+     */
+    suspend fun promoteGuestToUser(userId: String, email: String?, name: String?, photoUrl: String?) {
+        context.dataStore.edit { prefs ->
+            prefs.remove(Keys.IS_GUEST_MODE)
+            prefs[Keys.USER_ID] = userId
+            if (email != null) prefs[Keys.USER_EMAIL] = email else prefs.remove(Keys.USER_EMAIL)
+            if (name != null) prefs[Keys.USER_NAME] = name else prefs.remove(Keys.USER_NAME)
+            if (photoUrl != null) {
+                prefs[Keys.USER_PHOTO_URL] = photoUrl
+            } else {
+                prefs.remove(Keys.USER_PHOTO_URL)
+            }
+        }
+    }
+
+    suspend fun setGuestMode(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            if (enabled) {
+                prefs[Keys.IS_GUEST_MODE] = true
+                // Guests must never inherit Premium trial, paid flags, or Auto Capture setup.
+                prefs.remove(Keys.TRIAL_STARTED_AT)
+                prefs.remove(Keys.TRIAL_EXPIRES_AT)
+                prefs.remove(Keys.TRIAL_CONSUMED)
+                prefs.remove(Keys.IS_PREMIUM)
+                prefs.remove(Keys.AUTO_CAPTURE_ENABLED)
+                prefs.remove(Keys.AUTO_CAPTURE_STATEMENT_IMPORT_ENABLED)
+                prefs.remove(Keys.AUTO_CAPTURE_OCR_ENABLED)
+                prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ENABLED)
+                prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES)
+                prefs.remove(Keys.AUTO_CAPTURE_MERCHANT_MEMORY_ENABLED)
+                prefs.remove(Keys.AUTO_CAPTURE_RECURRING_SUGGESTIONS_ENABLED)
+                prefs.remove(Keys.AUTO_CAPTURE_DISCLOSURE_ACCEPTED)
+            } else {
+                prefs.remove(Keys.IS_GUEST_MODE)
+            }
+        }
+    }
+
     suspend fun setUserInfo(userId: String?, email: String?, name: String?, photoUrl: String?) {
         context.dataStore.edit { prefs ->
             val previousUserId = prefs[Keys.USER_ID]
@@ -321,6 +382,7 @@ class PreferencesDataStore @Inject constructor(
                 prefs.remove(Keys.ACCOUNT_CARD_STYLE_OVERRIDES)
                 prefs.remove(Keys.ACCOUNT_CARD_STYLE_UPDATED_AT)
                 prefs.remove(Keys.APP_OPEN_COUNT)
+                prefs.remove(Keys.RATE_ELIGIBLE_ACTION_COUNT)
                 prefs.remove(Keys.RATE_APP_PROMPT_LAST_SHOWN_AT)
                 prefs.remove(Keys.HAS_RATED_ON_PLAY_STORE)
             }
@@ -350,6 +412,12 @@ class PreferencesDataStore @Inject constructor(
     suspend fun setAiCoachCtaSeen(seen: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.HAS_SEEN_AI_COACH_CTA] = seen
+        }
+    }
+
+    suspend fun setAutoCaptureTutorialSeen(seen: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.HAS_SEEN_AUTO_CAPTURE_TUTORIAL] = seen
         }
     }
 
@@ -428,8 +496,12 @@ class PreferencesDataStore @Inject constructor(
     suspend fun setTrialState(startedAt: Long, expiresAt: Long, consumed: Boolean) {
         context.dataStore.edit { prefs ->
             val userId = prefs[Keys.USER_ID]
+            val isGuest = (prefs[Keys.IS_GUEST_MODE] ?: false) && userId.isNullOrBlank()
+            // Guests / signed-out sessions cannot store an active trial window.
+            if (isGuest || userId.isNullOrBlank()) return@edit
+
             val consumedUserIds = decodeConsumedUserIds(prefs[Keys.TRIAL_CONSUMED_USER_IDS].orEmpty()).toMutableSet()
-            if (consumed && !userId.isNullOrBlank()) {
+            if (consumed) {
                 consumedUserIds.add(userId)
             }
             prefs[Keys.TRIAL_STARTED_AT] = startedAt
@@ -474,6 +546,7 @@ class PreferencesDataStore @Inject constructor(
     suspend fun clearUserData() {
         context.dataStore.edit { prefs ->
             prefs.remove(Keys.USER_ID)
+            prefs.remove(Keys.IS_GUEST_MODE)
             prefs.remove(Keys.USER_EMAIL)
             prefs.remove(Keys.USER_NAME)
             prefs.remove(Keys.USER_PHOTO_URL)
@@ -482,13 +555,20 @@ class PreferencesDataStore @Inject constructor(
             prefs.remove(Keys.ACCOUNT_CARD_STYLE_OVERRIDES)
             prefs.remove(Keys.ACCOUNT_CARD_STYLE_UPDATED_AT)
             prefs.remove(Keys.HAS_SEEN_AI_COACH_CTA)
+            prefs.remove(Keys.HAS_SEEN_AUTO_CAPTURE_TUTORIAL)
             prefs.remove(Keys.IS_PREMIUM)
+            // Drop active trial window so logout / clear-data cannot leak Premium access to guests.
+            // Keep TRIAL_CONSUMED_USER_IDS so the same accounts cannot reclaim on this device.
+            prefs.remove(Keys.TRIAL_STARTED_AT)
+            prefs.remove(Keys.TRIAL_EXPIRES_AT)
+            prefs.remove(Keys.TRIAL_CONSUMED)
             prefs.remove(Keys.LAST_SYNC_TIME)
             prefs.remove(Keys.HAS_FOUNDER_REWARD)
             prefs.remove(Keys.FOUNDER_TRIAL_ACTIVATED)
             prefs.remove(Keys.FOUNDER_REWARD_PRODUCT_ID)
             prefs.remove(Keys.NOTIFICATION_PERMISSION_PROMPT_LAST_SHOWN_AT)
             prefs.remove(Keys.APP_OPEN_COUNT)
+            prefs.remove(Keys.RATE_ELIGIBLE_ACTION_COUNT)
             prefs.remove(Keys.RATE_APP_PROMPT_LAST_SHOWN_AT)
             prefs.remove(Keys.HAS_RATED_ON_PLAY_STORE)
             prefs.remove(Keys.AUTO_CAPTURE_ENABLED)

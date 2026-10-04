@@ -83,6 +83,7 @@ import com.chelumore.xpenze.ui.theme.YellowPrimary
 
 @Composable
 fun DraftInboxScreen(
+    openAppPicker: Boolean = false,
     onNavigateBack: () -> Unit,
     onNavigateToSubscription: () -> Unit,
     onNavigateToReviewDraft: (String, String) -> Unit,
@@ -97,7 +98,17 @@ fun DraftInboxScreen(
     val autoCaptureNotificationEnabled by rememberUpdatedState(uiState.notificationCaptureEnabled)
     var showAutoCaptureDisclosureDialog by rememberSaveable { mutableStateOf(false) }
     var showNotificationListenerDialog by remember { mutableStateOf(false) }
-    var showNotificationAppPicker by remember { mutableStateOf(false) }
+    val canUseNotificationAppPicker = uiState.hasPremiumAccess && !uiState.isGuestMode
+    var showNotificationAppPicker by rememberSaveable { mutableStateOf(false) }
+    var showAutoCaptureTutorial by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(openAppPicker, canUseNotificationAppPicker) {
+        if (openAppPicker && canUseNotificationAppPicker) {
+            showNotificationAppPicker = true
+        } else if (!canUseNotificationAppPicker) {
+            showNotificationAppPicker = false
+        }
+    }
     var pendingNotificationListenerEnable by rememberSaveable { mutableStateOf(false) }
     var hasNotificationListenerAccess by remember { mutableStateOf(context.hasNotificationListenerAccess()) }
     val showXiaomiAutoStartCard = remember(
@@ -235,7 +246,7 @@ fun DraftInboxScreen(
                     uiState = uiState,
                     hasNotificationListenerAccess = hasNotificationListenerAccess,
                     installedNotificationApps = installedNotificationApps,
-                    onOpenSetup = onNavigateToAutoCaptureSetup,
+                    onOpenTutorial = { showAutoCaptureTutorial = true },
                     onUpgrade = onNavigateToSubscription,
                     onMasterToggle = { enabled ->
                         if (enabled && !uiState.autoCaptureDisclosureAccepted) {
@@ -260,12 +271,18 @@ fun DraftInboxScreen(
                     onUseGeneralNotifications = {
                         viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
                     },
-                    onUseSpecificNotifications = { showNotificationAppPicker = true },
+                    onUseSpecificNotifications = {
+                        if (canUseNotificationAppPicker) showNotificationAppPicker = true
+                    },
                     onMerchantToggle = viewModel::toggleAutoCaptureMerchantMemory,
                     onRecurringToggle = viewModel::toggleAutoCaptureRecurringSuggestions,
-                    onChooseNotificationApps = { showNotificationAppPicker = true },
+                    onChooseNotificationApps = {
+                        if (canUseNotificationAppPicker) showNotificationAppPicker = true
+                    },
                     onClearNotificationApps = {
-                        viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
+                        if (canUseNotificationAppPicker) {
+                            viewModel.setAutoCaptureNotificationAllowedPackages(emptySet())
+                        }
                     },
                     showXiaomiAutoStartCard = showXiaomiAutoStartCard,
                     onOpenXiaomiAutoStartSettings = { context.openXiaomiAutoStartSettings() }
@@ -313,6 +330,19 @@ fun DraftInboxScreen(
             onSaveSelection = { packageNames ->
                 viewModel.setAutoCaptureNotificationAllowedPackages(packageNames)
                 showNotificationAppPicker = false
+            }
+        )
+    }
+
+    if (showAutoCaptureTutorial) {
+        AutoCaptureTutorialDialog(
+            canChooseBankApps = canUseNotificationAppPicker,
+            onDismiss = { showAutoCaptureTutorial = false },
+            onChooseBankApps = {
+                showAutoCaptureTutorial = false
+                if (canUseNotificationAppPicker) {
+                    showNotificationAppPicker = true
+                }
             }
         )
     }
@@ -437,7 +467,7 @@ private fun AutomaticSetupCard(
     uiState: DraftInboxUiState,
     hasNotificationListenerAccess: Boolean,
     installedNotificationApps: List<NotificationCaptureAppOption>,
-    onOpenSetup: () -> Unit,
+    onOpenTutorial: () -> Unit,
     onUpgrade: () -> Unit,
     onMasterToggle: (Boolean) -> Unit,
     onStatementToggle: (Boolean) -> Unit,
@@ -453,6 +483,9 @@ private fun AutomaticSetupCard(
     onOpenXiaomiAutoStartSettings: () -> Unit
 ) {
     val isSpecificNotificationMode = uiState.notificationAllowedPackages.isNotEmpty()
+    val showGeneralModeWarning = uiState.notificationCaptureEnabled &&
+        hasNotificationListenerAccess &&
+        !isSpecificNotificationMode
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -477,6 +510,14 @@ private fun AutomaticSetupCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (showGeneralModeWarning) {
+                Text(
+                    text = stringResource(R.string.auto_capture_general_mode_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = WarningOrange
+                )
+            }
             if (!uiState.hasPremiumAccess) {
                 Button(
                     onClick = onUpgrade,
@@ -567,10 +608,10 @@ private fun AutomaticSetupCard(
                 )
             }
             OutlinedButton(
-                onClick = onOpenSetup,
+                onClick = onOpenTutorial,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(stringResource(R.string.auto_capture_guide_button))
+                Text(stringResource(R.string.auto_capture_tutorial_replay_label))
             }
         }
     }

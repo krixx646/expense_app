@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chelumore.xpenze.R
+import com.chelumore.xpenze.core.analytics.GrowthAnalyticsTracker
 import com.chelumore.xpenze.core.datastore.PreferencesDataStore
 import com.chelumore.xpenze.core.premium.PremiumEntitlementTracker
 import com.chelumore.xpenze.core.work.BudgetAlertScheduler
@@ -47,7 +48,8 @@ class AddEditBudgetViewModel @Inject constructor(
     private val preferencesDataStore: PreferencesDataStore,
     private val budgetAlertScheduler: BudgetAlertScheduler,
     private val budgetLifecycleScheduler: BudgetLifecycleScheduler,
-    private val premiumEntitlementTracker: PremiumEntitlementTracker
+    private val premiumEntitlementTracker: PremiumEntitlementTracker,
+    private val growthAnalyticsTracker: GrowthAnalyticsTracker
 ) : ViewModel() {
 
     private val _form = MutableStateFlow(AddEditBudgetUiState())
@@ -119,7 +121,13 @@ class AddEditBudgetViewModel @Inject constructor(
     fun setCategoryId(value: String?) = _form.update { it.copy(selectedCategoryId = value) }
     fun setAccountId(value: String?) = _form.update { it.copy(selectedAccountId = value) }
     fun setActive(value: Boolean) = _form.update { it.copy(isActive = value) }
-    fun setRecurring(value: Boolean) = _form.update { it.copy(isRecurring = value) }
+    fun setRecurring(value: Boolean) {
+        if (value && !uiState.value.hasPremiumAccess) {
+            _form.update { it.copy(error = context.getString(R.string.budget_editor_recurring_premium_body)) }
+            return
+        }
+        _form.update { it.copy(isRecurring = value) }
+    }
     fun setStartDate(value: Long) = _form.update { it.copy(startDate = value) }
     fun setEndDate(value: Long?) = _form.update { it.copy(endDate = value) }
 
@@ -191,6 +199,13 @@ class AddEditBudgetViewModel @Inject constructor(
 
                 budgetAlertScheduler.scheduleNow()
                 budgetLifecycleScheduler.scheduleNow()
+                if (!state.isEdit) {
+                    runCatching { preferencesDataStore.incrementRateEligibleActionCount() }
+                    val lifetimeActions = runCatching {
+                        preferencesDataStore.userPreferences.first().rateEligibleActionCount
+                    }.getOrDefault(0)
+                    growthAnalyticsTracker.logBudgetCreated(lifetimeActions)
+                }
                 _form.update { it.copy(isSaving = false, isSaved = true) }
             } catch (e: Exception) {
                 _form.update {

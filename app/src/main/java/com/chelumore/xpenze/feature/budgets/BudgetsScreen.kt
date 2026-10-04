@@ -1,10 +1,17 @@
 package com.chelumore.xpenze.feature.budgets
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,8 +29,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,13 +41,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -51,11 +58,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -72,8 +85,8 @@ import com.chelumore.xpenze.ui.theme.ErrorRed
 import com.chelumore.xpenze.ui.theme.SuccessGreen
 import com.chelumore.xpenze.ui.theme.WarningOrange
 import com.chelumore.xpenze.ui.theme.YellowPrimary
+import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetsScreen(
     viewModel: BudgetsViewModel = hiltViewModel(),
@@ -81,6 +94,31 @@ fun BudgetsScreen(
     onNavigateToBudgetDetail: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    BudgetsContent(
+        uiState = uiState,
+        onSortSelected = viewModel::setSort,
+        onStatusSelected = viewModel::setFilter,
+        onPeriodSelected = viewModel::setPeriodFilter,
+        onAccountSelected = viewModel::setAccountFilter,
+        onCategorySelected = viewModel::setCategoryFilter,
+        onNavigateToAddBudget = onNavigateToAddBudget,
+        onNavigateToBudgetDetail = onNavigateToBudgetDetail
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun BudgetsContent(
+    uiState: BudgetsUiState,
+    onSortSelected: (BudgetSortOption) -> Unit,
+    onStatusSelected: (BudgetFilter) -> Unit,
+    onPeriodSelected: (BudgetPeriod?) -> Unit,
+    onAccountSelected: (String?) -> Unit,
+    onCategorySelected: (String?) -> Unit,
+    onNavigateToAddBudget: (String?) -> Unit,
+    onNavigateToBudgetDetail: (String) -> Unit
+) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
     val budgetsTitle = stringResource(R.string.main_nav_budgets)
     val sortText = stringResource(R.string.common_sort)
@@ -101,21 +139,21 @@ fun BudgetsScreen(
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.budgets_sort_usage_desc)) },
                                 onClick = {
-                                    viewModel.setSort(BudgetSortOption.USAGE_DESC)
+                                    onSortSelected(BudgetSortOption.USAGE_DESC)
                                     sortMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.budgets_sort_remaining_asc)) },
                                 onClick = {
-                                    viewModel.setSort(BudgetSortOption.REMAINING_ASC)
+                                    onSortSelected(BudgetSortOption.REMAINING_ASC)
                                     sortMenuExpanded = false
                                 }
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.budgets_sort_name)) },
                                 onClick = {
-                                    viewModel.setSort(BudgetSortOption.NAME)
+                                    onSortSelected(BudgetSortOption.NAME)
                                     sortMenuExpanded = false
                                 }
                             )
@@ -156,17 +194,22 @@ fun BudgetsScreen(
                     .fillMaxHeight()
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 220.dp)
+                contentPadding = PaddingValues(top = 12.dp, bottom = 220.dp)
             ) {
-                item { BudgetOverviewCard(uiState) }
+                item {
+                    BudgetHeroCard(
+                        state = uiState,
+                        onStatusSelected = onStatusSelected
+                    )
+                }
 
                 item {
                     BudgetFilters(
                         state = uiState,
-                        onStatusSelected = viewModel::setFilter,
-                        onPeriodSelected = viewModel::setPeriodFilter,
-                        onAccountSelected = viewModel::setAccountFilter,
-                        onCategorySelected = viewModel::setCategoryFilter
+                        onStatusSelected = onStatusSelected,
+                        onPeriodSelected = onPeriodSelected,
+                        onAccountSelected = onAccountSelected,
+                        onCategorySelected = onCategorySelected
                     )
                 }
 
@@ -177,13 +220,6 @@ fun BudgetsScreen(
                     )
                 }
 
-                item {
-                    BudgetSectionHeader(
-                        title = stringResource(R.string.budgets_current_section_title, uiState.currentBudgets.size),
-                        subtitle = stringResource(R.string.budgets_current_section_body)
-                    )
-                }
-
                 if (uiState.expiredPrompt != null) {
                     item {
                         ExpiredBudgetPromptCard(
@@ -191,6 +227,13 @@ fun BudgetsScreen(
                             onCreateNextBudget = { onNavigateToAddBudget(uiState.expiredPrompt?.budgetId) }
                         )
                     }
+                }
+
+                item {
+                    BudgetSectionHeader(
+                        title = stringResource(R.string.budgets_current_section_title, uiState.currentBudgets.size),
+                        subtitle = stringResource(R.string.budgets_current_section_body)
+                    )
                 }
 
                 if (uiState.currentBudgets.isEmpty()) {
@@ -231,191 +274,213 @@ fun BudgetsScreen(
 }
 
 @Composable
-private fun BudgetSectionHeader(
-    title: String,
-    subtitle: String
+private fun BudgetHeroCard(
+    state: BudgetsUiState,
+    onStatusSelected: (BudgetFilter) -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+    val accent = statusColorFor(state.totalProgress)
+    val heroBrush = Brush.verticalGradient(
+        listOf(
+            YellowPrimary.copy(alpha = if (isDarkSurface()) 0.14f else 0.22f),
+            MaterialTheme.colorScheme.surface
         )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
+    )
 
-@Composable
-private fun BudgetEmptyState(message: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(heroBrush)
+            .border(1.dp, hairlineColor(), RoundedCornerShape(28.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 28.dp),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = message,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.budgets_overview_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (state.currentCount == 0) {
+                    Text(
+                        text = stringResource(R.string.budgets_empty_current),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                } else {
+                    Text(
+                        text = state.totalSpentAmount.toCurrencyString(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.budgets_overview_of_limit,
+                            state.totalLimitAmount.toCurrencyString()
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+            BudgetUsageRing(
+                progress = state.totalProgress,
+                accentColor = accent
             )
+        }
+
+        if (state.currentCount > 0) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                StatusSummaryPill(
+                    modifier = Modifier.weight(1f),
+                    count = state.activeCount,
+                    label = stringResource(R.string.common_on_track),
+                    color = SuccessGreen,
+                    selected = state.selectedFilter == BudgetFilter.ON_TRACK,
+                    onClick = { onStatusSelected(toggledFilter(state.selectedFilter, BudgetFilter.ON_TRACK)) }
+                )
+                StatusSummaryPill(
+                    modifier = Modifier.weight(1f),
+                    count = state.warningCount,
+                    label = stringResource(R.string.common_warning),
+                    color = WarningOrange,
+                    selected = state.selectedFilter == BudgetFilter.WARNING,
+                    onClick = { onStatusSelected(toggledFilter(state.selectedFilter, BudgetFilter.WARNING)) }
+                )
+                StatusSummaryPill(
+                    modifier = Modifier.weight(1f),
+                    count = state.exceededCount,
+                    label = stringResource(R.string.common_exceeded),
+                    color = ErrorRed,
+                    selected = state.selectedFilter == BudgetFilter.EXCEEDED,
+                    onClick = { onStatusSelected(toggledFilter(state.selectedFilter, BudgetFilter.EXCEEDED)) }
+                )
+            }
         }
     }
 }
 
-@Composable
-private fun ExpiredBudgetPromptCard(
-    prompt: ExpiredBudgetPromptUi?,
-    onCreateNextBudget: () -> Unit
-) {
-    if (prompt == null) return
+private fun toggledFilter(current: BudgetFilter, tapped: BudgetFilter): BudgetFilter {
+    return if (current == tapped) BudgetFilter.ALL else tapped
+}
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = YellowPrimary.copy(alpha = 0.12f))
+@Composable
+private fun BudgetUsageRing(
+    progress: Float,
+    accentColor: Color
+) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 650),
+        label = "budgetUsageRing"
+    )
+    val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
+
+    Box(
+        modifier = Modifier.size(96.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidth = 11.dp.toPx()
+            val inset = strokeWidth / 2f
+            val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+            drawArc(
+                color = trackColor,
+                startAngle = 0f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arcSize,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            )
+            if (animatedProgress > 0f) {
+                drawArc(
+                    color = accentColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f * animatedProgress,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = arcSize,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(R.string.budgets_prompt_title),
+                text = "${(progress * 100).roundToInt()}%",
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = stringResource(
-                    R.string.budgets_prompt_body,
-                    prompt.budgetName,
-                    prompt.timeframeLabel
-                ),
+                text = stringResource(R.string.budgets_overview_used),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = "${prompt.spentAmount.toCurrencyString()} / ${prompt.limitAmount.toCurrencyString()}",
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
-            )
-            Button(
-                onClick = onCreateNextBudget,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = YellowPrimary,
-                    contentColor = BlackBackground
-                ),
-                shape = RoundedCornerShape(14.dp)
-            ) {
-                Text(stringResource(R.string.budgets_prompt_action), fontWeight = FontWeight.Bold)
-            }
         }
     }
 }
 
 @Composable
-private fun BudgetOverviewCard(state: BudgetsUiState) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = stringResource(R.string.budgets_overview_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = stringResource(
-                        R.string.budgets_overview_body,
-                        state.currentCount,
-                        state.pastCount
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                BudgetOverviewMetric(
-                    modifier = Modifier.weight(1f),
-                    value = state.activeCount.toString(),
-                    label = stringResource(R.string.common_on_track),
-                    accentColor = SuccessGreen,
-                    backgroundColor = Color(0xFF0F1E15)
-                )
-                BudgetOverviewMetric(
-                    modifier = Modifier.weight(1f),
-                    value = state.warningCount.toString(),
-                    label = stringResource(R.string.common_warning),
-                    accentColor = WarningOrange,
-                    backgroundColor = Color(0xFF1E1500)
-                )
-                BudgetOverviewMetric(
-                    modifier = Modifier.weight(1f),
-                    value = state.exceededCount.toString(),
-                    label = stringResource(R.string.common_exceeded),
-                    accentColor = ErrorRed,
-                    backgroundColor = Color(0xFF1E1010)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BudgetOverviewMetric(
+private fun StatusSummaryPill(
     modifier: Modifier = Modifier,
-    value: String,
+    count: Int,
     label: String,
-    accentColor: Color,
-    backgroundColor: Color
+    color: Color,
+    selected: Boolean,
+    onClick: () -> Unit
 ) {
-    val palette = rememberBudgetOverviewMetricPalette(
-        accentColor = accentColor,
-        darkContainerColor = backgroundColor
-    )
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = palette.containerColor)
+    val shape = RoundedCornerShape(18.dp)
+    Column(
+        modifier = modifier
+            .clip(shape)
+            .background(color.copy(alpha = if (selected) 0.24f else 0.10f))
+            .border(1.dp, if (selected) color else Color.Transparent, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
             Text(
-                text = value,
+                text = count.toString(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = palette.valueColor
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = palette.labelColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -428,58 +493,60 @@ private fun BudgetFilters(
     onCategorySelected: (String?) -> Unit
 ) {
     val allText = stringResource(R.string.common_all)
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(vertical = 4.dp)
-        ) {
-            item { FilterChipItem(allText, state.selectedFilter == BudgetFilter.ALL) { onStatusSelected(BudgetFilter.ALL) } }
-            item { FilterChipItem(stringResource(R.string.common_on_track), state.selectedFilter == BudgetFilter.ON_TRACK) { onStatusSelected(BudgetFilter.ON_TRACK) } }
-            item { FilterChipItem(stringResource(R.string.common_warning), state.selectedFilter == BudgetFilter.WARNING) { onStatusSelected(BudgetFilter.WARNING) } }
-            item { FilterChipItem(stringResource(R.string.common_exceeded), state.selectedFilter == BudgetFilter.EXCEEDED) { onStatusSelected(BudgetFilter.EXCEEDED) } }
-        }
+    val hasActiveFilter = state.selectedFilter != BudgetFilter.ALL ||
+        state.selectedPeriod != null ||
+        state.selectedAccountId != null ||
+        state.selectedCategoryId != null
 
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                val selected = state.selectedPeriod?.let { localizedBudgetPeriodLabel(it) } ?: allText
-                val options = buildList {
-                    add("" to allText)
-                    addAll(BudgetPeriod.entries.map { it.name to localizedBudgetPeriodLabel(it) })
-                }
-                DropdownFilterButton(
-                    label = stringResource(R.string.common_period),
-                    value = selected,
-                    options = options,
-                    selectedId = state.selectedPeriod?.name ?: "",
-                    onSelected = { id -> onPeriodSelected(id.takeIf { it.isNotBlank() }?.let { BudgetPeriod.valueOf(it) }) }
-                )
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        item {
+            val options = buildList {
+                add("" to allText)
+                addAll(BudgetPeriod.entries.map { it.name to localizedBudgetPeriodLabel(it) })
             }
-            item {
-                val selectedAccount = state.selectedAccountId?.let { id -> state.accounts.firstOrNull { it.id == id }?.name } ?: allText
-                val options = buildList {
-                    add("" to allText)
-                    addAll(state.accounts.map { it.id to it.name })
-                }
-                DropdownFilterButton(
-                    label = stringResource(R.string.common_account),
-                    value = selectedAccount,
-                    options = options,
-                    selectedId = state.selectedAccountId ?: "",
-                    onSelected = { id -> onAccountSelected(id.takeIf { it.isNotBlank() }) }
-                )
+            DropdownFilterButton(
+                label = stringResource(R.string.common_period),
+                value = state.selectedPeriod?.let { localizedBudgetPeriodLabel(it) },
+                options = options,
+                selectedId = state.selectedPeriod?.name ?: "",
+                onSelected = { id -> onPeriodSelected(id.takeIf { it.isNotBlank() }?.let { BudgetPeriod.valueOf(it) }) }
+            )
+        }
+        item {
+            val options = buildList {
+                add("" to allText)
+                addAll(state.accounts.map { it.id to it.name })
             }
+            DropdownFilterButton(
+                label = stringResource(R.string.common_account),
+                value = state.selectedAccountId?.let { id -> state.accounts.firstOrNull { it.id == id }?.name },
+                options = options,
+                selectedId = state.selectedAccountId ?: "",
+                onSelected = { id -> onAccountSelected(id.takeIf { it.isNotBlank() }) }
+            )
+        }
+        item {
+            val options = buildList {
+                add("" to allText)
+                addAll(state.categories.map { it.id to it.name })
+            }
+            DropdownFilterButton(
+                label = stringResource(R.string.common_category),
+                value = state.selectedCategoryId?.let { id -> state.categories.firstOrNull { it.id == id }?.name },
+                options = options,
+                selectedId = state.selectedCategoryId ?: "",
+                onSelected = { id -> onCategorySelected(id.takeIf { it.isNotBlank() }) }
+            )
+        }
+        if (hasActiveFilter) {
             item {
-                val selectedCategory = state.selectedCategoryId?.let { id -> state.categories.firstOrNull { it.id == id }?.name } ?: allText
-                val options = buildList {
-                    add("" to allText)
-                    addAll(state.categories.map { it.id to it.name })
-                }
-                DropdownFilterButton(
-                    label = stringResource(R.string.common_category),
-                    value = selectedCategory,
-                    options = options,
-                    selectedId = state.selectedCategoryId ?: "",
-                    onSelected = { id -> onCategorySelected(id.takeIf { it.isNotBlank() }) }
+                ClearFiltersChip(
+                    onClick = {
+                        onStatusSelected(BudgetFilter.ALL)
+                        onPeriodSelected(null)
+                        onAccountSelected(null)
+                        onCategorySelected(null)
+                    }
                 )
             }
         }
@@ -487,54 +554,77 @@ private fun BudgetFilters(
 }
 
 @Composable
-private fun FilterChipItem(label: String, selected: Boolean, onClick: () -> Unit) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = YellowPrimary,
-            selectedLabelColor = BlackBackground,
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
-        border = null,
-        shape = RoundedCornerShape(20.dp)
-    )
+private fun ClearFiltersChip(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = stringResource(R.string.common_clear),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }
 
 @Composable
 private fun DropdownFilterButton(
     label: String,
-    value: String,
+    value: String?,
     options: List<Pair<String, String>>,
     selectedId: String,
     onSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val isActive = value != null
+    val shape = RoundedCornerShape(20.dp)
+    val containerColor = if (isActive) {
+        YellowPrimary.copy(alpha = 0.18f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    val contentColor = if (isActive) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Box {
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clip(shape)
+                .background(containerColor)
+                .border(1.dp, if (isActive) YellowPrimary.copy(alpha = 0.6f) else Color.Transparent, shape)
                 .clickable { expanded = true }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "$label: $value",
+                text = value ?: label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                color = contentColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 140.dp)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = contentColor
             )
         }
 
@@ -553,7 +643,13 @@ private fun DropdownFilterButton(
                         ) {
                             Text(title)
                             if (id == selectedId) {
-                                Text("?", color = YellowPrimary, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = YellowPrimary
+                                )
                             }
                         }
                     },
@@ -568,32 +664,139 @@ private fun DropdownFilterButton(
 }
 
 @Composable
-private fun CurrentBudgetCard(budget: BudgetUiModel, onClick: () -> Unit) {
-    val scopeTags = remember(
-        budget.categoryId,
-        budget.accountId,
-        budget.categoryName,
-        budget.accountName,
-        budget.isRecurring
+private fun BudgetSectionHeader(
+    title: String,
+    subtitle: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        buildBudgetScopeTags(budget)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 3.dp, height = 16.dp)
+                    .clip(RoundedCornerShape(100))
+                    .background(YellowPrimary)
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 11.dp)
+        )
     }
+}
+
+@Composable
+private fun BudgetEmptyState(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .border(1.dp, hairlineColor(), RoundedCornerShape(24.dp))
+            .padding(horizontal = 20.dp, vertical = 28.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun ExpiredBudgetPromptCard(
+    prompt: ExpiredBudgetPromptUi?,
+    onCreateNextBudget: () -> Unit
+) {
+    if (prompt == null) return
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(YellowPrimary.copy(alpha = 0.12f))
+            .border(1.dp, YellowPrimary.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.budgets_prompt_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = stringResource(
+                R.string.budgets_prompt_body,
+                prompt.budgetName,
+                prompt.timeframeLabel
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = stringResource(
+                R.string.budgets_spent_of_limit,
+                prompt.spentAmount.toCurrencyString(),
+                prompt.limitAmount.toCurrencyString()
+            ),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Button(
+            onClick = onCreateNextBudget,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = YellowPrimary,
+                contentColor = BlackBackground
+            ),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text(stringResource(R.string.budgets_prompt_action), fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun CurrentBudgetCard(budget: BudgetUiModel, onClick: () -> Unit) {
     val accentColor = parseHexColorOrFallback(budget.categoryColorHex, YellowPrimary)
+    val statusColor = statusColorFor(budget.status)
+    val remainingLabel = if (budget.remainingAmount >= 0L) {
+        stringResource(R.string.budgets_remaining_left, budget.remainingAmount.toCurrencyString())
+    } else {
+        stringResource(R.string.budgets_remaining_over, (-budget.remainingAmount).toCurrencyString())
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, hairlineColor())
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 BudgetLeadingVisual(
                     iconName = budget.categoryIconName,
@@ -605,134 +808,152 @@ private fun CurrentBudgetCard(budget: BudgetUiModel, onClick: () -> Unit) {
                         text = budget.name,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = budget.timeframeLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = budget.metaLabel,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (scopeTags.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            scopeTags.forEach { label ->
-                                TagChip(label = label)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = stringResource(R.string.common_spent),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "${(budget.progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = when (budget.status) {
-                            BudgetStatus.ON_TRACK -> SuccessGreen
-                            BudgetStatus.WARNING -> WarningOrange
-                            BudgetStatus.EXCEEDED -> ErrorRed
-                        }
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-
-                LinearProgressIndicator(
-                    progress = { budget.progress.coerceAtMost(1f) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = when (budget.status) {
-                        BudgetStatus.ON_TRACK -> SuccessGreen
-                        BudgetStatus.WARNING -> WarningOrange
-                        BudgetStatus.EXCEEDED -> ErrorRed
-                    },
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                Spacer(modifier = Modifier.width(8.dp))
+                StatusPill(
+                    label = statusLabel(budget.status),
+                    color = statusColor
                 )
+            }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = "${budget.spentAmount.toCurrencyString()} of ${budget.limitAmount.toCurrencyString()}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = stringResource(R.string.budgets_past_transactions_count, budget.transactionCount),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    val remainingLabel = if (budget.remainingAmount >= 0L) {
-                        stringResource(R.string.budgets_remaining_left, budget.remainingAmount.toCurrencyString())
-                    } else {
-                        stringResource(R.string.budgets_remaining_over, (-budget.remainingAmount).toCurrencyString())
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (budget.daysLeft > 0) {
-                            stringResource(R.string.budgets_remaining_with_days, remainingLabel, budget.daysLeft)
-                        } else {
-                            remainingLabel
-                        },
+                        text = remainingLabel,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.budgets_spent_of_limit,
+                            budget.spentAmount.toCurrencyString(),
+                            budget.limitAmount.toCurrencyString()
+                        ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "${(budget.progress * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = statusColor
+                )
             }
+
+            BudgetProgressBar(
+                progress = budget.progress,
+                color = statusColor
+            )
+
+            BudgetMetaChips(budget = budget)
         }
+    }
+}
+
+@Composable
+private fun BudgetProgressBar(progress: Float, color: Color, height: Dp = 10.dp) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 550),
+        label = "budgetProgressBar"
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(RoundedCornerShape(100))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(animatedProgress)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(100))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(color.copy(alpha = 0.65f), color)
+                    )
+                )
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BudgetMetaChips(budget: BudgetUiModel) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (budget.daysLeft > 0) {
+            TagChip(
+                label = stringResource(R.string.budgets_days_left_short, budget.daysLeft),
+                highlighted = true
+            )
+        }
+        TagChip(label = budget.timeframeLabel)
+        if (budget.isRecurring) {
+            TagChip(label = stringResource(R.string.common_recurring))
+        }
+        if (budget.categoryId != null) {
+            TagChip(label = budget.categoryName)
+        }
+        if (budget.accountId != null) {
+            TagChip(label = budget.accountName)
+        }
+        TagChip(label = stringResource(R.string.budgets_past_transactions_count, budget.transactionCount))
     }
 }
 
 @Composable
 private fun PastBudgetCard(budget: BudgetUiModel, onClick: () -> Unit) {
-    val scopeTags = remember(
-        budget.categoryId,
-        budget.accountId,
-        budget.categoryName,
-        budget.accountName,
-        budget.isRecurring
-    ) {
-        buildBudgetScopeTags(budget)
-    }
-    val historyResultText = if (budget.remainingAmount >= 0L) {
+    val finishedUnderBudget = budget.remainingAmount >= 0L
+    val historyResultText = if (finishedUnderBudget) {
         stringResource(R.string.budgets_past_under_by, budget.remainingAmount.toCurrencyString())
     } else {
         stringResource(R.string.budgets_past_over_by, (-budget.remainingAmount).toCurrencyString())
     }
-    val historyResultColor = if (budget.remainingAmount >= 0L) SuccessGreen else ErrorRed
+    val historyResultColor = if (finishedUnderBudget) SuccessGreen else ErrorRed
     val accentColor = parseHexColorOrFallback(budget.categoryColorHex, YellowPrimary)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, hairlineColor())
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 BudgetLeadingVisual(
                     iconName = budget.categoryIconName,
@@ -744,137 +965,84 @@ private fun PastBudgetCard(budget: BudgetUiModel, onClick: () -> Unit) {
                         text = budget.name,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = budget.timeframeLabel,
+                        text = stringResource(
+                            R.string.budgets_past_meta,
+                            budget.timeframeLabel,
+                            budget.transactionCount
+                        ),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text = budget.metaLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (scopeTags.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            scopeTags.forEach { label ->
-                                TagChip(label = label)
-                            }
-                        }
-                    }
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(historyResultColor.copy(alpha = 0.14f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = if (budget.remainingAmount >= 0L) {
-                                stringResource(R.string.common_on_track)
-                            } else {
-                                stringResource(R.string.common_exceeded)
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = historyResultColor
-                        )
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                BudgetHistoryStat(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.common_spent),
-                    value = budget.spentAmount.toCurrencyString(),
-                    accentColor = ErrorRed,
-                    backgroundColor = Color(0xFF1E1010)
-                )
-                BudgetHistoryStat(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.common_limit),
-                    value = budget.limitAmount.toCurrencyString(),
-                    accentColor = YellowPrimary,
-                    backgroundColor = Color(0xFF1E1C10)
-                )
-                BudgetHistoryStat(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.common_transactions),
-                    value = budget.transactionCount.toString(),
-                    accentColor = accentColor,
-                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = stringResource(R.string.budgets_past_view_history),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Text(
-                text = historyResultText,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = historyResultColor
-            )
-            Text(
-                text = stringResource(R.string.budgets_past_view_history),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(
+                        R.string.budgets_spent_of_limit,
+                        budget.spentAmount.toCurrencyString(),
+                        budget.limitAmount.toCurrencyString()
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                BudgetProgressBar(
+                    progress = budget.progress,
+                    color = historyResultColor,
+                    height = 6.dp
+                )
+                Text(
+                    text = historyResultText,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = historyResultColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun BudgetHistoryStat(
-    modifier: Modifier = Modifier,
-    label: String,
-    value: String,
-    accentColor: Color,
-    backgroundColor: Color
-) {
-    val palette = rememberBudgetStatPalette(
-        accentColor = accentColor,
-        darkContainerColor = backgroundColor
-    )
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = palette.containerColor)
+private fun StatusPill(label: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(100))
+            .background(color.copy(alpha = 0.14f))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = palette.labelColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = palette.valueColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Box(
-                modifier = Modifier
-                    .size(width = 20.dp, height = 3.dp)
-                    .background(accentColor, RoundedCornerShape(100))
-            )
-        }
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = color,
+            maxLines = 1
+        )
     }
 }
 
@@ -886,8 +1054,8 @@ private fun BudgetLeadingVisual(
     Box(
         modifier = Modifier
             .size(46.dp)
-            .clip(CircleShape)
-            .background(accentColor.copy(alpha = 0.18f)),
+            .clip(RoundedCornerShape(16.dp))
+            .background(accentColor.copy(alpha = 0.16f)),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -898,13 +1066,66 @@ private fun BudgetLeadingVisual(
     }
 }
 
-private fun buildBudgetScopeTags(budget: BudgetUiModel): List<String> {
-    return buildList {
-        if (budget.isRecurring) add("Recurring")
-        if (budget.categoryId != null) add(budget.categoryName)
-        if (budget.accountId != null) add(budget.accountName)
+@Composable
+private fun TagChip(label: String, highlighted: Boolean = false) {
+    Box(
+        modifier = Modifier
+            .widthIn(max = 140.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                if (highlighted) {
+                    YellowPrimary.copy(alpha = 0.16f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                }
+            )
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Normal,
+            color = if (highlighted) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
+
+@Composable
+private fun statusLabel(status: BudgetStatus): String {
+    return when (status) {
+        BudgetStatus.ON_TRACK -> stringResource(R.string.common_on_track)
+        BudgetStatus.WARNING -> stringResource(R.string.common_warning)
+        BudgetStatus.EXCEEDED -> stringResource(R.string.common_exceeded)
+    }
+}
+
+private fun statusColorFor(status: BudgetStatus): Color {
+    return when (status) {
+        BudgetStatus.ON_TRACK -> SuccessGreen
+        BudgetStatus.WARNING -> WarningOrange
+        BudgetStatus.EXCEEDED -> ErrorRed
+    }
+}
+
+private fun statusColorFor(progress: Float): Color {
+    return when {
+        progress >= 1f -> ErrorRed
+        progress >= 0.8f -> WarningOrange
+        else -> SuccessGreen
+    }
+}
+
+@Composable
+private fun isDarkSurface(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+
+@Composable
+private fun hairlineColor(): Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)
 
 @Composable
 private fun localizedBudgetPeriodLabel(period: BudgetPeriod): String {
@@ -916,79 +1137,3 @@ private fun localizedBudgetPeriodLabel(period: BudgetPeriod): String {
         BudgetPeriod.CUSTOM -> stringResource(R.string.budget_period_custom)
     }
 }
-
-@Composable
-private fun TagChip(label: String) {
-    Box(
-        modifier = Modifier
-            .widthIn(max = 120.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun rememberBudgetOverviewMetricPalette(
-    accentColor: Color,
-    darkContainerColor: Color
-): BudgetMetricPalette {
-    val surface = MaterialTheme.colorScheme.surface
-    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    val useDarkPalette = surface.luminance() < 0.5f
-    return remember(accentColor, darkContainerColor, onSurfaceVariant, useDarkPalette) {
-        if (useDarkPalette) {
-            BudgetMetricPalette(
-                containerColor = darkContainerColor,
-                valueColor = accentColor,
-                labelColor = Color.White.copy(alpha = 0.72f)
-            )
-        } else {
-            BudgetMetricPalette(
-                containerColor = accentColor.copy(alpha = 0.14f),
-                valueColor = accentColor,
-                labelColor = onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun rememberBudgetStatPalette(
-    accentColor: Color,
-    darkContainerColor: Color
-): BudgetMetricPalette {
-    val surface = MaterialTheme.colorScheme.surface
-    val onSurface = MaterialTheme.colorScheme.onSurface
-    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    val useDarkPalette = surface.luminance() < 0.5f
-    return remember(accentColor, darkContainerColor, onSurface, onSurfaceVariant, useDarkPalette) {
-        if (useDarkPalette) {
-            BudgetMetricPalette(
-                containerColor = darkContainerColor,
-                valueColor = Color.White,
-                labelColor = Color.White.copy(alpha = 0.72f)
-            )
-        } else {
-            BudgetMetricPalette(
-                containerColor = accentColor.copy(alpha = 0.12f),
-                valueColor = onSurface,
-                labelColor = onSurfaceVariant
-            )
-        }
-    }
-}
-
-private data class BudgetMetricPalette(
-    val containerColor: Color,
-    val valueColor: Color,
-    val labelColor: Color
-)

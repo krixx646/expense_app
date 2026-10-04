@@ -56,8 +56,18 @@ interface BudgetDao {
         WHERE deleted = 0 AND isActive = 1 
         AND (startDate <= :currentTime) 
         AND (endDate IS NULL OR endDate >= :currentTime)
+        ORDER BY endDate ASC, name ASC
     """)
     fun getCurrentBudgets(currentTime: Long): Flow<List<BudgetEntity>>
+
+    @Query("""
+        SELECT * FROM budgets
+        WHERE deleted = 0 AND isActive = 1
+        AND endDate IS NOT NULL
+        AND endDate < :currentTime
+        ORDER BY endDate DESC, name ASC
+    """)
+    fun getPastBudgets(currentTime: Long): Flow<List<BudgetEntity>>
 
     @Query("SELECT * FROM budgets WHERE synced = 0 AND deleted = 0")
     suspend fun getUnsynced(): List<BudgetEntity>

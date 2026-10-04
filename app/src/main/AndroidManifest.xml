@@ -12,6 +12,14 @@
     <!-- For notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Android 11+ package visibility: allow listing launcher apps for Auto Capture picker -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:name=".XpenzeApplication"
         android:allowBackup="true"

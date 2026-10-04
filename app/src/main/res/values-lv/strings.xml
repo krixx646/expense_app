@@ -1,0 +1,1445 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">xpenze</string>
+    <string name="common_back">
+Atpakaļ</string>
+    <string name="common_continue">
+Turpināt</string>
+    <string name="common_finish">
+Pabeigt</string>
+    <string name="common_cancel">
+Atcelt</string>
+    <string name="common_save">
+Saglabāt</string>
+    <string name="common_clear">
+Skaidrs</string>
+    <string name="common_delete">
+Dzēst</string>
+    <string name="common_edit">
+Rediģēt</string>
+    <string name="common_sign_out">
+Izrakstīties</string>
+    <string name="common_syncing">
+Sinhronizē...</string>
+    <string name="common_none">
+Nav</string>
+    <string name="common_select">Izvēlieties</string>
+    <string name="common_color">
+Krāsa</string>
+    <string name="common_icon">
+Ikona</string>
+    <string name="common_no_items_available">
+Nav pieejams neviens vienums</string>
+    <string name="main_nav_home">
+Sākums</string>
+    <string name="main_nav_transactions">
+Darījumi</string>
+    <string name="main_nav_budgets">
+Budžeti</string>
+    <string name="main_nav_reports">
+Pārskati</string>
+    <string name="main_nav_settings">
+Iestatījumi</string>
+    <string name="main_cd_add_transaction">
+Pievienot darījumu</string>
+    <string name="main_ai_coach_fab">
+Moči</string>
+    <string name="main_new_badge">
+JAUNS</string>
+    <string name="splash_loading_message">Notiek datu atjaunošana...</string>
+    <string name="splash_restore_error">
+Mēs vēl nevarējām atjaunot jūsu konta datus. Pārbaudiet savienojumu un mēģiniet vēlreiz.</string>
+    <string name="splash_retry_button">
+Mēģiniet vēlreiz</string>
+    <string name="onboarding_setup_title">
+Iestatīšana</string>
+    <string name="onboarding_welcome_title">
+Laipni lūdzam Xpenze</string>
+    <string name="onboarding_welcome_body">
+Iestatīsim jūsu valodu, valūtu un pirmo kontu, lai jūs varētu nekavējoties sākt izsekot izdevumiem.</string>
+    <string name="onboarding_language_title">
+Izvēlieties lietotnes valodu</string>
+    <string name="onboarding_language_subtitle">
+Jebkurā laikā varat to mainīt sadaļā Iestatījumi.</string>
+    <string name="onboarding_language_label">
+Valoda</string>
+    <string name="onboarding_currency_title">
+Izvēlieties savu valūtu</string>
+    <string name="onboarding_currency_subtitle">
+Tas tiks izmantots jūsu noklusējuma konta un summas formatēšanai.</string>
+    <string name="onboarding_currency_label">
+Valūta</string>
+    <string name="onboarding_account_title">Izveidojiet savu pirmo kontu</string>
+    <string name="onboarding_account_subtitle">
+Sāciet ar galveno kontu, kuru izmantojat visbiežāk. Šī ir tikai summa, kuru vēlaties, lai Xpenze izsekotu, nevis jūsu bankas pieteikšanās vai privātā konta informācija.</string>
+    <string name="onboarding_account_name_label">
+Konta nosaukums</string>
+    <string name="onboarding_account_name_placeholder">
+Skaidra nauda</string>
+    <string name="onboarding_account_type_label">
+Konta veids</string>
+    <string name="onboarding_account_balance_label">
+Pašreizējais atlikums</string>
+    <string name="onboarding_account_balance_hint_default">
+Ievadiet summu, kas pašlaik ir šajā kontā izsekošanai. Bankas dati netiek pieprasīti. Jebkurā laikā varat to labot, pievienot citus kontus vai dzēst šo kontu.</string>
+    <string name="onboarding_account_balance_hint_credit_card">
+Ievadiet šajā kartē esošo summu izsekošanai. Bankas dati netiek pieprasīti. Jebkurā laikā varat to labot, pievienot citus kontus vai dzēst šo kontu.</string>
+    <string name="onboarding_budget_title">
+Neobligāti: pievienojiet budžetu</string>
+    <string name="onboarding_budget_subtitle">
+Pagaidām varat to izlaist un vēlāk pievienot detalizētākus budžetus.</string>
+    <string name="onboarding_budget_helper">
+Šis ātrais budžets sedz visus izdevumus un brīdina par izmantoto 80%%.</string>
+    <string name="onboarding_budget_toggle">
+Iestatiet tēriņu limitu tūlīt</string>
+    <string name="onboarding_budget_name_label">Budžeta nosaukums</string>
+    <string name="onboarding_budget_name_placeholder">
+Mēneša tēriņu limits</string>
+    <string name="onboarding_budget_amount_label">
+Budžeta summa</string>
+    <string name="onboarding_budget_period_label">
+Periods</string>
+    <string name="onboarding_budget_period_hint">
+Nedēļas, mēneša un gada budžeti tiek atiestatīti atbilstoši kalendāra robežām.</string>
+        <string name="onboarding_auto_capture_title">Izsekojiet izdevumus no lietotnem</string>
+    <string name="onboarding_auto_capture_body">Kad bankas vai maka lietotne nosuta maksajuma pazinojumu, Xpenze var to parveidot par melnrakstu, ko apstiprinat. Nekas netiek saglabats, kamer neapstiprinat.</string>
+    <string name="onboarding_auto_capture_diagram_title">Ka tas darbojas</string>
+    <string name="onboarding_auto_capture_diagram_notif_app">Bankas / maka pazinojums</string>
+    <string name="onboarding_auto_capture_diagram_notif_body">Samaksats $12.50 Coffee Shop</string>
+    <string name="onboarding_auto_capture_diagram_arrow">Klust par melnrakstu</string>
+    <string name="onboarding_auto_capture_diagram_draft_title">Melnrakstu iesutne</string>
+    <string name="onboarding_auto_capture_diagram_draft_body">Parbaudiet un apstipriniet pirms tas tiek ieskaitits</string>
+    <string name="onboarding_auto_capture_enable_cta">Ieslegt pazinojumu tveršanu</string>
+    <string name="onboarding_auto_capture_skip_hint">Varat turpinat un ieslegt to velak iestatijumos.</string>
+    <string name="onboarding_auto_capture_enabled">Pazinojumu tveršana ir ieslegta</string>
+    <string name="onboarding_auto_capture_claiming_trial">Tiek saktas jusu bezmaksas Premium izmeginajums…</string>
+    <string name="onboarding_auto_capture_trial_started">Jusu 7 dienu Premium izmeginajums ir aktives — kartes nav vajadzigas.</string>
+    <string name="onboarding_auto_capture_founder_started">Jusu Founder Premium izmeginajums ir aktives — baudiet pagarinato piekluvi.</string>
+    <string name="onboarding_auto_capture_trial_active">Premium izmeginajums soa konta jau ir aktives.</string>
+    <string name="onboarding_auto_capture_guest_hint">Jebkura laika pierakstieties ar bezmaksas kontu, lai atbloketu 7 dienu Premium izmeginajumu un ieslegtu so funkciju.</string>
+<string name="onboarding_done_title">
+Gatavs darbam</string>
+    <string name="onboarding_done_subtitle">
+Pieskarieties Pabeigt, lai saglabātu iestatījumus un sāktu izsekošanu.</string>
+    <string name="onboarding_done_subtitle_trial">Jusu Premium izmeginajums ir aktives. Pieskarieties Pabeigt un izmeginiet Auto Capture un Mochi, kamer tas vel darbojas.</string>
+
+    <string name="onboarding_step_1">
+1/4</string>
+    <string name="onboarding_step_2">
+2/4</string>
+    <string name="onboarding_step_3">
+3/4</string>
+    <string name="onboarding_step_4">
+4/4</string>
+    <string name="onboarding_step_5">
+4/4</string>
+    <string name="onboarding_step_6">4/4</string>
+    <string name="account_type_cash">
+Skaidra nauda</string>
+    <string name="account_type_bank">
+Banka</string>
+    <string name="account_type_credit_card">
+Kredītkarte</string>
+    <string name="account_type_savings">
+Ietaupījumi</string>
+    <string name="account_type_investment">
+Investīcijas</string>
+    <string name="account_type_ewallet">
+E-maciņš</string>
+    <string name="account_type_other">
+Cits</string>
+    <string name="budget_period_daily">
+Ikdienas</string>
+    <string name="budget_period_weekly">
+Iknedēļas</string>
+    <string name="budget_period_monthly">
+Ikmēneša</string>
+    <string name="budget_period_yearly">
+Ik gadu</string>
+    <string name="settings_title">Iestatījumi</string>
+    <string name="settings_cd_help">
+Palīdzība</string>
+    <string name="settings_cd_notifications">
+Paziņojumi</string>
+    <string name="settings_section_preferences">
+PREFERENCE</string>
+    <string name="settings_section_notifications">
+PAZIŅOJUMI</string>
+    <string name="settings_section_data">
+DATI UN PĀRVALDĪBA</string>
+    <string name="settings_section_subscription">
+ABONEMENTS</string>
+    <string name="settings_section_about">
+PAR</string>
+    <string name="settings_section_danger">
+BĪSTAMO ZONA</string>
+    <string name="settings_app_language">
+Lietotnes valoda</string>
+    <string name="settings_account_card_style">
+Konta kartes stils</string>
+    <string name="settings_account_card_style_matte">
+Matēts</string>
+    <string name="settings_account_card_style_metallic">Metālisks</string>
+    <string name="settings_account_card_style_neon">
+Neona</string>
+    <string name="settings_default_currency">
+Noklusējuma valūta</string>
+    <string name="settings_default_account">
+Noklusējuma konts</string>
+    <string name="settings_select_account">
+Izvēlieties kontu</string>
+    <string name="settings_theme">
+Tēma</string>
+    <string name="settings_theme_system">
+Sistēma</string>
+    <string name="settings_theme_light">
+Gaisma</string>
+    <string name="settings_theme_dark">
+Tumšs</string>
+    <string name="settings_enable_notifications">
+Atļaut paziņojumus</string>
+    <string name="settings_enable_notifications_subtitle">
+Nepieciešams budžeta brīdinājumiem un atgādinājumiem.</string>
+    <string name="settings_notification_permission_denied">
+Paziņojumu atļauja liegta. Iespējojiet to sistēmas iestatījumos, lai saņemtu brīdinājumus.</string>
+    <string name="settings_budget_alerts">Budžeta brīdinājumi</string>
+    <string name="settings_budget_alerts_subtitle">
+Brīdina, kad budžets sasniedz slieksni.</string>
+    <string name="settings_daily_summary">
+Ikdienas atgādinājumi</string>
+    <string name="settings_daily_summary_subtitle">
+Ieplāno reģistrēšanās atgādinājumus visas dienas garumā.</string>
+    <string name="settings_accounts">
+Konti</string>
+    <string name="settings_accounts_subtitle">
+Pārvaldiet savus saistītos kontus</string>
+    <string name="settings_categories">
+Kategorijas</string>
+    <string name="settings_categories_subtitle">
+Organizējiet savus tēriņus</string>
+    <string name="categories_default_cannot_delete">
+Noklusējuma kategorija (nevar izdzēst)</string>
+    <string name="categories_choose_action">
+Izvēlieties darbību</string>
+    <string name="categories_empty_expense">
+Nav izdevumu kategoriju</string>
+    <string name="categories_empty_income">
+Nav ienākumu kategoriju</string>
+    <string name="categories_empty_body">Izveidojiet kategoriju, lai organizētu savus darījumus.</string>
+    <string name="categories_add_category">
+Pievienot kategoriju</string>
+    <string name="categories_subcategory">
+Apakškategorija</string>
+    <string name="category_editor_title_edit">
+Rediģēt kategoriju</string>
+    <string name="category_editor_title_new">
+Jauna kategorija</string>
+    <string name="category_editor_name_label">
+Kategorijas nosaukums</string>
+    <string name="category_editor_parent_optional">
+Vecāku kategorija (neobligāti)</string>
+    <string name="category_editor_set_default">
+Iestatīt kā noklusējumu</string>
+    <string name="category_editor_set_default_body">
+Noklusējuma kategorijas ir aizsargātas pret dzēšanu</string>
+    <string name="settings_recurring_rules">
+Atkārtoti noteikumi</string>
+    <string name="settings_recurring_rules_subtitle">
+Automatizējiet atkārtotus darījumus</string>
+    <string name="settings_cloud_sync_title">
+Mākoņu sinhronizācija</string>
+    <string name="settings_cloud_sync_error">Sinhronizācija neizdevās: %1$s. Pieskarieties, lai mēģinātu vēlreiz.</string>
+    <string name="settings_cloud_sync_last">
+Pēdējo reizi sinhronizēts: %1$s</string>
+    <string name="settings_cloud_sync_idle">
+Pierakstījies. Konti, budžeti, darījumi un periodiskās kārtulas tiek sinhronizētas automātiski. Pieskarieties, lai sinhronizētu tūlīt.</string>
+    <string name="settings_cloud_sync_signed_out">
+Pierakstieties, lai sinhronizētu kontus, budžetus, darījumus un periodiskas kārtulas dažādās ierīcēs.</string>
+    <string name="settings_export_import">
+Eksportēt/importēt (CSV)</string>
+    <string name="settings_export_import_subtitle">
+Importējiet darījumus no CSV. CSV eksporta dublējumkopijas ir Premium.</string>
+    <string name="settings_subscription_plan">
+Premium plāns</string>
+    <string name="settings_subscription_status_premium">
+Statuss: Premium ir aktīvs</string>
+    <string name="settings_subscription_status_trial">
+Statuss: izmēģinājuma periods ir aktīvs (beidzas %1$s)</string>
+    <string name="settings_subscription_status_access">
+Statuss: piekļuve ir aktīva</string>
+    <string name="settings_subscription_status_free">
+Statuss: Bezmaksas</string>
+    <string name="settings_manage_subscription">
+Pārvaldīt abonementu</string>
+    <string name="settings_app_version">Lietotnes versija</string>
+    <string name="settings_privacy_policy">
+Privātuma politika</string>
+    <string name="settings_terms_of_service">
+Pakalpojuma noteikumi</string>
+    <string name="settings_open_source_licenses">
+Atvērtā pirmkoda licences</string>
+    <string name="settings_help_support">
+Palīdzība un atbalsts</string>
+    <string name="settings_contact_feedback">
+Sazināties / Atsauksmes</string>
+    <string name="settings_feedback_subject">
+Xpenze atsauksmes (%1$s)</string>
+    <string name="settings_feedback_body">
+Rakstiet savu ziņojumu šeit.\n\n---\nLietotnes versija: %1$s\n</string>
+    <string name="settings_clear_all_data">
+Notīrīt visus datus</string>
+    <string name="settings_delete_account">
+Dzēst kontu</string>
+    <string name="settings_dialog_clear_title">
+Vai dzēst visus vietējos datus?</string>
+    <string name="settings_dialog_clear_message">
+Tādējādi šajā ierīcē tiks dzēsti konti, kategorijas, budžeti, darījumi un periodiskās kārtulas.</string>
+    <string name="settings_dialog_delete_account_title">Vai dzēst savu kontu?</string>
+    <string name="settings_dialog_delete_account_message">
+Tādējādi tiek dzēsts jūsu Firebase lietotājs. Tam var būt nepieciešama nesena pieteikšanās. Tiks dzēsti arī vietējie dati.</string>
+    <string name="settings_dialog_sign_out_title">
+Izrakstīties?</string>
+    <string name="settings_dialog_sign_out_message">
+Vai tiešām vēlaties izrakstīties?</string>
+    <string name="settings_dialog_contact_title">
+Vai sazināties ar atbalsta dienestu?</string>
+    <string name="settings_dialog_contact_message">
+Tiks atvērta jūsu e-pasta lietotne.</string>
+    <string name="settings_dialog_open_email">
+Atvērt e-pastu</string>
+    <string name="settings_edit_profile">
+Rediģēt profilu</string>
+    <string name="settings_dialog_edit_profile_title">
+Rediģēt profilu</string>
+    <string name="settings_name_label">
+Vārds</string>
+    <string name="settings_name_placeholder">
+Jūsu vārds</string>
+    <string name="settings_remove_photo">
+Noņemt fotoattēlu</string>
+    <string name="settings_premium_badge">PREMIUM</string>
+    <string name="settings_founder_badge">
+DIBINĀTĀJS</string>
+    <string name="settings_cd_profile_photo">
+Profila foto</string>
+    <string name="settings_cd_premium">
+Premium</string>
+    <string name="settings_profile_initial_fallback">
+G</string>
+    <string name="subscription_title">
+Abonēšana</string>
+    <string name="subscription_status_premium_active">
+Premium Active</string>
+    <string name="subscription_status_trial_active">
+Izmēģinājuma periods ir aktīvs</string>
+    <string name="subscription_status_free_plan">
+Bezmaksas plāns</string>
+    <string name="subscription_desc_premium">
+Jums ir piekļuve premium funkcijām.</string>
+    <string name="subscription_desc_trial">
+Jūsu izmēģinājuma periods īslaicīgi atbloķē premium funkcijas.</string>
+    <string name="subscription_desc_free">
+Jauniniet, lai atbloķētu premium funkcijas.</string>
+    <string name="subscription_active_plan">Aktīvs plāns</string>
+    <string name="subscription_unknown">
+Nezināms</string>
+    <string name="subscription_expires">
+Derīguma termiņš: %1$s</string>
+    <string name="subscription_product">
+Produkts: %1$s</string>
+    <string name="subscription_cancel_plan">
+Anulēt abonementu</string>
+    <string name="subscription_trial_card_title">
+Izmēģinājuma periods ir aktīvs</string>
+    <string name="subscription_trial_ends">
+Beigas: %1$s</string>
+    <string name="subscription_trial_note">
+Pēc izmēģinājuma perioda maksas funkcijas tiek bloķētas, līdz abonējat.</string>
+    <string name="subscription_benefits_title">
+Premium priekšrocības</string>
+    <string name="subscription_benefit_ai">
+Mochi tērzēšana un norādījumi</string>
+    <string name="subscription_benefit_reports">
+Uzlaboti pārskati un padziļināta analīze</string>
+    <string name="subscription_benefit_recurring_budgets">
+Atkārtoti budžeti, kas automātiski tiek iekļauti nākamajā periodā</string>
+    <string name="subscription_benefit_export">CSV eksporta dublējumkopijas</string>
+    <string name="subscription_benefit_ads">
+Pieredze bez reklāmām</string>
+    <string name="subscription_start_trial">
+Sāciet 7 dienu izmēģinājumu</string>
+    <string name="subscription_activate_founder_reward">
+Aktivizējiet Founder 14 dienu izmēģinājuma versiju</string>
+    <string name="subscription_founder_badge">
+Dibinātāja emblēma ir atbloķēta</string>
+    <string name="subscription_founder_reward_title">
+Dibinātāja balva</string>
+    <string name="subscription_founder_reward_available">
+Jūsu iepriekšējās reģistrācijas balva ir gatava. Aktivizējiet to jebkurā laikā, lai atbloķētu 14 dienu Premium piekļuvi un saglabātu savu dibinātāja emblēmu.</string>
+    <string name="subscription_founder_reward_active">
+Dibinātāja atlīdzība ir aktivizēta. Jūsu paplašinātā Premium piekļuve tagad beidzas %1$s.</string>
+    <string name="subscription_founder_reward_premium_note">
+Jūsu dibinātāja emblēma jau ir atbloķēta šajā kontā. Jūsu Dibinātāja izmēģinājuma atlīdzība paliks saistīta šeit.</string>
+    <string name="subscription_checkout_cta">
+Turpiniet norēķināties</string>
+    <string name="subscription_subscribe_now">
+Abonējiet tūlīt</string>
+    <string name="subscription_trial_checkout_note">
+Jūsu izmēģinājums ir aktīvs. Abonējiet tūlīt, lai saglabātu Premium pēc %1$s.</string>
+    <string name="subscription_trial_used_button">Izmēģinājums jau izmantots</string>
+    <string name="subscription_trial_used_note">
+Jūsu vienreizējais izmēģinājums jau ir izmantots.</string>
+    <string name="subscription_dev_enable_local">
+Iespējot vietējo premium izmēģinājuma versiju (izstrādātājs)</string>
+    <string name="subscription_dev_reset">
+Atiestatīt abonementa stāvokli (izstrādātājs)</string>
+    <string name="ai_chat_title">
+Moči</string>
+    <string name="ai_chat_thinking">
+Moči domā...</string>
+    <string name="ai_chat_placeholder">
+Jautājiet par tēriņiem, budžetiem, naudas plūsmu vai periodiskiem maksājumiem...</string>
+    <string name="ai_chat_send">
+Sūtīt</string>
+    <string name="ai_chat_locked_title">
+Mochi ir Premium</string>
+    <string name="ai_chat_locked_message">
+Jauniniet vai sāciet izmēģinājumu, lai uzdotu jautājumus par finansēm un saņemtu personalizētus ieteikumus.</string>
+    <string name="ai_chat_go_premium">
+Izmantojiet Premium</string>
+    <string name="ai_chat_tip">
+Padoms. Mochi atbildes ir tikai norādes, un tām ir jāpamato jūsu lēmumi.</string>
+    <string name="dashboard_greeting_morning">Labrīt,</string>
+    <string name="dashboard_greeting_afternoon">
+Labdien,</string>
+    <string name="dashboard_greeting_evening">
+Labvakar,</string>
+    <string name="dashboard_cd_select_month">
+Izvēlieties mēnesi</string>
+    <string name="dashboard_cd_profile_photo">
+Profila foto</string>
+    <string name="dashboard_cd_hide_balance">
+Slēpt līdzsvaru</string>
+    <string name="dashboard_cd_show_balance">
+Rādīt līdzsvaru</string>
+    <string name="dashboard_profile_initial_fallback">
+A</string>
+    <string name="dashboard_total_balance">
+Kopējais atlikums</string>
+    <string name="dashboard_total_balance_change_label">
+Neto naudas plūsma salīdzinājumā ar iepriekšējo mēnesi</string>
+    <string name="dashboard_income">
+Ienākumi</string>
+    <string name="dashboard_expense">
+Izdevumi</string>
+    <string name="dashboard_add_income">Pievienot ienākumus</string>
+    <string name="dashboard_add_expense">
+Pievienot izdevumus</string>
+    <string name="dashboard_transfer">
+Pārsūtīšana</string>
+    <string name="dashboard_actions_hint">
+Poga + ātri pievieno izdevumus. Izmantojiet pārskaitījumu, lai pārvietotu naudu starp saviem kontiem.</string>
+    <string name="dashboard_spending_by_category">
+Tēriņi pēc kategorijas</string>
+    <string name="dashboard_no_spending_for_period">
+%1$s vēl nav nekādu izdevumu darījumu.</string>
+    <string name="dashboard_total_short">
+Kopā</string>
+    <string name="dashboard_recent_transactions">
+Nesenie darījumi</string>
+    <string name="dashboard_see_all">
+Skatīt visu</string>
+    <string name="dashboard_no_transactions_yet">
+Vēl nav darījumu. Pievienojiet ienākumus, izdevumus vai pārskaitījumu, lai skatītu darbību šeit.</string>
+    <string name="dashboard_budget_alerts">
+Budžeta brīdinājumi</string>
+    <string name="dashboard_no_budget_alerts">
+Neviens budžets nav sasniedzis brīdinājuma slieksni.</string>
+    <string name="dashboard_budget_exceeded_by">Pārsniegts par %1$s</string>
+    <string name="dashboard_budget_threshold_reached">
+Sasniegts brīdinājuma slieksnis</string>
+    <string name="dashboard_budget_threshold_reached_with_percent">
+Sasniegts brīdinājuma slieksnis (%1$d%%)</string>
+    <string name="dashboard_accounts">
+Konti</string>
+    <string name="dashboard_manage">
+Pārvaldīt</string>
+    <string name="dashboard_no_accounts">
+Vēl nav kontu</string>
+    <string name="dashboard_create_account_hint">
+Izveidojiet kontu, lai sāktu izsekot atlikumiem.</string>
+    <string name="dashboard_manage_accounts">
+Pārvaldīt kontus</string>
+    <string name="dashboard_view_all_accounts">
+Skatīt visus kontus</string>
+    <string name="transaction_form_title_edit">
+Rediģēt darījumu</string>
+    <string name="transaction_form_title_add">
+Pievienot darījumu</string>
+    <string name="transaction_form_type_expense">
+Izdevumi</string>
+    <string name="transaction_form_type_income">Ienākumi</string>
+    <string name="transaction_form_type_transfer">
+Pārsūtīšana</string>
+    <string name="transaction_form_title_label">
+Nosaukums</string>
+    <string name="transaction_form_title_placeholder">
+Ievadiet darījuma nosaukumu</string>
+    <string name="transaction_form_date_label">
+Datums</string>
+    <string name="transaction_form_time_label">
+Laiks</string>
+    <string name="transaction_form_category_label">
+Kategorija</string>
+    <string name="transaction_form_category_placeholder">
+Atlasiet kategoriju</string>
+    <string name="transaction_form_uncategorized">
+Bez kategorijas</string>
+    <string name="transaction_form_from_account_label">
+No konta</string>
+    <string name="transaction_form_account_label">
+Konts</string>
+    <string name="transaction_form_to_account_label">
+Uz kontu</string>
+    <string name="transaction_form_account_placeholder">Atlasiet Konts</string>
+    <string name="transaction_form_notes_label">
+Piezīmes (pēc izvēles)</string>
+    <string name="transaction_form_notes_placeholder">
+Pievienot piezīmes...</string>
+    <string name="transaction_form_receipt_label">
+Kvīts (pēc izvēles)</string>
+    <string name="transaction_form_receipt_preview_cd">
+Kvīts priekšskatījums</string>
+    <string name="transaction_form_receipt_change">
+Mainīt</string>
+    <string name="transaction_form_receipt_remove">
+Noņemt</string>
+    <string name="transaction_form_receipt_attach">
+Pievienojiet kvīts attēlu</string>
+    <string name="transaction_form_receipt_tip">
+Padoms: izmantojiet skaidru fotoattēlu, lai vēlāk to varētu vieglāk izmantot.</string>
+    <string name="transaction_form_tags_label">
+Tagi (neobligāti)</string>
+    <string name="transaction_form_tags_placeholder">
+piem. pārtika, taksometrs, darbs</string>
+    <string name="transaction_form_frequency_daily">
+Ikdienas</string>
+    <string name="transaction_form_frequency_weekly">Iknedēļas</string>
+    <string name="transaction_form_frequency_biweekly">
+Reizi divās nedēļās</string>
+    <string name="transaction_form_frequency_monthly">
+Ikmēneša</string>
+    <string name="transaction_form_frequency_yearly">
+Ik gadu</string>
+    <string name="transaction_form_recurring_label">
+Atkārtojas</string>
+    <string name="transaction_form_recurring_subtitle">
+Automātiski izveidojiet nākotnes notikumus</string>
+    <string name="transaction_form_frequency_label">
+Biežums</string>
+    <string name="transaction_form_interval_label">
+Intervāls</string>
+    <string name="transaction_form_interval_placeholder">
+1</string>
+    <string name="transaction_form_save_changes">
+Saglabāt izmaiņas</string>
+    <string name="transaction_form_save_transaction">
+Saglabāt darījumu</string>
+    <string name="transaction_form_delete_title">
+Vai dzēst darījumu?</string>
+    <string name="transaction_form_delete_message">Šo darbību nevar atsaukt.</string>
+    <string name="rate_prompt_title">
+Vai jums patīk Xpenze?</string>
+    <string name="rate_prompt_body">
+Ja Xpenze palīdz jums saglabāt savu naudu, lūdzu, novērtējiet mūs ar 5 zvaigznītēm pakalpojumā Google Play. Jūsu atbalsts palīdz mums augt.</string>
+    <string name="rate_prompt_rate_now">
+Novērtējiet tagad</string>
+    <string name="rate_prompt_later">
+Vēlāk</string>
+    <string name="rate_prompt_already_rated">
+Jau novērtēts</string>
+    <string name="notifications_prompt_title">
+Vai ieslēgt Xpenze paziņojumus?</string>
+    <string name="notifications_prompt_body">
+Ieslēdziet lietotņu paziņojumus, lai Xpenze varētu nosūtīt budžeta brīdinājumus, atgādinājumus un notvertus paziņojumu melnrakstus.</string>
+    <string name="notifications_prompt_enable">
+Ieslēdziet</string>
+    <string name="notifications_prompt_later">
+Ne tagad</string>
+    <string name="common_add">
+Pievienot</string>
+    <string name="common_search">
+Meklēt</string>
+    <string name="common_amount">Summa</string>
+    <string name="common_type">
+Tips</string>
+    <string name="common_optional_format">
+%1$s (pēc izvēles)</string>
+    <string name="common_show_extra_options">
+Rādīt papildu opcijas</string>
+    <string name="common_hide_extra_options">
+Slēpt papildu opcijas</string>
+    <string name="common_clear_end_date">
+Notīrīt beigu datumu</string>
+    <string name="common_active">
+Aktīvs</string>
+    <string name="common_all_categories">
+Visas kategorijas</string>
+    <string name="common_all_accounts">
+Visi konti</string>
+    <string name="common_start_date">
+Sākuma datums</string>
+    <string name="common_end_date">
+Beigu datums</string>
+    <string name="common_no_end_date">
+Nav beigu datuma</string>
+    <string name="language_picker_placeholder">Izvēlieties valodu</string>
+    <string name="language_picker_search_placeholder">
+angļu, spāņu, vācu...</string>
+    <string name="language_picker_empty">
+Nav pieejama neviena valoda</string>
+    <string name="onboarding_account_name_helper">
+Ja vēlaties ātri sākt, atstājiet ieteikto nosaukumu. Vēlāk varat to pārdēvēt.</string>
+    <string name="onboarding_budget_name_helper">
+Ja atstājat šo lauku tukšu, Xpenze nosauks budžetu jūsu vietā.</string>
+    <string name="onboarding_budget_amount_required_now">
+Ievadiet budžeta summu vai pagaidām izslēdziet budžeta iestatīšanu.</string>
+    <string name="budget_default_daily_name">
+Dienas tēriņu limits</string>
+    <string name="budget_default_weekly_name">
+Nedēļas tēriņu limits</string>
+    <string name="budget_default_monthly_name">
+Mēneša tēriņu limits</string>
+    <string name="budget_default_yearly_name">
+Gada tēriņu limits</string>
+    <string name="budget_default_custom_name">
+Tēriņu limits</string>
+    <string name="transaction_form_transfer_hint">
+Pārskaitījums pārvieto naudu starp jūsu kontiem un netiek uzskatīts par tēriņu.</string>
+    <string name="transaction_form_summary_date">Datums %1$s</string>
+    <string name="transaction_form_summary_repeats">
+Atkārtojas %1$s</string>
+    <string name="transaction_form_summary_receipt_attached">
+Pielikumā kvīts</string>
+    <string name="transaction_form_summary_notes_added">
+Piezīmes pievienotas</string>
+    <string name="transaction_form_summary_tags_added">
+Atzīmes pievienotas</string>
+    <string name="transaction_form_extra_details_title">
+Papildu detaļas</string>
+    <string name="transaction_form_keep_simple_title">
+Saglabājiet to vienkārši</string>
+    <string name="transaction_form_title_placeholder_auto">
+Atstājiet tukšu, lai Xpenze to nosauktu jūsu vietā</string>
+    <string name="transaction_form_repeat_toggle_title">
+Atkārtojiet to automātiski</string>
+    <string name="transaction_form_repeat_toggle_body">
+Izmantojiet to īrei, algai, abonementiem vai citiem atkārtotiem ierakstiem.</string>
+    <string name="transaction_default_title_transfer">
+Pārsūtīšana</string>
+    <string name="transaction_default_title_income">
+Ienākumi</string>
+    <string name="transaction_default_title_expense">Izdevumi</string>
+    <string name="dashboard_quick_actions_title">
+Ātras darbības</string>
+    <string name="dashboard_start_here_title">
+Sāciet šeit</string>
+    <string name="dashboard_quick_actions_body">
+Lielākā daļa cilvēku izmanto Add Expense ikdienas izsekošanai. Ienākumi un pārskaitījumi paliek šeit, kad tie ir nepieciešami.</string>
+    <string name="dashboard_start_here_body">
+Ātrākais veids, kā sākt, ir pievienot savus pirmos izdevumus. Jūs joprojām varat pievienot ienākumus vai pārvietot naudu tālāk.</string>
+    <string name="budget_editor_title_edit">
+Rediģēt budžetu</string>
+    <string name="budget_editor_title_new">
+Jauns budžets</string>
+    <string name="budget_editor_limit_amount">
+Limit summa</string>
+    <string name="budget_editor_name_placeholder">
+piemēram, pārtikas preces</string>
+    <string name="budget_editor_details_title">
+Budžeta informācija</string>
+    <string name="budget_editor_simple_title">
+Vienkārša iestatīšana</string>
+    <string name="budget_editor_scope_pair">
+%1$s visā %2$s</string>
+    <string name="budget_editor_scope_summary">Šis budžets atbilst %1$s. Periods: %2$s. Pievienojiet papildu opcijas tikai tad, ja tās ir nepieciešamas.</string>
+    <string name="budget_editor_scope_hint">
+Atstājiet kategoriju vai kontu uz Visi, lai izsekotu apvienotajiem tēriņiem visā jomā.</string>
+    <string name="budget_editor_category_expense_only_hint">
+Budžeti izseko izdevumus, tāpēc šajā sarakstā tiek rādītas tikai izdevumu kategorijas.</string>
+    <string name="budget_editor_alert_threshold">
+Trauksmes slieksnis</string>
+    <string name="budget_editor_alert_threshold_value">
+Izlietotā budžeta %1$d%%</string>
+    <string name="budget_editor_inactive_hint">
+Neaktīvie budžeti netiks izsekoti</string>
+    <string name="budget_editor_create">
+Izveidojiet budžetu</string>
+    <string name="budget_editor_delete_title">
+Vai dzēst budžetu?</string>
+    <string name="budget_editor_delete_message">
+Šo darbību nevar atsaukt.</string>
+    <string name="budget_name_from_category">
+%1$s budžets</string>
+    <string name="budget_name_from_account">
+%1$s budžets</string>
+    <string name="recurring_screen_title">
+Atkārtoti noteikumi</string>
+    <string name="recurring_empty_title">Vēl nav atkārtotu noteikumu</string>
+    <string name="recurring_empty_body">
+Izveidojiet kārtulu, lai automātiski pievienotu atkārtotus darījumus (alga, īre, abonementi).</string>
+    <string name="recurring_create">
+Izveidojiet noteikumu</string>
+    <string name="recurring_info_body">
+Izmantojiet periodiskos noteikumus attiecībā uz rēķiniem, algu, abonementiem vai jebko citu, ko Xpenze jums vajadzētu pievienot automātiski.</string>
+    <string name="recurring_check_due_now">
+Tagad pārbaudiet atbilstošos noteikumus</string>
+    <string name="recurring_rule_next_occurrence">
+%1$s • nākamais %2$s</string>
+    <string name="recurring_editor_title_new">
+Jauns periodisks noteikums</string>
+    <string name="recurring_editor_title_edit">
+Rediģēt periodisko kārtulu</string>
+    <string name="recurring_preview">
+Priekšskatījums: Xpenze izveidos jaunu ierakstu %1$s grafikā, sākot ar %2$s</string>
+    <string name="recurring_title_placeholder_auto">
+Atstājiet tukšu, lai Xpenze to nosauktu jūsu vietā</string>
+    <string name="recurring_notes_placeholder">
+Pievienojiet detalizētu informāciju, ja šai kārtulai ir nepieciešams konteksts</string>
+    <string name="recurring_inactive_hint">
+Neaktīvie noteikumi netiks izpildīti</string>
+    <string name="recurring_save">Saglabāt noteikumu</string>
+    <string name="recurring_delete_title">
+Vai dzēst periodisko kārtulu?</string>
+    <string name="recurring_delete_message">
+Tas apturēs turpmākos notikumus. Esošie darījumi paliek.</string>
+    <string name="recurring_rule_deleted">
+Atkārtota kārtula ir izdzēsta</string>
+    <string name="recurring_rule_saved">
+Atkārtota kārtula ir saglabāta</string>
+    <string name="recurring_rules_processed_count">
+Apstrādāti %1$d izpildes noteikumi.</string>
+    <string name="error_transaction_not_found">
+Darījums nav atrasts</string>
+    <string name="error_transaction_load">
+Neizdevās ielādēt darījumu</string>
+    <string name="error_transaction_save">
+Neizdevās saglabāt darījumu</string>
+    <string name="error_transaction_delete">
+Neizdevās izdzēst darījumu</string>
+    <string name="error_budget_not_found">
+Budžets nav atrasts</string>
+    <string name="error_budget_load">
+Neizdevās ielādēt budžetu</string>
+    <string name="error_budget_save">Neizdevās ietaupīt budžetu</string>
+    <string name="error_budget_delete">
+Neizdevās izdzēst budžetu</string>
+    <string name="error_onboarding_finish">
+Neizdevās pabeigt iestatīšanu</string>
+    <string name="error_recurring_rule_save">
+Neizdevās saglabāt periodisko kārtulu</string>
+    <string name="welcome_screen_subtitle">
+Izsekojiet tēriņiem, budžetiem un kontiem vienuviet</string>
+    <string name="welcome_screen_sign_up">
+Reģistrēties</string>
+    <string name="welcome_screen_log_in">
+Pieteikties</string>
+    <string name="settings_account_card_style_sunset">
+Saulriets</string>
+    <string name="settings_account_card_style_ocean">
+Okeāns</string>
+    <string name="settings_account_card_style_royal">
+Karaliskā</string>
+    <string name="account_card_default_badge">
+Noklusējums</string>
+    <string name="account_detail_title">
+Konts</string>
+    <string name="account_detail_not_found">Konts nav atrasts</string>
+    <string name="account_detail_style_label">
+Kartes stils šim kontam</string>
+    <string name="account_detail_inherit_global">
+Pārmantot globālo (%1$s)</string>
+    <string name="account_detail_archive">
+Arhīvs</string>
+    <string name="account_detail_unarchive">
+Atarhivēt</string>
+    <string name="account_detail_activity_here">
+Šeit tiks parādīta jūsu konta darbība.</string>
+    <string name="ai_chat_cd_new_chat">
+Sāciet jaunu tērzēšanu</string>
+    <string name="ai_chat_message_copied">
+Ziņa nokopēta</string>
+    <string name="ai_chat_new_chat_title">
+Vai sākt jaunu tērzēšanu?</string>
+    <string name="ai_chat_new_chat_message">
+Tādējādi šajā ierīcē tiks notīrīti pašreizējie tērzēšanas ziņojumi.</string>
+    <string name="ai_chat_new_chat_started">
+Sākās jauna tērzēšana</string>
+    <string name="ai_chat_new_chat_confirm">
+Sāciet jaunu tērzēšanu</string>
+    <string name="ai_chat_welcome_title">Moči ir gatavi</string>
+    <string name="ai_chat_welcome_body">
+Jautājiet par tēriņiem, budžetiem, ietaupījumiem, periodiskiem maksājumiem vai to, kas šomēnes ir mainījies.</string>
+    <string name="ai_chat_welcome_examples">
+Mēģiniet: “Kur palika lielākā daļa manas naudas?” vai "Kā es varu samazināt izdevumus šonedēļ?"</string>
+    <string name="ai_chat_copy">
+Kopēt</string>
+    <string name="reports_export_csv">
+Eksportēt kā CSV</string>
+    <string name="reports_csv_premium_cd">
+CSV eksportēšana ir Premium</string>
+    <string name="reports_compare_toggle_title">
+Rādīt augstākās kategorijas izmaiņas salīdzinājumā ar iepriekšējo periodu</string>
+    <string name="reports_compare_toggle_disabled">
+Nav pieejams visu laiku.</string>
+    <string name="reports_net_cash_flow">
+Neto naudas plūsma</string>
+    <string name="reports_top_spending_categories">
+Populārākās tēriņu kategorijas</string>
+    <string name="reports_cash_flow_summary">
+Naudas plūsmas kopsavilkums</string>
+    <string name="reports_total_income">
+Kopējie ienākumi</string>
+    <string name="reports_total_expense">Kopējie izdevumi</string>
+    <string name="reports_breakdown_below">
+Sadalījums zemāk</string>
+    <string name="reports_percent_of_total">
+%1$d%% no kopsummas</string>
+    <string name="reports_monthly_trend_title">
+Mēneša tendence</string>
+    <string name="reports_monthly_trend_subtitle">
+Katrs punkts ir viena diena. Zaļā krāsa norāda ienākumus, sarkanā – tēriņus, un pārtrauktā dzeltenā līnija norāda jūsu neto šajā dienā.</string>
+    <string name="reports_highest_income_day">
+Lielāko ienākumu diena</string>
+    <string name="reports_highest_spending_day">
+Lielāko izdevumu diena</string>
+    <string name="reports_not_enough_data">
+Vēl nav pietiekami daudz datu</string>
+    <string name="reports_no_money_movement">
+Naudas kustības šajā periodā vēl nav.</string>
+    <string name="reports_net_short">
+Net</string>
+    <string name="reports_premium_section_title">
+Premium pārskati un Mochi</string>
+    <string name="reports_locked_feature_mochi_and_recurring">
+Moči un periodiski ziņojumi</string>
+    <string name="reports_locked_feature_mochi_chat">Moči tērzēšana</string>
+    <string name="reports_locked_feature_monthly_insights">
+Ikmēneša tēriņu ieskati</string>
+    <string name="reports_locked_feature_budget_suggestions">
+Budžeta ieteikumi</string>
+    <string name="reports_locked_feature_recurring_totals">
+Periodisko darījumu kopsummas</string>
+    <string name="reports_locked_feature_recurring_income_vs_expense">
+Regulāri ienākumi pret izdevumiem</string>
+    <string name="reports_locked_feature_date_range_analysis">
+Atkārtota datumu diapazona analīze</string>
+    <string name="reports_recurring_reports_title">
+Atkārtoti ziņojumi</string>
+    <string name="reports_premium_badge">
+PREMIUM</string>
+    <string name="reports_trial_recurring_reports">
+Izmēģinājuma periods ir aktīvs. Atveriet periodiskos pārskatus, lai iegūtu dziļāku ieskatu plānotajos ienākumos un tēriņos.</string>
+    <string name="reports_recurring_reports_message">
+Atveriet periodiskos pārskatus, lai iegūtu dziļāku ieskatu plānotajos ienākumos un tēriņos.</string>
+    <string name="reports_open_recurring_reports">
+Atveriet periodiskos pārskatus</string>
+    <string name="reports_feature_recurring_reports">
+Atkārtoti ziņojumi</string>
+    <string name="reports_mochi_insights_title">Moči ieskati</string>
+    <string name="reports_trial_mochi_active">
+Mochi izmēģinājuma piekļuve ir aktīva.</string>
+    <string name="reports_open_mochi">
+Atveriet Mochi</string>
+    <string name="reports_monthly_spending_insights_title">
+Ikmēneša tēriņu ieskati</string>
+    <string name="reports_not_enough_data_track_more">
+Vēl nav pietiekami daudz datu. Turpiniet izsekošanu, lai iegūtu ieskatus.</string>
+    <string name="reports_budget_suggestions_last_three_months">
+Budžeta ieteikumi (pēdējie 3 mēneši)</string>
+    <string name="reports_no_suggestions_track_more">
+Vēl nav ieteikumu. Pievienojiet papildu izdevumus, lai saņemtu ieteikumus.</string>
+    <string name="reports_more">
+vairāk</string>
+    <string name="reports_less">
+mazāk</string>
+    <string name="reports_monthly_insight_row">
+%1$s: %2$d%% %3$s nekā pagājušajā mēnesī (%4$s)</string>
+    <string name="reports_budget_suggestion_row">
+Ieteicamais %1$s budžets: %2$s (vid. %3$s)</string>
+    <string name="reports_locked_cd">
+Bloķēts</string>
+    <string name="reports_date_range">Datumu diapazons</string>
+    <string name="reports_recurring_activity">
+Atkārtota darbība</string>
+    <string name="reports_recurring_transactions">
+Atkārtoti darījumi</string>
+    <string name="reports_recurring_income">
+Atkārtoti ienākumi</string>
+    <string name="reports_recurring_expense">
+Periodiski izdevumi</string>
+    <string name="reports_recurring_focus_message">
+Šis ekrāns koncentrējas uz periodiskām darbībām atlasītajā datumu diapazonā.</string>
+    <string name="export_data_saved">
+Saglabāts %1$s</string>
+    <string name="export_data_save_failed">
+Saglabāt neizdevās</string>
+    <string name="export_data_description">
+Dublējiet savus datus, eksportējot darījumus. Varat arī importēt iepriekšējo eksportu.</string>
+    <string name="export_data_optional_date_range">
+Izvēles datumu diapazons</string>
+    <string name="export_data_start">
+Sākt</string>
+    <string name="export_data_end">
+Beigas</string>
+    <string name="export_data_clear_date_range">Notīrīt datumu diapazonu</string>
+    <string name="export_data_section_export">
+Eksportēt</string>
+    <string name="export_data_share_csv">
+Kopīgot CSV</string>
+    <string name="export_data_save_csv">
+Saglabāt CSV</string>
+    <string name="export_data_supported">
+Atbalstīts: CSV eksportēšana un CSV importēšana.</string>
+    <string name="export_data_premium_message">
+CSV eksporta dublējumkopijas ir daļa no Premium. Imports ir pieejams zemāk.</string>
+    <string name="export_data_upgrade_cta">
+Jauniniet, lai atbloķētu CSV eksportēšanu</string>
+    <string name="export_data_section_import">
+Importēt</string>
+    <string name="export_data_choose_csv">
+Izvēlieties importējamo CSV</string>
+    <string name="export_data_import_tip">
+Padoms: importējiet vienu un to pašu eksportu vairākas reizes — dublikātus aizstāj ar ID.</string>
+    <string name="subscription_value_save_more_than">
+Premium var palīdzēt ietaupīt vairāk nekā %1$s mēnesī</string>
+    <string name="subscription_value_highest_spend">
+Pagājušajā mēnesī jūsu lielākie tēriņi bija %1$s: %2$s.</string>
+    <string name="subscription_value_reduction">Samazinājums par 10%% būtu aptuveni %1$s mēnesī (%2$s gadā).</string>
+    <string name="subscription_value_ratio">
+Šī aplēse ir aptuveni %1$sx ikmēneša abonēšanas cena.</string>
+    <string name="subscription_value_track_more">
+Izsekojiet nedaudz vairāk tēriņu, un mēs aprēķināsim, cik daudz Premium var palīdzēt jums ietaupīt katru mēnesi.</string>
+    <string name="subscription_choose_plan">
+Izvēlieties savu plānu</string>
+    <string name="subscription_loading_pricing">
+Notiek tiešsaistes cenu ielāde no pakalpojuma Google Play...</string>
+    <string name="subscription_pricing_unavailable">
+Tiešraides Google Play cenas īslaicīgi nav pieejamas. Pēc brīža mēģiniet vēlreiz.</string>
+    <string name="subscription_free_vs_premium">
+Bezmaksas vs Premium</string>
+    <string name="subscription_feature_mochi_finance_chat">
+Mochi finanšu tērzēšana</string>
+    <string name="subscription_feature_monthly_savings_insights">
+Ikmēneša ietaupījumu ieskati</string>
+    <string name="subscription_feature_recurring_budgets">
+Periodiskie budžeti</string>
+    <string name="subscription_feature_advanced_reports">
+Uzlaboti pārskati</string>
+    <string name="subscription_feature_ads">
+Reklāmas</string>
+    <string name="subscription_feature_locked">Bloķēts</string>
+    <string name="subscription_feature_included">
+Iekļauts</string>
+    <string name="subscription_feature_basic">
+Pamata</string>
+    <string name="subscription_feature_personalized">
+Personalizēts</string>
+    <string name="subscription_feature_shown">
+Parādīts</string>
+    <string name="subscription_feature_removed">
+Noņemts</string>
+    <string name="subscription_restore_purchases">
+Atjaunot pirkumus</string>
+    <string name="notification_daily_title_playful">
+Moči reģistrēšanās</string>
+    <string name="notification_daily_text_playful">
+Labs darbs šodien. Ienākumi %1$s • Izdevumi %2$s • Neto %3$s</string>
+    <string name="notification_daily_title_advisor">
+Ikdienas naudas kopsavilkums</string>
+    <string name="notification_daily_text_advisor">
+Ienākumi %1$s • Izdevumi %2$s • Neto %3$s</string>
+    <string name="notification_daily_title_urgent">
+Aizsargājiet rītdienas budžetu</string>
+    <string name="notification_daily_text_urgent">Šodienas tīkls ir %1$s. Ātra pārskatīšana tagad var novērst pārtēriņus vēlāk.</string>
+    <string name="notification_empty_title_playful">
+Mochi izlaiž šodienas ierakstus</string>
+    <string name="notification_empty_text_playful">
+Reģistrējiet šodienas ienākumus un izdevumus, lai jūsu naudas plāns turpinātu darboties.</string>
+    <string name="notification_empty_title_advisor">
+Vakara finanšu atgādinājums</string>
+    <string name="notification_empty_text_advisor">
+Reģistrējiet šodienas darījumus, lai jūsu pārskati būtu precīzi.</string>
+    <string name="notification_empty_title_urgent">
+Nezaudējiet šodienas naudas takas</string>
+    <string name="notification_empty_text_urgent">
+1 minūti ilga reģistrēšanās šovakar novērš aklo zonu rašanos šajā mēnesī.</string>
+    <string name="common_all">
+Visi</string>
+    <string name="common_sort">
+Kārtot</string>
+    <string name="common_filter">
+Filtrs</string>
+    <string name="common_duplicate">
+Dublikāts</string>
+    <string name="common_share">
+Dalīties</string>
+    <string name="common_details">Sīkāka informācija</string>
+    <string name="common_transaction">
+Darījums</string>
+    <string name="common_budget">
+Budžets</string>
+    <string name="common_transactions">
+Darījumi</string>
+    <string name="common_account">
+Konts</string>
+    <string name="common_category">
+Kategorija</string>
+    <string name="common_period">
+Periods</string>
+    <string name="common_warning">
+Brīdinājums</string>
+    <string name="common_on_track">
+Uz ceļa</string>
+    <string name="common_exceeded">
+Pārsniegts</string>
+    <string name="common_remaining">
+Atlikušais</string>
+    <string name="common_limit">
+Ierobežot</string>
+    <string name="common_spent">Iztērēts</string>
+    <string name="common_date">
+Datums</string>
+    <string name="common_notes">
+Piezīmes</string>
+    <string name="common_yes">
+Jā</string>
+    <string name="common_tags">
+Tagi</string>
+    <string name="common_receipt">
+Kvīts</string>
+    <string name="common_from">
+No</string>
+    <string name="common_to">
+Uz</string>
+    <string name="common_attached">
+Pievienots</string>
+    <string name="common_open_receipt">
+Atvērt kvīti</string>
+    <string name="common_today">
+Šodien</string>
+    <string name="common_yesterday">
+vakar</string>
+    <string name="period_this_month">Šomēnes</string>
+    <string name="period_last_month">
+Pagājušais mēnesis</string>
+    <string name="period_this_year">
+Šogad</string>
+    <string name="period_all_time">
+Visu laiku</string>
+    <string name="transactions_share_chooser">
+Akciju darījums</string>
+    <string name="transactions_select_transaction">
+Atlasiet darījumu</string>
+    <string name="transactions_clear_all_filters">
+Notīrīt visus filtrus</string>
+    <string name="transactions_search_placeholder">
+Meklēt darījumus</string>
+    <string name="transactions_empty">
+Nav atrasts neviens darījums</string>
+    <string name="transactions_badge_recurring">
+Atkārtojas</string>
+    <string name="transactions_badge_receipt">
+Kvīts</string>
+    <string name="transactions_sort_date_newest">
+Datums (jaunākais)</string>
+    <string name="transactions_sort_date_oldest">Datums (vecākais)</string>
+    <string name="transactions_sort_amount_high_low">
+Summa (no lielas līdz mazai)</string>
+    <string name="transactions_sort_amount_low_high">
+Summa (maza līdz liela)</string>
+    <string name="budgets_sort_usage_desc">
+Kārtot pēc lietojuma (no augsta līdz zemam)</string>
+    <string name="budgets_sort_remaining_asc">
+Kārtot pēc atlikušā (no zemā līdz augstākajam)</string>
+    <string name="budgets_sort_name">
+Kārtot pēc nosaukuma</string>
+    <string name="budgets_add_budget">
+Pievienot budžetu</string>
+    <string name="budgets_tab_current">
+Pašreizējie budžeti (%1$d)</string>
+    <string name="budgets_tab_past">
+Iepriekšējie budžeti (%1$d)</string>
+    <string name="budgets_current_section_title">
+Pašreizējie budžeti (%1$d)</string>
+    <string name="budgets_current_section_body">
+Budžeti, kas pašlaik joprojām darbojas.</string>
+    <string name="budgets_past_section_title">
+Iepriekšējie budžeti (%1$d)</string>
+    <string name="budgets_past_section_body">Pabeigtie budžeti ar tēriņu vēsturi no to aktīvā perioda.</string>
+    <string name="budgets_empty_filtered">
+Šiem filtriem neatbilst neviens budžets.</string>
+    <string name="budgets_empty_current">
+Pašreizējo budžetu vēl nav.</string>
+    <string name="budgets_empty_past">
+Vēl nav iepriekšējo budžetu.</string>
+    <string name="budgets_overview_title">
+Budžeta pārskats</string>
+    <string name="budgets_overview_body">
+%1$d pašreizējais(-ie) budžets(-i) un %2$d iepriekšējais(-ie) budžets(-i). Izmantojiet tālāk esošos filtrus, ja vēlaties sašaurināt sarakstu.</string>
+    <string name="budgets_summary_on_track">
+Uz ceļa: %1$d</string>
+    <string name="budgets_summary_warning">
+Brīdinājums: %1$d</string>
+    <string name="budgets_summary_exceeded">
+Pārsniegts: %1$d</string>
+    <string name="budgets_remaining_left">
+%1$s pa kreisi</string>
+    <string name="budgets_remaining_over">
+%1$s beidzies</string>
+    <string name="budgets_remaining_with_days">
+%1$s • Atlikušas %2$d dienas</string>
+    <string name="budgets_overview_of_limit">no %1$s budžeta</string>
+    <string name="budgets_overview_used">izlietots</string>
+    <string name="budgets_spent_of_limit">%1$s no %2$s</string>
+    <string name="budgets_days_left_short">Atlikušas %1$d dienas</string>
+    <string name="common_recurring">Atkārtojas</string>
+    <string name="budgets_prompt_title">Tikko beidzās budžets</string>
+    <string name="budgets_prompt_body">
+%1$s beidzās %2$s. Izveidojiet nākamo budžetu tūlīt, lai turpinātu to izsekot.</string>
+    <string name="budgets_prompt_action">
+Izveidojiet nākamo budžetu</string>
+    <string name="budgets_past_transactions_count">
+%1$d darījumi</string>
+    <string name="budgets_past_meta">%1$s  &#183;  %2$d darījumi</string>
+    <string name="budgets_past_view_history">
+Pieskarieties, lai skatītu šo budžeta vēsturi.</string>
+    <string name="budgets_past_under_by">
+%1$s pabeidza saskaņā ar budžetu</string>
+    <string name="budgets_past_over_by">
+Pabeidza %1$s, pārsniedzot budžetu</string>
+    <string name="budget_period_custom">
+Pielāgots</string>
+    <string name="budget_detail_period_format">
+Periods: %1$s</string>
+    <string name="budget_detail_no_transactions">
+Šajā budžetā vēl nav ieskaitīts neviens darījums.</string>
+    <string name="budget_detail_next_cycle">
+Nākamais cikls: %1$s</string>
+    <string name="budget_detail_create_next">
+Izveidojiet nākamo budžetu</string>
+    <string name="budget_detail_history_result_under">%1$s pabeidza saskaņā ar budžetu</string>
+    <string name="budget_detail_history_result_over">
+Pabeidza %1$s, pārsniedzot budžetu</string>
+    <string name="budget_detail_snapshot_title">
+Budžeta momentuzņēmums</string>
+    <string name="budget_detail_average_spend">
+Vidējie tēriņi</string>
+    <string name="budget_detail_largest_expense">
+Lielākie izdevumi</string>
+    <string name="budget_detail_spend_breakdown">
+Izdevumu sadalījums</string>
+    <string name="budget_detail_breakdown_transactions">
+%1$d tx</string>
+    <string name="budget_detail_spend_share">
+%1$d%% tēriņu</string>
+    <string name="budget_detail_transactions_period">
+Darījumi no šī budžeta perioda</string>
+    <string name="budget_detail_transaction_count">
+%1$d darījumi</string>
+    <string name="budget_detail_no_transactions_period">
+Šajā budžeta periodā netika reģistrēti darījumi.</string>
+    <string name="budget_editor_auto_end_hint">
+Šis budžets beigsies %1$s un pēc tam tiks pārvietots uz iepriekšējiem budžetiem.</string>
+    <string name="budget_editor_custom_end_hint">Pielāgotajiem budžetiem ir nepieciešams beigu datums, lai Xpenze varētu pārvietot tos uz iepriekšējiem budžetiem, kad periods beidzas.</string>
+    <string name="budget_editor_custom_end_required">
+Izvēlieties šī pielāgotā budžeta beigu datumu.</string>
+    <string name="budget_editor_recurring_title">
+Periodisks budžets</string>
+    <string name="budget_editor_recurring_body">
+Kad šis beidzas, automātiski izveidojiet nākamo budžetu.</string>
+    <string name="budget_editor_recurring_premium_body">
+Periodiski budžeti ir Premium funkcija. Jauniniet, lai automātiski izveidotu nākamo budžeta periodu.</string>
+    <string name="budget_editor_recurring_next_hint">
+Xpenze automātiski izveidos nākamo %1$s budžetu, kad šis beigsies.</string>
+    <string name="transfer_date_today">
+Datums: šodien</string>
+    <string name="transfer_confirm">
+Apstipriniet pārsūtīšanu</string>
+    <string name="accounts_add_account">
+Pievienot kontu</string>
+    <string name="accounts_show_archived">
+Rādīt arhivētos kontus</string>
+    <string name="accounts_show_archived_body">
+Arhivētie konti pēc noklusējuma ir paslēpti</string>
+    <string name="account_editor_title_edit">
+Rediģēt kontu</string>
+    <string name="account_editor_title_new">Jauns konts</string>
+    <string name="account_editor_name_label">
+Konta nosaukums</string>
+    <string name="account_editor_type_label">
+Tips</string>
+    <string name="account_editor_currency_label">
+Valūta</string>
+    <string name="account_editor_initial_balance_label">
+Sākotnējais līdzsvars</string>
+    <string name="account_editor_balance_edit_hint">
+Atjauniniet izsekoto atlikumu šeit, un Xpenze saglabās jūsu iepriekšējos darījumus neskartus.</string>
+    <string name="account_editor_set_default_title">
+Iestatīt kā noklusējumu</string>
+    <string name="account_editor_set_default_body">
+Pēc noklusējuma tiek izmantots jauniem darījumiem</string>
+    <string name="account_editor_archived_title">
+Arhivēts</string>
+    <string name="account_editor_archived_body">
+Paslēpt no galvenajiem sarakstiem</string>
+    <string name="about_title">
+Par</string>
+    <string name="about_version_format">
+Versija %1$s (%2$d)</string>
+    <string name="about_tagline">Izdevumu izsekošana ir vienkārša.</string>
+    <string name="about_privacy_subtitle">
+Kā mēs apstrādājam jūsu datus</string>
+    <string name="about_help_support_subtitle">
+Saņemiet palīdzību, ziņojiet par kļūdu</string>
+    <string name="about_terms_subtitle">
+Lietošana un ierobežojumi</string>
+    <string name="about_licenses_subtitle">
+Xpenze izmantotās bibliotēkas</string>
+    <string name="help_support_quick_tips_title">
+Ātri padomi</string>
+    <string name="help_support_quick_tips_body">
+Turiet nospiestu darījumu, lai veiktu darbības. Izmantojiet filtrus sadaļā Darījumi un Budžeti, lai sašaurinātu rezultātus. Regulāri eksportējiet dublēšanai.</string>
+    <string name="help_support_report_bug_title">
+Ziņot par kļūdu</string>
+    <string name="help_support_report_bug_body">
+Ja šķiet, ka kaut kas nav kārtībā, iekļaujiet to, ko darījāt, ko gaidījāt, un, ja iespējams, ekrānuzņēmumu.</string>
+    <string name="help_support_contact_title">
+Sazināties</string>
+    <string name="help_support_contact_body">
+Atbalsts pa e-pastu: support@xpenze.app</string>
+    <string name="help_support_email_hint">
+E-pastā būs informācija par versiju, lai paātrinātu atbalstu.</string>
+    <string name="help_support_send_email_title">Nosūtīt e-pastu</string>
+    <string name="help_support_send_email_body">
+Tiek atvērta jūsu e-pasta lietotne ar iepriekš aizpildītu diagnostikas informāciju.</string>
+    <string name="help_support_email_button">
+E-pasta atbalsts</string>
+    <string name="help_support_email_subject">
+Xpenze atbalsts (v%1$s)</string>
+    <string name="help_support_email_body_intro">
+Aprakstiet problēmu šeit:</string>
+    <string name="help_support_email_body_app_version">
+Lietotnes versija: %1$s (%2$d)</string>
+    <string name="help_support_email_body_device">
+Ierīce: Android</string>
+    <string name="auth_create_account_title">
+Izveidojiet savu kontu</string>
+    <string name="auth_create_account_subtitle">
+Izveidojiet savu kontu, verificējiet savu e-pastu un pēc tam pabeidziet iestatīšanu.</string>
+    <string name="auth_full_name">
+Pilns vārds</string>
+    <string name="auth_full_name_placeholder">
+Džons Dū</string>
+    <string name="auth_email">
+E-pasts</string>
+    <string name="auth_email_address">E-pasta adrese</string>
+    <string name="auth_email_placeholder">
+lietotājs@example.com</string>
+    <string name="auth_password">
+Parole</string>
+    <string name="auth_password_placeholder">
+........</string>
+    <string name="auth_confirm_password">
+Apstipriniet paroli</string>
+    <string name="auth_or_continue_with">
+VAI TURPINĀT AR</string>
+    <string name="auth_google">
+Google</string>
+    <string name="auth_already_have_account">
+Vai jums jau ir konts? </string>
+    <string name="auth_welcome_back">
+Laipni lūdzam atpakaļ</string>
+    <string name="auth_login_subtitle">
+Lūdzu, ievadiet savu informāciju, lai pierakstītos.</string>
+    <string name="auth_forgot_password">
+Aizmirsāt paroli?</string>
+    <string name="auth_dont_have_account">
+Vai jums nav konta? </string>
+    <string name="auth_reset_password_title">Atiestatīt paroli</string>
+    <string name="auth_reset_password_subtitle">
+Ievadiet ar jūsu kontu saistīto e-pasta adresi, un mēs nosūtīsim jums e-pasta ziņojumu ar norādījumiem paroles atiestatīšanai.</string>
+    <string name="auth_send_reset_link">
+Nosūtīt atiestatīšanas saiti</string>
+    <string name="auth_or_need_help">
+VAI VAJAG PALĪDZĪBA?</string>
+    <string name="auth_contact_support">
+Sazinieties ar atbalsta dienestu</string>
+    <string name="auth_contact_support_chooser">
+Sazinieties ar atbalsta dienestu</string>
+    <string name="auth_remember_password">
+Atcerieties savu paroli? </string>
+    <string name="auth_verify_email_title">
+Apstipriniet savu e-pastu</string>
+    <string name="auth_verification_intro">
+Mēs esam nosūtījuši verifikācijas saiti uz\n</string>
+    <string name="auth_verification_outro">
+. Lūdzu, atveriet savu iesūtni, noklikšķiniet uz saites, pēc tam atgriezieties un pieskarieties "%1$s".</string>
+    <string name="auth_ive_verified">
+Esmu pārbaudījis</string>
+    <string name="auth_didnt_receive_email">
+Vai nesaņēmāt e-pastu? </string>
+    <string name="auth_resend_email">Atkārtoti nosūtīt e-pastu</string>
+    <string name="auth_check_spam_hint">
+Pārbaudiet surogātpastu vai pieskarieties vienumam Sūtīt e-pastu atkārtoti, ja ziņojums netiek saņemts.</string>
+    <string name="auth_google_requires_activity">
+Lai pierakstītos pakalpojumā Google, ir nepieciešams darbības konteksts.</string>
+    <string name="auth_google_not_configured">
+Google pierakstīšanās vēl nav konfigurēta. Pievienojiet google-services.json un iespējojiet Google Firebase konsolē.</string>
+    <string name="auto_capture_settings_section">
+AUTOMĀTISKĀ UZŅEMŠANA</string>
+    <string name="auto_capture_settings_title">
+Automātiska uztveršana</string>
+    <string name="auto_capture_settings_premium_subtitle">
+Pirmā paziņojuma melnraksta importēšana, OCR, tirgotāja atmiņa un paziņojumu tveršana ir Premium.</string>
+    <string name="auto_capture_master_label">
+Automātiskais režīms</string>
+    <string name="auto_capture_master_subtitle">
+Ļaujiet Xpenze savākt iespējamos darījumus kā melnrakstus. Jūsu naudas vēsturei nekas netiek pievienots, kamēr neesat to apstiprinājis.</string>
+    <string name="auto_capture_statement_toggle">
+Izrakstu importēšana</string>
+    <string name="auto_capture_statement_subtitle">
+Importējiet izraksta CSV failus melnrakstu iesūtnē pārskatīšanai.</string>
+    <string name="auto_capture_ocr_toggle">
+Ekrānuzņēmums / kvīts OCR</string>
+    <string name="auto_capture_ocr_subtitle">Izņemiet summu un tirgotāju no ekrānuzņēmuma vai kvīts uz melnrakstu.</string>
+    <string name="auto_capture_notification_toggle">
+Paziņojumu uztveršana</string>
+    <string name="auto_capture_notification_subtitle_on">
+Lasiet atbalstītos darījumu paziņojumus un saglabājiet tos kā pārskatāmus melnrakstus.</string>
+    <string name="auto_capture_notification_subtitle_off">
+Nepieciešama piekļuve paziņojumiem Android iestatījumos. Melnraksti nekad netiek automātiski publicēti.</string>
+    <string name="auto_capture_notification_mode_title">
+Paziņojumu avota režīms</string>
+    <string name="auto_capture_notification_mode_general">
+Ģenerālis</string>
+    <string name="auto_capture_notification_mode_specific">
+Konkrētas lietotnes</string>
+    <string name="auto_capture_notification_mode_general_hint">
+Uzņemiet melnrakstus no visām atbalstītajām lietotnēm. Šajā režīmā noteiktas lietotnes atlase ir atspējota.</string>
+    <string name="auto_capture_notification_mode_specific_hint">
+Uzņemiet melnrakstus tikai no tālāk izvēlētajām lietotnēm.</string>
+    <string name="auto_capture_merchant_toggle">
+Tirgotāja atmiņa</string>
+    <string name="auto_capture_merchant_subtitle">
+Atkārtoti izmantojiet kategoriju, kontu, piezīmes un atzīmes, kuras parasti izmantojat pazīstamiem tirgotājiem.</string>
+    <string name="auto_capture_recurring_toggle">
+Atkārtoti ieteikumi</string>
+    <string name="auto_capture_recurring_subtitle">Iesakiet atkārtotu iestatīšanu, ja nosaukums atbilst esošai atkārtotai shēmai.</string>
+    <string name="auto_capture_draft_inbox_title">
+Melnraksta iesūtne</string>
+    <string name="auto_capture_draft_inbox_subtitle">
+Pārskatiet reģistrētos darījumus, pirms tie ietekmē jūsu vēsturi.</string>
+    <string name="auto_capture_disclosure_title">
+Vai ieslēgt automātisko tveršanu?</string>
+    <string name="auto_capture_disclosure_message">
+Automātiskā uztveršana rada tikai melnrakstus. Xpenze nekad nepārvietos naudu, neapstiprinās maksājumus un nemainīs jūsu atlikumus, kamēr pats nepārskatīsit un nesaglabāsiet katru melnrakstu.</string>
+    <string name="auto_capture_disclosure_confirm">
+es saprotu</string>
+    <string name="auto_capture_notification_access_title">
+Vai atļaut notvert paziņojumus?</string>
+    <string name="auto_capture_notification_access_message">
+Android atvērs paziņojumu piekļuves iestatījumus. Xpenze pārvērš atbilstošos darījumu brīdinājumus tikai melnrakstos jūsu pārskatīšanai, nevis reālos darījumos.</string>
+    <string name="auto_capture_notification_access_confirm">
+Atveriet iestatījumus</string>
+    <string name="auto_capture_draft_inbox_heading">
+Droša pārskatīšanas rinda</string>
+    <string name="auto_capture_premium_required">
+Jauniniet uz Premium, lai izmantotu automātisko uztveršanu.</string>
+    <string name="auto_capture_master_toggle_required">
+Lai sāktu uzņemt melnrakstus, sadaļā Iestatījumi ieslēdziet automātisko režīmu.</string>
+    <string name="auto_capture_empty_hint">Jūsu iesūtne ir gatava. Lai sāktu, importējiet izrakstu vai skenējiet kvīti.</string>
+    <string name="auto_capture_pending_count">
+Neapstiprinātie melnraksti: %1$d</string>
+    <string name="auto_capture_capture_tools_title">
+Tveršanas rīki</string>
+    <string name="auto_capture_capture_tools_body">
+Izvēlieties kontu, kuram pieder šie melnraksti, pēc tam importējiet izrakstu vai skenējiet ekrānuzņēmumu.</string>
+    <string name="auto_capture_import_account_label">
+Importēt vērā</string>
+    <string name="auto_capture_upgrade_button">
+Atbloķējiet Premium</string>
+    <string name="auto_capture_import_statement_button">
+Importēt paziņojumu CSV</string>
+    <string name="auto_capture_scan_receipt_button">
+Skenējiet ekrānuzņēmumu / kvīti</string>
+    <string name="auto_capture_empty_title">
+Vēl nav melnrakstu</string>
+    <string name="auto_capture_empty_body">
+Šeit tiks pārskatītas jaunas izraksta rindas, OCR skenēšana un darījumu paziņojumi.</string>
+    <string name="auto_capture_review_button">
+Pārskats</string>
+    <string name="auto_capture_save_expense_button">
+Izdevumi</string>
+    <string name="auto_capture_save_income_button">Ienākumi</string>
+    <string name="auto_capture_reimbursement_button">
+Atlīdzība</string>
+    <string name="auto_capture_transfer_button">
+Pārsūtīšana</string>
+    <string name="auto_capture_pass_through_button">
+Caurlaide</string>
+    <string name="auto_capture_exclude_button">
+Izslēgt</string>
+    <string name="auto_capture_guide_button">
+Kā darbojas automātiskā uztveršana</string>
+    <string name="auto_capture_tutorial_title">Iestatīt Auto Capture</string>
+    <string name="auto_capture_tutorial_subtitle">Izvēlieties bankas vai maciņa lietotnes, lai Xpenze veidotu melnrakstus tikai no īstiem maksājumu brīdinājumiem.</string>
+    <string name="auto_capture_tutorial_general_warning">Izvairieties no Vispārīgā režīma. Tas uztver daudz ciparu paziņojumu un piepilda melnrakstu iesūtni ar troksni. Dodiet priekšroku Konkrētām lietotnēm.</string>
+    <string name="auto_capture_tutorial_page1_body">Melnrakstu iesūtnē izvēlieties Konkrētas lietotnes, lai Auto Capture uzraudzītu tikai jūsu izvēlētās bankas un maciņa lietotnes.</string>
+    <string name="auto_capture_tutorial_page1_image_cd">Melnrakstu iesūtne ar izceltām Konkrētām lietotnēm</string>
+    <string name="auto_capture_tutorial_page2_body">Meklējiet banku vai maciņu, atlasiet to un pieskarieties Saglabāt. Šajā lietotnē atstājiet ieslēgtus paziņojumus par maksājumiem.</string>
+    <string name="auto_capture_tutorial_page2_image_cd">Paziņojumu lietotņu izvēles ekrāns</string>
+    <string name="auto_capture_tutorial_callout_specific_apps">Izmantojiet Konkrētas lietotnes, ne Vispārīgo</string>
+    <string name="auto_capture_tutorial_callout_select_app">Atlasiet bankas vai maciņa lietotni</string>
+    <string name="auto_capture_tutorial_callout_search">Meklējiet bankas vai maciņa lietotni</string>
+    <string name="auto_capture_tutorial_callout_save">Pieskarieties Saglabāt, lai saglabātu izvēli</string>
+    <string name="auto_capture_tutorial_notification_note">Jūsu bankas vai maciņa lietotnei pēc katra maksājuma jānosūta paziņojums, lai Auto Capture izveidotu melnrakstu.</string>
+    <string name="auto_capture_tutorial_next">Tālāk</string>
+    <string name="auto_capture_tutorial_back">Atpakaļ</string>
+    <string name="auto_capture_tutorial_got_it">Sapratu</string>
+    <string name="auto_capture_tutorial_choose_apps_cta">Izvēlēties bankas lietotnes</string>
+    <string name="auto_capture_tutorial_replay_label">Kā darbojas Auto Capture</string>
+    <string name="auto_capture_tutorial_replay_subtitle">Skatiet, kā izvēlēties bankas lietotnes un izvairīties no Vispārīgā režīma trokšņa.</string>
+    <string name="auto_capture_tutorial_replay_hint">Varat to jebkurā laikā atkārtot sadaļā Iestatījumi → Auto Capture → Kā darbojas Auto Capture.</string>
+    <string name="auto_capture_general_mode_warning">Vispārīgais režīms ir ieslēgts. Dodiet priekšroku Konkrētām lietotnēm, lai tikai bankas un maciņa brīdinājumi kļūtu par melnrakstiem.</string>
+    <string name="auto_capture_xiaomi_autostart_title">
+Ieslēdziet Xiaomi automātisko palaišanu</string>
+    <string name="auto_capture_xiaomi_autostart_body">
+Xiaomi, Redmi un POCO tālruņos paziņojumu tveršana var tikt apturēta fonā, ja vien MIUI drošības sistēmā Xpenze nav iespējota automātiskā palaišana.</string>
+    <string name="auto_capture_xiaomi_autostart_button">
+Atveriet automātiskās palaišanas iestatījumus</string>
+    <string name="auto_capture_capture_tools_ready">
+Melnraksta uzņemšana ir gatava.</string>
+    <string name="auto_capture_enable_more_tools_hint">
+Iespējojiet izrakstu importēšanu vai OCR sadaļā Iestatījumi, lai izmantotu šos rīkus šeit.</string>
+    <string name="auto_capture_notification_tools_hint">
+Iestatījumos ieslēdziet paziņojumu uzņemšanu, ja vēlaties, lai Xpenze skatītos brīdinājumus par darījumiem.</string>
+    <string name="auto_capture_review_draft_title">Pārskatīt melnrakstu</string>
+    <string name="auto_capture_review_draft_banner_title">
+Melnraksta pārskatīšanas režīms</string>
+    <string name="auto_capture_review_draft_banner_body">
+Šis uzņemtais vienums joprojām ir nošķirts no jūsu reālajiem darījumiem. Saglabājiet to tikai pēc tam, kad detaļas izskatās pareizi.</string>
+    <string name="auto_capture_merchant_memory_card_title">
+Tirgotāja atmiņa</string>
+    <string name="auto_capture_merchant_memory_card_body">
+Xpenze atceras, kā jūs parasti klasificējat %1$s.</string>
+    <string name="auto_capture_apply_memory_button">
+Lietot atmiņu</string>
+    <string name="auto_capture_apply_recurring_button">
+Izmantojiet atkārtotus ieteikumus</string>
+    <string name="welcome_screen_continue_without_account">Turpināt bez konta</string>
+    <string name="welcome_screen_guest_hint">Konts nav vajadzīgs — sāciet uzreiz.</string>
+    <string name="settings_guest_backup_title">Dublējiet savus datus</string>
+    <string name="settings_guest_backup_subtitle">Jūs izmantojat Xpenze bez konta. Pierakstieties, lai dublētu datus un sinhronizētu tos vairākās ierīcēs.</string>
+    <string name="settings_guest_sign_in">Pierakstīties</string>
+</resources>

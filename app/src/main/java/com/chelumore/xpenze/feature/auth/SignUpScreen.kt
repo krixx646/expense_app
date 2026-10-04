@@ -69,6 +69,7 @@ fun SignUpScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onSignUpSuccess: () -> Unit,
+    onRequireVerification: () -> Unit,
     viewModel: SignUpViewModel = hiltViewModel()
 ) {
     XpenzeTheme(darkTheme = true, dynamicColor = false) {
@@ -87,8 +88,9 @@ fun SignUpScreen(
 
         LaunchedEffect(uiState.isSuccess) {
             if (uiState.isSuccess) {
+                val requiresVerification = uiState.requiresVerification
                 viewModel.consumeSuccess()
-                onSignUpSuccess()
+                if (requiresVerification) onRequireVerification() else onSignUpSuccess()
             }
         }
 

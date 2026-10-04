@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.auth.FirebaseAuthException
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -175,6 +176,81 @@ class GrowthAnalyticsTracker @Inject constructor(
         }
     }
 
+    fun logScreenView(route: String?) {
+        val screenName = screenNameFromRoute(route) ?: return
+        val params = Bundle().apply {
+            putString(FirebaseAnalytics.Param.SCREEN_NAME, screenName)
+            putString(FirebaseAnalytics.Param.SCREEN_CLASS, screenName)
+        }
+        runCatching { firebaseAnalytics?.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, params) }
+        Log.d(TAG, "screen_view=$screenName")
+    }
+
+    fun setAccountType(isGuest: Boolean, isSignedIn: Boolean) {
+        val accountType = when {
+            isGuest -> "guest"
+            isSignedIn -> "account"
+            else -> "none"
+        }
+        runCatching { firebaseAnalytics?.setUserProperty(USER_PROP_ACCOUNT_TYPE, accountType) }
+    }
+
+    fun logWelcomeChoice(choice: String) {
+        logFunnelEvent(EVENT_WELCOME_CHOICE) { putString(PARAM_CHOICE, choice) }
+    }
+
+    fun logAuthResult(flow: String, method: String, success: Boolean, error: Throwable? = null) {
+        logFunnelEvent(if (success) EVENT_AUTH_SUCCESS else EVENT_AUTH_FAILED) {
+            putString(PARAM_FLOW, flow)
+            putString(PARAM_METHOD, method)
+            if (error != null) putString(PARAM_REASON, authErrorReason(error))
+        }
+    }
+
+    fun logOnboardingStep(step: String) {
+        logFunnelEvent(EVENT_ONBOARDING_STEP) { putString(PARAM_STEP, step.lowercase()) }
+    }
+
+    fun logOnboardingCompleted(addedBudget: Boolean) {
+        logFunnelEvent(EVENT_ONBOARDING_COMPLETE) { putLong(PARAM_ADDED_BUDGET, if (addedBudget) 1L else 0L) }
+    }
+
+    fun logOnboardingFailed(reason: String) {
+        logFunnelEvent(EVENT_ONBOARDING_FAILED) { putString(PARAM_REASON, reason.take(80)) }
+    }
+
+    fun logTransactionCreated(type: String, lifetimeActions: Int) {
+        logFunnelEvent(EVENT_TRANSACTION_CREATED) {
+            putString(PARAM_TYPE, type.lowercase())
+            putLong(PARAM_LIFETIME_ACTIONS, lifetimeActions.toLong())
+        }
+    }
+
+    fun logBudgetCreated(lifetimeActions: Int) {
+        logFunnelEvent(EVENT_BUDGET_CREATED) { putLong(PARAM_LIFETIME_ACTIONS, lifetimeActions.toLong()) }
+    }
+
+    private inline fun logFunnelEvent(eventName: String, paramsBuilder: Bundle.() -> Unit) {
+        val params = Bundle().apply(paramsBuilder)
+        runCatching { firebaseAnalytics?.logEvent(eventName, params) }
+        Log.d(TAG, "event=$eventName params=$params")
+    }
+
+    private fun authErrorReason(error: Throwable): String {
+        val code = (error as? FirebaseAuthException)?.errorCode
+        return (code ?: error::class.simpleName ?: "unknown").take(80)
+    }
+
+    private fun screenNameFromRoute(route: String?): String? {
+        if (route.isNullOrBlank()) return null
+        return route
+            .substringBefore('/')
+            .substringBefore('?')
+            .substringAfterLast('.')
+            .take(100)
+            .ifBlank { null }
+    }
+
     private inline fun logEvent(
         eventName: String,
         screenRoute: String?,
@@ -218,6 +294,33 @@ class GrowthAnalyticsTracker @Inject constructor(
         private const val EVENT_SUBSCRIPTION_RESTORE_FAILED = "subscription_restore_failed"
         private const val EVENT_PREMIUM_NUDGE_IMPRESSION = "premium_nudge_impression"
         private const val EVENT_PREMIUM_NUDGE_CLICK = "premium_nudge_click"
+
+        private const val EVENT_WELCOME_CHOICE = "welcome_choice"
+        private const val EVENT_AUTH_SUCCESS = "auth_success"
+        private const val EVENT_AUTH_FAILED = "auth_failed"
+        private const val EVENT_ONBOARDING_STEP = "onboarding_step"
+        private const val EVENT_ONBOARDING_COMPLETE = "onboarding_complete"
+        private const val EVENT_ONBOARDING_FAILED = "onboarding_failed"
+        private const val EVENT_TRANSACTION_CREATED = "transaction_created"
+        private const val EVENT_BUDGET_CREATED = "budget_created"
+
+        private const val USER_PROP_ACCOUNT_TYPE = "account_type"
+
+        private const val PARAM_CHOICE = "choice"
+        private const val PARAM_FLOW = "flow"
+        private const val PARAM_METHOD = "method"
+        private const val PARAM_STEP = "step"
+        private const val PARAM_ADDED_BUDGET = "added_budget"
+        private const val PARAM_TYPE = "type"
+        private const val PARAM_LIFETIME_ACTIONS = "lifetime_actions"
+
+        const val WELCOME_CHOICE_SIGN_UP = "sign_up"
+        const val WELCOME_CHOICE_LOG_IN = "log_in"
+        const val WELCOME_CHOICE_GUEST = "guest"
+        const val AUTH_FLOW_SIGN_UP = "sign_up"
+        const val AUTH_FLOW_LOG_IN = "log_in"
+        const val AUTH_METHOD_EMAIL = "email"
+        const val AUTH_METHOD_GOOGLE = "google"
 
         private const val SURFACE_GLOBAL_OVERLAY = "global_overlay"
         private const val SURFACE_SUBSCRIPTION_SCREEN = "subscription_screen"

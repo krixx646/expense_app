@@ -11,6 +11,7 @@ internal fun localizedAutoCaptureSourceLabel(
     AutoCaptureSource.STATEMENT_IMPORT -> pickAutoCaptureText(
         languageTag,
         en = "Statement",
+        lv = "Paziņojums",
         es = "Extracto",
         fr = "Releve",
         de = "Auszug",
@@ -25,6 +26,7 @@ internal fun localizedAutoCaptureSourceLabel(
     AutoCaptureSource.NOTIFICATION -> pickAutoCaptureText(
         languageTag,
         en = "Notification",
+        lv = "Paziņojums",
         es = "Notificacion",
         fr = "Notification",
         de = "Benachrichtigung",
@@ -44,6 +46,7 @@ internal fun localizedAutoCaptureStatusLabel(
     AutoCaptureDraftStatus.PENDING -> pickAutoCaptureText(
         languageTag,
         en = "Ready",
+        lv = "Gatavs",
         es = "Listo",
         fr = "Pret",
         de = "Bereit",
@@ -57,6 +60,7 @@ internal fun localizedAutoCaptureStatusLabel(
     AutoCaptureDraftStatus.NEEDS_REVIEW -> pickAutoCaptureText(
         languageTag,
         en = "Needs review",
+        lv = "Nepieciešama pārskatīšana",
         es = "Necesita revision",
         fr = "A verifier",
         de = "Prufung erforderlich",
@@ -70,6 +74,7 @@ internal fun localizedAutoCaptureStatusLabel(
     AutoCaptureDraftStatus.RESOLVED -> pickAutoCaptureText(
         languageTag,
         en = "Resolved",
+        lv = "Atrisināts",
         es = "Resuelto",
         fr = "Traite",
         de = "Erledigt",
@@ -86,6 +91,7 @@ internal fun localizedAutoCapturePremiumRequiredMessage(languageTag: String? = n
     pickAutoCaptureText(
         languageTag,
         en = "Auto-capture is part of Premium.",
+        lv = "Automātiskā tveršana ir daļa no Premium.",
         es = "La captura automatica forma parte de Premium.",
         fr = "La capture automatique fait partie de Premium.",
         de = "Die automatische Erfassung ist Teil von Premium.",
@@ -101,6 +107,7 @@ internal fun localizedAutoCaptureEnableStatementFirstMessage(languageTag: String
     pickAutoCaptureText(
         languageTag,
         en = "Enable statement import in Settings first.",
+        lv = "Vispirms iestatījumos iespējojiet izrakstu importēšanu.",
         es = "Primero activa la importacion de extractos en Ajustes.",
         fr = "Activez d'abord l'import de releves dans les Reglages.",
         de = "Aktivieren Sie zuerst den Auszugsimport in den Einstellungen.",
@@ -119,6 +126,7 @@ internal fun localizedAutoCaptureStatementImportSummaryMessage(
 ): String = pickAutoCaptureText(
     languageTag,
     en = "Added $draftsCreated draft(s). Skipped $rowsSkipped row(s).",
+    lv = "Pievienots $draftsCreated melnraksts(-i). Izlaista(-as) $rowsSkipped rinda(-as).",
     es = "Se agregaron $draftsCreated borrador(es). Se omitieron $rowsSkipped fila(s).",
     fr = "$draftsCreated brouillon(s) ajoute(s). $rowsSkipped ligne(s) ignoree(s).",
     de = "$draftsCreated Entwurf(e) hinzugefugt. $rowsSkipped Zeile(n) ubersprungen.",
@@ -134,6 +142,7 @@ internal fun localizedAutoCaptureStatementImportFailedMessage(languageTag: Strin
     pickAutoCaptureText(
         languageTag,
         en = "Statement import failed.",
+        lv = "Izraksta importēšana neizdevās.",
         es = "La importacion del extracto fallo.",
         fr = "L'import du releve a echoue.",
         de = "Der Auszugsimport ist fehlgeschlagen.",
@@ -149,6 +158,7 @@ internal fun localizedAutoCaptureStatementFormatError(languageTag: String? = nul
     pickAutoCaptureText(
         languageTag,
         en = "We could not recognize this statement format. Use a CSV with date, amount, and description columns.",
+        lv = "Mēs nevarējām atpazīt šo paziņojuma formātu. Izmantojiet CSV failu ar datuma, summas un apraksta kolonnām.",
         es = "No pudimos reconocer este formato de extracto. Usa un CSV con columnas de fecha, importe y descripcion.",
         fr = "Impossible de reconnaitre ce format de releve. Utilisez un CSV avec les colonnes date, montant et description.",
         de = "Dieses Auszugsformat konnte nicht erkannt werden. Verwenden Sie eine CSV mit Datum, Betrag und Beschreibung.",
@@ -164,6 +174,7 @@ internal fun localizedAutoCaptureEnableOcrFirstMessage(languageTag: String? = nu
     pickAutoCaptureText(
         languageTag,
         en = "Enable screenshot / receipt OCR in Settings first.",
+        lv = "Vispirms iestatījumos iespējojiet ekrānuzņēmumu/kvīts OCR.",
         es = "Primero activa el OCR de capturas y recibos en Ajustes.",
         fr = "Activez d'abord l'OCR des captures et recus dans les Reglages.",
         de = "Aktivieren Sie zuerst Screenshot-/Beleg-OCR in den Einstellungen.",
@@ -179,6 +190,7 @@ internal fun localizedAutoCaptureOcrAddedMessage(languageTag: String? = null): S
     pickAutoCaptureText(
         languageTag,
         en = "OCR draft added to your inbox.",
+        lv = "OCR melnraksts ir pievienots jūsu iesūtnei.",
         es = "El borrador OCR se agrego a tu bandeja.",
         fr = "Le brouillon OCR a ete ajoute a votre boite.",
         de = "Der OCR-Entwurf wurde Ihrem Posteingang hinzugefugt.",
@@ -194,6 +206,7 @@ internal fun localizedAutoCaptureOcrFailedParseMessage(languageTag: String? = nu
     pickAutoCaptureText(
         languageTag,
         en = "We could not extract a reliable draft from that image.",
+        lv = "Mēs nevarējām iegūt uzticamu melnrakstu no šī attēla.",
         es = "No pudimos extraer un borrador confiable de esa imagen.",
         fr = "Nous n'avons pas pu extraire un brouillon fiable de cette image.",
         de = "Aus diesem Bild konnte kein zuverlassiger Entwurf erstellt werden.",
@@ -209,6 +222,7 @@ internal fun localizedAutoCaptureOcrFailedMessage(languageTag: String? = null): 
     pickAutoCaptureText(
         languageTag,
         en = "OCR capture failed.",
+        lv = "OCR uztveršana neizdevās.",
         es = "La captura OCR fallo.",
         fr = "La capture OCR a echoue.",
         de = "Die OCR-Erfassung ist fehlgeschlagen.",
@@ -224,6 +238,7 @@ internal fun localizedAutoCaptureDraftMissingMessage(languageTag: String? = null
     pickAutoCaptureText(
         languageTag,
         en = "Draft no longer exists.",
+        lv = "Melnraksts vairs nepastāv.",
         es = "El borrador ya no existe.",
         fr = "Le brouillon n'existe plus.",
         de = "Der Entwurf existiert nicht mehr.",
@@ -239,6 +254,7 @@ internal fun localizedAutoCaptureConfirmAmountFirstMessage(languageTag: String? 
     pickAutoCaptureText(
         languageTag,
         en = "Open review to confirm the amount first.",
+        lv = "Atveriet pārskatīšanu, lai vispirms apstiprinātu summu.",
         es = "Abre la revision para confirmar primero el importe.",
         fr = "Ouvrez la verification pour confirmer d'abord le montant.",
         de = "Offnen Sie zuerst die Prufung, um den Betrag zu bestatigen.",
@@ -254,6 +270,7 @@ internal fun localizedAutoCaptureChooseAccountFirstMessage(languageTag: String? 
     pickAutoCaptureText(
         languageTag,
         en = "Create or choose an account first.",
+        lv = "Vispirms izveidojiet vai izvēlieties kontu.",
         es = "Primero crea o elige una cuenta.",
         fr = "Creez ou choisissez d'abord un compte.",
         de = "Erstellen oder wahlen Sie zuerst ein Konto aus.",
@@ -269,6 +286,7 @@ internal fun localizedAutoCaptureChooseDestinationFirstMessage(languageTag: Stri
     pickAutoCaptureText(
         languageTag,
         en = "Open review to choose the destination account.",
+        lv = "Atveriet pārskatīšanu, lai izvēlētos galamērķa kontu.",
         es = "Abre la revision para elegir la cuenta de destino.",
         fr = "Ouvrez la verification pour choisir le compte de destination.",
         de = "Offnen Sie die Prufung, um das Zielkonto auszuwahlen.",
@@ -284,6 +302,7 @@ internal fun localizedAutoCaptureDefaultTitle(languageTag: String? = null): Stri
     pickAutoCaptureText(
         languageTag,
         en = "Captured draft",
+        lv = "Uzņemts melnraksts",
         es = "Borrador capturado",
         fr = "Brouillon capture",
         de = "Erfasster Entwurf",
@@ -299,6 +318,7 @@ internal fun localizedAutoCaptureSavedToTransactionsMessage(languageTag: String?
     pickAutoCaptureText(
         languageTag,
         en = "Draft saved to transactions.",
+        lv = "Melnraksts saglabāts darījumos.",
         es = "El borrador se guardo en transacciones.",
         fr = "Le brouillon a ete enregistre dans les transactions.",
         de = "Der Entwurf wurde bei den Transaktionen gespeichert.",
@@ -314,6 +334,7 @@ internal fun localizedAutoCaptureSaveFailedMessage(languageTag: String? = null):
     pickAutoCaptureText(
         languageTag,
         en = "We could not save that draft.",
+        lv = "Mēs nevarējām saglabāt šo melnrakstu.",
         es = "No pudimos guardar ese borrador.",
         fr = "Nous n'avons pas pu enregistrer ce brouillon.",
         de = "Dieser Entwurf konnte nicht gespeichert werden.",
@@ -329,6 +350,7 @@ internal fun localizedAutoCaptureMarkedPassThroughMessage(languageTag: String? =
     pickAutoCaptureText(
         languageTag,
         en = "Draft marked as pass-through.",
+        lv = "Melnraksts atzīmēts kā caurlaide.",
         es = "El borrador se marco como paso temporal.",
         fr = "Le brouillon a ete marque comme pass-through.",
         de = "Der Entwurf wurde als Durchlaufposten markiert.",
@@ -344,6 +366,7 @@ internal fun localizedAutoCaptureExcludedMessage(languageTag: String? = null): S
     pickAutoCaptureText(
         languageTag,
         en = "Draft excluded from your inbox.",
+        lv = "Melnraksts ir izslēgts no jūsu iesūtnes.",
         es = "El borrador se excluyo de tu bandeja.",
         fr = "Le brouillon a ete exclu de votre boite.",
         de = "Der Entwurf wurde aus Ihrem Posteingang ausgeschlossen.",
@@ -359,6 +382,7 @@ internal fun localizedAutoCaptureResolvedMessage(languageTag: String? = null): S
     pickAutoCaptureText(
         languageTag,
         en = "Draft resolved.",
+        lv = "Melnraksts atrisināts.",
         es = "Borrador resuelto.",
         fr = "Brouillon traite.",
         de = "Entwurf erledigt.",
@@ -374,6 +398,7 @@ internal fun localizedAutoCaptureNotificationAmbiguousReason(languageTag: String
     pickAutoCaptureText(
         languageTag,
         en = "This looks like a real money movement, but its meaning still needs your confirmation.",
+        lv = "Tā izskatās kā īsta naudas kustība, taču tās nozīmei vēl ir nepieciešams jūsu apstiprinājums.",
         es = "Esto parece un movimiento de dinero real, pero su significado aun necesita tu confirmacion.",
         fr = "Cela ressemble a un vrai mouvement d'argent, mais sa signification doit encore etre confirmee.",
         de = "Dies sieht nach einer echten Geldbewegung aus, aber die Bedeutung muss noch bestatigt werden.",
@@ -389,6 +414,7 @@ internal fun localizedAutoCaptureOcrAmbiguousReason(languageTag: String? = null)
     pickAutoCaptureText(
         languageTag,
         en = "OCR found an amount, but the transaction meaning is still ambiguous.",
+        lv = "OCR atrada summu, taču darījuma nozīme joprojām ir neskaidra.",
         es = "El OCR encontro un importe, pero el significado de la transaccion sigue siendo ambiguo.",
         fr = "L'OCR a trouve un montant, mais le sens de la transaction reste ambigu.",
         de = "OCR hat einen Betrag gefunden, aber die Bedeutung der Transaktion bleibt unklar.",
@@ -404,6 +430,7 @@ internal fun localizedAutoCaptureStatementAmbiguousReason(languageTag: String? =
     pickAutoCaptureText(
         languageTag,
         en = "Possible transfer or ambiguous statement row.",
+        lv = "Iespējama pārsūtīšana vai neskaidra paziņojuma rinda.",
         es = "Posible transferencia o fila ambigua del extracto.",
         fr = "Virement possible ou ligne de releve ambigue.",
         de = "Mogliche Uberweisung oder mehrdeutige Auszugszeile.",
@@ -422,6 +449,7 @@ internal fun localizedAutoCaptureDraftNotificationBody(
     pickAutoCaptureText(
         languageTag,
         en = "New draft captured for $amountText. Review it or save it from this notification.",
+        lv = "$amountText ir uzņemts jauns melnraksts. Pārskatiet to vai saglabājiet to no šī paziņojuma.",
         es = "Se capturo un nuevo borrador por $amountText. Revisalo o guardalo desde esta notificacion.",
         fr = "Nouveau brouillon capture pour $amountText. Verifiez-le ou enregistrez-le depuis cette notification.",
         de = "Neuer Entwurf uber $amountText erfasst. Prufen oder speichern Sie ihn direkt aus dieser Benachrichtigung.",
@@ -436,6 +464,7 @@ internal fun localizedAutoCaptureDraftNotificationBody(
     pickAutoCaptureText(
         languageTag,
         en = "New money draft captured. Review it or save it from this notification.",
+        lv = "Uzņemts jauns naudas pārvedums. Pārskatiet to vai saglabājiet to no šī paziņojuma.",
         es = "Se capturo un nuevo borrador de dinero. Revisalo o guardalo desde esta notificacion.",
         fr = "Un nouveau brouillon financier a ete capture. Verifiez-le ou enregistrez-le depuis cette notification.",
         de = "Ein neuer Geld-Entwurf wurde erfasst. Prufen oder speichern Sie ihn direkt aus dieser Benachrichtigung.",
@@ -452,6 +481,7 @@ internal fun localizedAutoCaptureManageSetupBody(languageTag: String? = null): S
     pickAutoCaptureText(
         languageTag,
         en = "Manage notification capture, statement import, OCR, merchant memory, and recurring suggestions from one clear setup flow.",
+        lv = "Pārvaldiet paziņojumu tveršanu, izrakstu importēšanu, OCR, tirgotāja atmiņu un periodiskos ieteikumus no vienas skaidras iestatīšanas plūsmas.",
         es = "Gestiona la captura de notificaciones, importacion de extractos, OCR, memoria de comercios y sugerencias recurrentes desde una sola configuracion clara.",
         fr = "Gerez la capture des notifications, l'import de releves, l'OCR, la memoire des marchands et les suggestions recurrentes depuis une seule configuration claire.",
         de = "Verwalten Sie Benachrichtigungserfassung, Auszugsimport, OCR, Haendlerspeicher und wiederkehrende Vorschlaege in einem klaren Setup.",
@@ -467,6 +497,7 @@ internal fun localizedAutoCaptureManageSetupButton(languageTag: String? = null):
     pickAutoCaptureText(
         languageTag,
         en = "Open automatic setup",
+        lv = "Atveriet automātisko iestatīšanu",
         es = "Abrir configuracion automatica",
         fr = "Ouvrir la configuration automatique",
         de = "Automatisches Setup offnen",
@@ -482,6 +513,7 @@ internal fun localizedAutoCaptureNotificationToolsHint(languageTag: String? = nu
     pickAutoCaptureText(
         languageTag,
         en = "Open automatic setup below if you want Xpenze to watch supported transaction alerts too.",
+        lv = "Tālāk atveriet automātisko iestatīšanu, ja vēlaties, lai Xpenze skatītos arī atbalstītos darījumu brīdinājumus.",
         es = "Abre la configuracion automatica de abajo si quieres que Xpenze tambien vigile alertas de transacciones compatibles.",
         fr = "Ouvrez la configuration automatique ci-dessous si vous voulez que Xpenze surveille aussi les alertes de transaction prises en charge.",
         de = "Offnen Sie unten das automatische Setup, wenn Xpenze auch unterstuetzte Transaktionshinweise beobachten soll.",
@@ -497,6 +529,7 @@ internal fun localizedAutoCaptureNotificationAppFilterTitle(languageTag: String?
     pickAutoCaptureText(
         languageTag,
         en = "Notification sources",
+        lv = "Paziņojumu avoti",
         es = "Fuentes de notificaciones",
         fr = "Sources de notifications",
         de = "Benachrichtigungsquellen",
@@ -512,6 +545,7 @@ internal fun localizedAutoCaptureNotificationAppFilterAllSummary(languageTag: St
     pickAutoCaptureText(
         languageTag,
         en = "All supported apps can create drafts right now.",
+        lv = "Visas atbalstītās lietotnes šobrīd var izveidot melnrakstus.",
         es = "Todas las apps compatibles pueden crear borradores ahora mismo.",
         fr = "Toutes les applications compatibles peuvent creer des brouillons pour le moment.",
         de = "Alle unterstuetzten Apps konnen derzeit Entwuerfe erstellen.",
@@ -529,6 +563,7 @@ internal fun localizedAutoCaptureNotificationAppFilterSelectedSummary(
 ): String = pickAutoCaptureText(
     languageTag,
     en = "Only $selectedCount selected app(s) can create drafts.",
+    lv = "Tikai $selectedCount atlasītā(-ās) lietotne(-es) var izveidot melnrakstus.",
     es = "Solo $selectedCount app(s) seleccionada(s) pueden crear borradores.",
     fr = "Seules $selectedCount application(s) selectionnee(s) peuvent creer des brouillons.",
     de = "Nur $selectedCount ausgewaehlte App(s) koennen Entwuerfe erstellen.",
@@ -544,6 +579,7 @@ internal fun localizedAutoCaptureNotificationAppFilterChooseButton(languageTag: 
     pickAutoCaptureText(
         languageTag,
         en = "Choose specific apps",
+        lv = "Izvēlieties noteiktas lietotnes",
         es = "Elegir apps especificas",
         fr = "Choisir des applications precises",
         de = "Bestimmte Apps auswaehlen",
@@ -559,6 +595,7 @@ internal fun localizedAutoCaptureNotificationAppFilterResetButton(languageTag: S
     pickAutoCaptureText(
         languageTag,
         en = "Use all supported apps",
+        lv = "Izmantojiet visas atbalstītās lietotnes",
         es = "Usar todas las apps compatibles",
         fr = "Utiliser toutes les applications compatibles",
         de = "Alle unterstuetzten Apps verwenden",
@@ -574,6 +611,7 @@ internal fun localizedAutoCaptureNotificationAppPickerTitle(languageTag: String?
     pickAutoCaptureText(
         languageTag,
         en = "Choose notification apps",
+        lv = "Izvēlieties paziņojumu lietotnes",
         es = "Elegir apps de notificaciones",
         fr = "Choisir les applications de notification",
         de = "Benachrichtigungs-Apps auswaehlen",
@@ -589,6 +627,7 @@ internal fun localizedAutoCaptureNotificationAppPickerBody(languageTag: String? 
     pickAutoCaptureText(
         languageTag,
         en = "Pick the apps whose money alerts should be allowed to create drafts.",
+        lv = "Izvēlieties lietotnes, kuru naudas brīdinājumiem jāļauj izveidot melnrakstus.",
         es = "Elige las apps cuyas alertas de dinero podran crear borradores.",
         fr = "Choisissez les applications dont les alertes d'argent pourront creer des brouillons.",
         de = "Waehlen Sie die Apps aus, deren Geldbenachrichtigungen Entwuerfe erstellen duerfen.",
@@ -604,6 +643,7 @@ internal fun localizedAutoCaptureNotificationAppPickerSearchPlaceholder(language
     pickAutoCaptureText(
         languageTag,
         en = "Search apps",
+        lv = "Meklēt lietotnes",
         es = "Buscar apps",
         fr = "Rechercher des applications",
         de = "Apps suchen",
@@ -621,6 +661,7 @@ internal fun localizedAutoCaptureNotificationAppPickerSelectedCount(
 ): String = pickAutoCaptureText(
     languageTag,
     en = "$selectedCount app(s) selected",
+    lv = "Atlasīta(-as) lietotne(-es) $selectedCount",
     es = "$selectedCount app(s) seleccionada(s)",
     fr = "$selectedCount application(s) selectionnee(s)",
     de = "$selectedCount App(s) ausgewaehlt",
@@ -636,6 +677,7 @@ internal fun localizedAutoCaptureNotificationAppPickerEmptyResults(languageTag: 
     pickAutoCaptureText(
         languageTag,
         en = "No matching apps found on this device.",
+        lv = "Šajā ierīcē nav atrasta neviena atbilstoša lietotne.",
         es = "No se encontraron apps coincidentes en este dispositivo.",
         fr = "Aucune application correspondante trouvee sur cet appareil.",
         de = "Auf diesem Geraet wurden keine passenden Apps gefunden.",
@@ -650,6 +692,7 @@ internal fun localizedAutoCaptureNotificationAppPickerEmptyResults(languageTag: 
 private fun pickAutoCaptureText(
     languageTag: String?,
     en: String,
+    lv: String = en,
     es: String,
     fr: String,
     de: String,
@@ -661,6 +704,7 @@ private fun pickAutoCaptureText(
     zh: String
 ): String {
     return when (AppLanguages.normalizeTag(languageTag ?: Locale.getDefault().toLanguageTag())) {
+        "lv" -> lv
         "es" -> es
         "fr" -> fr
         "de" -> de

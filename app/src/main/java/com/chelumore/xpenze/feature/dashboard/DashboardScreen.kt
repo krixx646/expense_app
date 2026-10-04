@@ -54,6 +54,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
@@ -74,6 +75,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import coil.compose.AsyncImage
 import com.chelumore.xpenze.R
@@ -92,6 +94,8 @@ import com.chelumore.xpenze.core.ui.components.display.AccountCard
 import com.chelumore.xpenze.core.ui.components.growth.PremiumOpportunityCard
 import com.chelumore.xpenze.core.ui.util.iconForName
 import com.chelumore.xpenze.core.ui.util.parseHexColorOrFallback
+import com.chelumore.xpenze.feature.autocapture.AutoCaptureTutorialDialog
+import com.chelumore.xpenze.ui.theme.BlackBackground
 import com.chelumore.xpenze.ui.theme.ErrorRed
 import com.chelumore.xpenze.ui.theme.InfoBlue
 import com.chelumore.xpenze.ui.theme.SuccessGreen
@@ -111,11 +115,19 @@ fun DashboardScreen(
     onNavigateToAllTransactions: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToDraftInbox: () -> Unit = {},
+    onNavigateToDraftInboxAppPicker: () -> Unit = {},
     onNavigateToAutoCaptureSetup: () -> Unit = {},
     onNavigateToSubscription: () -> Unit = {},
     onNavigateToAiChat: (String?) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showAutoCaptureTutorial by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.showAutoCaptureTutorial, uiState.isLoading) {
+        if (!uiState.isLoading && uiState.showAutoCaptureTutorial) {
+            showAutoCaptureTutorial = true
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -141,6 +153,14 @@ fun DashboardScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     item { HeaderSection(uiState, onSelectMonth = viewModel::setMonth) }
+                    if (uiState.isTrialEndingSoon) {
+                        item {
+                            TrialEndingSoonCard(
+                                daysRemaining = uiState.trialDaysRemaining,
+                                onKeepPremium = onNavigateToSubscription
+                            )
+                        }
+                    }
                     item {
                         BalanceSection(
                             state = uiState,
@@ -197,6 +217,23 @@ fun DashboardScreen(
                     }
                     item { BudgetAlertsSection(uiState) }
                     item { AccountsSection(uiState, onNavigateToAccounts) }
+                }
+
+                if (showAutoCaptureTutorial) {
+                    AutoCaptureTutorialDialog(
+                        canChooseBankApps = uiState.hasPremiumAccess && !uiState.isGuestMode,
+                        onDismiss = {
+                            showAutoCaptureTutorial = false
+                            viewModel.markAutoCaptureTutorialSeen()
+                        },
+                        onChooseBankApps = {
+                            showAutoCaptureTutorial = false
+                            viewModel.markAutoCaptureTutorialSeen()
+                            if (uiState.hasPremiumAccess && !uiState.isGuestMode) {
+                                onNavigateToDraftInboxAppPicker()
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -761,6 +798,49 @@ private fun ActionButtonsSection(
                 ) {
                     Text(stringResource(R.string.dashboard_transfer))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TrialEndingSoonCard(
+    daysRemaining: Int,
+    onKeepPremium: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = WarningOrange.copy(alpha = 0.14f)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.trial_ending_soon_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = stringResource(R.string.trial_ending_soon_body, daysRemaining),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Button(
+                onClick = onKeepPremium,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = YellowPrimary,
+                    contentColor = BlackBackground
+                ),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.trial_ending_soon_cta),
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
