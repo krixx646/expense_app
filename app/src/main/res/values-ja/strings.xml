@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">ここで追跡残高を更新すると、Xpenze は過去の取引をそのまま保持します。</string>
     <string name="auto_capture_guide_button">自動キャプチャの仕組み</string>
     <string name="auto_capture_tutorial_title">オートキャプチャを設定</string>
-    <string name="auto_capture_tutorial_subtitle">銀行やウォレットアプリを選ぶと、Xpenzeは実際の支払い通知だけを下書きにします。</string>
+    <string name="auto_capture_tutorial_subtitle">下書き受信箱の取り込みツールを確認し、銀行アプリを選んで実際の支払い通知だけを下書きにします。</string>
     <string name="auto_capture_tutorial_general_warning">一般モードは避けてください。数字の多い通知を多く取り込み、下書き受信箱がノイズで埋まります。特定アプリを選んでください。</string>
+    <string name="auto_capture_tutorial_page0_body">下書き受信箱の取り込みツールで明細CSVを取り込むか、スクリーンショット/レシートをスキャンします。残高に影響する前に、まず下書きで確認できます。</string>
+    <string name="auto_capture_tutorial_page0_image_cd">取り込みとスキャンがある下書き受信箱のツール</string>
+    <string name="auto_capture_tutorial_callout_import_account">新しい下書きの口座を選ぶ</string>
+    <string name="auto_capture_tutorial_callout_import_csv">明細CSVを下書き受信箱に取り込む</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">スクリーンショットやレシートを下書きにスキャン</string>
     <string name="auto_capture_tutorial_page1_body">下書き受信箱で特定アプリを選び、オートキャプチャが選択した銀行・ウォレットアプリだけを監視するようにします。</string>
     <string name="auto_capture_tutorial_page1_image_cd">特定アプリが強調された下書き受信箱</string>
     <string name="auto_capture_tutorial_page2_body">銀行やウォレットを検索して選択し、保存をタップします。支払い通知のため、そのアプリの通知をオンにしてください。</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">了解</string>
     <string name="auto_capture_tutorial_choose_apps_cta">銀行アプリを選ぶ</string>
     <string name="auto_capture_tutorial_replay_label">オートキャプチャの仕組み</string>
-    <string name="auto_capture_tutorial_replay_subtitle">銀行アプリの選び方と、一般モードのノイズを避ける方法を確認します。</string>
+    <string name="auto_capture_tutorial_replay_subtitle">取り込みツール、銀行アプリの選び方、一般モードのノイズ回避を確認します。</string>
     <string name="auto_capture_tutorial_replay_hint">このチュートリアルは、設定 → オートキャプチャ → オートキャプチャの仕組み からいつでもやり直せます。</string>
     <string name="auto_capture_general_mode_warning">一般モードがオンです。特定アプリを選び、銀行・ウォレットの通知だけを下書きにしてください。</string>
     <string name="auto_capture_notification_mode_general">一般的な</string>

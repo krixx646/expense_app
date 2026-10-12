@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">Actualice el saldo rastreado aquí y Xpenze mantendrá intactas sus transacciones anteriores.</string>
     <string name="auto_capture_guide_button">Cómo funciona la captura automática</string>
     <string name="auto_capture_tutorial_title">Configura Auto Capture</string>
-    <string name="auto_capture_tutorial_subtitle">Elige tus apps de banco o billetera para que Xpenze solo cree borradores de alertas de pago reales.</string>
+    <string name="auto_capture_tutorial_subtitle">Conoce las herramientas de captura de Draft Inbox y luego elige apps bancarias para que Xpenze solo cree borradores de alertas de pago reales.</string>
     <string name="auto_capture_tutorial_general_warning">Evita el modo General. Captura muchas notificaciones numéricas y llena tu Bandeja de borradores de ruido. Prefiere Apps específicas.</string>
+    <string name="auto_capture_tutorial_page0_body">Usa las herramientas de captura en Draft Inbox para importar un CSV de extracto o escanear una captura/recibo. Todo llega primero como borrador para revisarlo antes de afectar tus saldos.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">Herramientas de captura de Draft Inbox con importar y escanear</string>
+    <string name="auto_capture_tutorial_callout_import_account">Elige la cuenta de los nuevos borradores</string>
+    <string name="auto_capture_tutorial_callout_import_csv">Importa un CSV de extracto a Draft Inbox</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">Escanea una captura o recibo a un borrador</string>
     <string name="auto_capture_tutorial_page1_body">En la Bandeja de borradores, elige Apps específicas para que Auto Capture solo observe las apps de banco y billetera que selecciones.</string>
     <string name="auto_capture_tutorial_page1_image_cd">Bandeja de borradores con Apps específicas resaltadas</string>
     <string name="auto_capture_tutorial_page2_body">Busca tu banco o billetera, selecciónalo y toca Guardar. Mantén las notificaciones activadas en esa app para alertas de pago.</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">Entendido</string>
     <string name="auto_capture_tutorial_choose_apps_cta">Elegir apps de banco</string>
     <string name="auto_capture_tutorial_replay_label">Cómo funciona Auto Capture</string>
-    <string name="auto_capture_tutorial_replay_subtitle">Mira cómo elegir apps de banco y evitar el ruido del modo General.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">Mira las herramientas de captura, cómo elegir apps bancarias y evitar el modo General ruidoso.</string>
     <string name="auto_capture_tutorial_replay_hint">Puedes volver a ver esto cuando quieras en Ajustes → Captura automática → Cómo funciona Auto Capture.</string>
     <string name="auto_capture_general_mode_warning">El modo General está activo. Prefiere Apps específicas para que solo las alertas de banco y billetera se conviertan en borradores.</string>
     <string name="auto_capture_notification_mode_general">General</string>

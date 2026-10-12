@@ -3,6 +3,7 @@ package com.chelumore.xpenze.core.datastore
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -112,7 +113,9 @@ class PreferencesDataStore @Inject constructor(
             areBalancesHidden = prefs[Keys.ARE_BALANCES_HIDDEN] ?: false,
             defaultCurrency = prefs[Keys.DEFAULT_CURRENCY] ?: Constants.DEFAULT_CURRENCY,
             defaultAccountId = prefs[Keys.DEFAULT_ACCOUNT_ID],
-            themeMode = prefs[Keys.THEME_MODE]?.let { ThemeMode.valueOf(it) } ?: ThemeMode.DARK,
+            themeMode = prefs[Keys.THEME_MODE]
+                ?.let { value -> runCatching { ThemeMode.valueOf(value) }.getOrNull() }
+                ?: ThemeMode.DARK,
             notificationsEnabled = prefs[Keys.NOTIFICATIONS_ENABLED] ?: true,
             budgetAlertEnabled = prefs[Keys.BUDGET_ALERT_ENABLED] ?: true,
             dailySummaryEnabled = prefs[Keys.DAILY_SUMMARY_ENABLED] ?: true,
@@ -351,22 +354,40 @@ class PreferencesDataStore @Inject constructor(
             if (enabled) {
                 prefs[Keys.IS_GUEST_MODE] = true
                 // Guests must never inherit Premium trial, paid flags, or Auto Capture setup.
-                prefs.remove(Keys.TRIAL_STARTED_AT)
-                prefs.remove(Keys.TRIAL_EXPIRES_AT)
-                prefs.remove(Keys.TRIAL_CONSUMED)
-                prefs.remove(Keys.IS_PREMIUM)
-                prefs.remove(Keys.AUTO_CAPTURE_ENABLED)
-                prefs.remove(Keys.AUTO_CAPTURE_STATEMENT_IMPORT_ENABLED)
-                prefs.remove(Keys.AUTO_CAPTURE_OCR_ENABLED)
-                prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ENABLED)
-                prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES)
-                prefs.remove(Keys.AUTO_CAPTURE_MERCHANT_MEMORY_ENABLED)
-                prefs.remove(Keys.AUTO_CAPTURE_RECURRING_SUGGESTIONS_ENABLED)
-                prefs.remove(Keys.AUTO_CAPTURE_DISCLOSURE_ACCEPTED)
+                // Prefer explicit false over remove for booleans: DataStore remove() returns a
+                // non-null T and has caused NullPointerException(getClass) crashes in production
+                // on 1.0.22 when clearing many keys in one guest-mode edit.
+                stripGuestForbiddenEntitlements(prefs)
             } else {
-                prefs.remove(Keys.IS_GUEST_MODE)
+                prefs[Keys.IS_GUEST_MODE] = false
             }
         }
+    }
+
+    /**
+     * Atomically enter guest mode and strip any leftover Premium / Auto Capture entitlements.
+     * Prefer this over separate clearTrial + setPremium + setGuestMode calls.
+     */
+    suspend fun enterGuestMode() {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.IS_GUEST_MODE] = true
+            stripGuestForbiddenEntitlements(prefs)
+        }
+    }
+
+    private fun stripGuestForbiddenEntitlements(prefs: MutablePreferences) {
+        prefs.remove(Keys.TRIAL_STARTED_AT)
+        prefs.remove(Keys.TRIAL_EXPIRES_AT)
+        prefs[Keys.TRIAL_CONSUMED] = false
+        prefs[Keys.IS_PREMIUM] = false
+        prefs[Keys.AUTO_CAPTURE_ENABLED] = false
+        prefs[Keys.AUTO_CAPTURE_STATEMENT_IMPORT_ENABLED] = false
+        prefs[Keys.AUTO_CAPTURE_OCR_ENABLED] = false
+        prefs[Keys.AUTO_CAPTURE_NOTIFICATION_ENABLED] = false
+        prefs.remove(Keys.AUTO_CAPTURE_NOTIFICATION_ALLOWED_PACKAGES)
+        prefs[Keys.AUTO_CAPTURE_MERCHANT_MEMORY_ENABLED] = false
+        prefs[Keys.AUTO_CAPTURE_RECURRING_SUGGESTIONS_ENABLED] = false
+        prefs[Keys.AUTO_CAPTURE_DISCLOSURE_ACCEPTED] = false
     }
 
     suspend fun setUserInfo(userId: String?, email: String?, name: String?, photoUrl: String?) {

@@ -183,7 +183,7 @@ class GeminiFinanceAssistant @Inject constructor(
             }
         }
 
-        val resolvedApiKey = apiKey?.trim().orEmpty()
+        val resolvedApiKey = apiKey.trim()
         if (resolvedApiKey.isBlank()) {
             throw IllegalStateException("Mochi backend is unavailable.")
         }

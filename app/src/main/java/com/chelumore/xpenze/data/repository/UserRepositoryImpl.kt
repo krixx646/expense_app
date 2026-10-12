@@ -90,6 +90,10 @@ class UserRepositoryImpl @Inject constructor(
         preferencesDataStore.setGuestMode(enabled)
     }
 
+    override suspend fun enterGuestMode() {
+        preferencesDataStore.enterGuestMode()
+    }
+
     override suspend fun promoteGuestToUser(
         userId: String,
         email: String?,

@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">قم بتحديث الرصيد المتتبع هنا وسيحافظ Xpenze على معاملاتك السابقة سليمة.</string>
     <string name="auto_capture_guide_button">كيف يعمل الالتقاط التلقائي</string>
     <string name="auto_capture_tutorial_title">إعداد الالتقاط التلقائي</string>
-    <string name="auto_capture_tutorial_subtitle">اختر تطبيقات البنك أو المحفظة حتى ينشئ Xpenze مسودات لتنبيهات الدفع الحقيقية فقط.</string>
+    <string name="auto_capture_tutorial_subtitle">تعرّف على أدوات الالتقاط في صندوق المسودات، ثم اختر تطبيقات البنك حتى ينشئ Xpenze مسودات لتنبيهات الدفع الحقيقية فقط.</string>
     <string name="auto_capture_tutorial_general_warning">تجنب الوضع العام. يلتقط العديد من الإشعارات الرقمية ويملأ صندوق المسودات بالضوضاء. فضّل التطبيقات المحددة.</string>
+    <string name="auto_capture_tutorial_page0_body">استخدم أدوات الالتقاط في صندوق المسودات لاستيراد كشف حساب CSV أو مسح لقطة شاشة/إيصال. كل شيء يصل كمسودة أولاً لمراجعته قبل أن يؤثر على أرصدتك.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">أدوات الالتقاط في صندوق المسودات مع الاستيراد والمسح</string>
+    <string name="auto_capture_tutorial_callout_import_account">اختر الحساب الذي تنتمي إليه المسودات الجديدة</string>
+    <string name="auto_capture_tutorial_callout_import_csv">استورد كشف حساب CSV إلى صندوق المسودات</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">امسح لقطة شاشة أو إيصالاً إلى مسودة</string>
     <string name="auto_capture_tutorial_page1_body">في صندوق المسودات، اختر التطبيقات المحددة حتى يراقب الالتقاط التلقائي فقط تطبيقات البنك والمحفظة التي تحددها.</string>
     <string name="auto_capture_tutorial_page1_image_cd">صندوق المسودات مع تمييز التطبيقات المحددة</string>
     <string name="auto_capture_tutorial_page2_body">ابحث عن تطبيق البنك أو المحفظة، حدده، ثم اضغط حفظ. أبقِ الإشعارات مفعّلة في ذلك التطبيق لتنبيهات الدفع.</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">حسنًا</string>
     <string name="auto_capture_tutorial_choose_apps_cta">اختيار تطبيقات البنك</string>
     <string name="auto_capture_tutorial_replay_label">كيف يعمل الالتقاط التلقائي</string>
-    <string name="auto_capture_tutorial_replay_subtitle">تعرّف على اختيار تطبيقات البنك وتجنب ضوضاء الوضع العام.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">اطّلع على أدوات الالتقاط وكيفية اختيار تطبيقات البنك وتجنّب وضع عام المزدحم.</string>
     <string name="auto_capture_tutorial_replay_hint">يمكنك إعادة مشاهدة هذا في أي وقت من الإعدادات ← الالتقاط التلقائي ← كيف يعمل الالتقاط التلقائي.</string>
     <string name="auto_capture_general_mode_warning">الوضع العام مفعّل. فضّل التطبيقات المحددة حتى تتحول تنبيهات البنك والمحفظة فقط إلى مسودات.</string>
     <string name="auto_capture_notification_mode_general">عام</string>

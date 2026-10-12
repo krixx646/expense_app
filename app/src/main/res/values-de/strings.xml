@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">Aktualisieren Sie hier den verfolgten Kontostand und Xpenze behält Ihre vergangenen Transaktionen bei.</string>
     <string name="auto_capture_guide_button">So funktioniert die automatische Erfassung</string>
     <string name="auto_capture_tutorial_title">Auto Capture einrichten</string>
-    <string name="auto_capture_tutorial_subtitle">Wähle Bank- oder Wallet-Apps, damit Xpenze nur echte Zahlungsbenachrichtigungen als Entwürfe speichert.</string>
+    <string name="auto_capture_tutorial_subtitle">Lerne die Draft-Inbox-Werkzeuge kennen und wähle dann Bank-Apps, damit Xpenze nur echte Zahlungsbenachrichtigungen als Entwürfe speichert.</string>
     <string name="auto_capture_tutorial_general_warning">Vermeide den Allgemein-Modus. Er erfasst viele numerische Benachrichtigungen und füllt den Entwurfseingang mit Rauschen. Bevorzuge Bestimmte Apps.</string>
+    <string name="auto_capture_tutorial_page0_body">Nutze die Capture-Tools in der Draft Inbox, um eine Kontoauszug-CSV zu importieren oder einen Screenshot/Beleg zu scannen. Alles landet zuerst als Entwurf zur Prüfung, bevor Salden betroffen sind.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">Draft-Inbox-Capture-Tools mit Import- und Scan-Aktionen</string>
+    <string name="auto_capture_tutorial_callout_import_account">Wähle das Konto für neue Entwürfe</string>
+    <string name="auto_capture_tutorial_callout_import_csv">Importiere eine Auszug-CSV in die Draft Inbox</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">Scanne einen Screenshot oder Beleg als Entwurf</string>
     <string name="auto_capture_tutorial_page1_body">Wähle im Entwurfseingang Bestimmte Apps, damit Auto Capture nur die von dir ausgewählten Bank- und Wallet-Apps beobachtet.</string>
     <string name="auto_capture_tutorial_page1_image_cd">Entwurfseingang mit hervorgehobenen Bestimmten Apps</string>
     <string name="auto_capture_tutorial_page2_body">Suche deine Bank oder Wallet, wähle sie aus und tippe auf Speichern. Lass Benachrichtigungen in dieser App für Zahlungsalarme aktiviert.</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">Verstanden</string>
     <string name="auto_capture_tutorial_choose_apps_cta">Bank-Apps wählen</string>
     <string name="auto_capture_tutorial_replay_label">So funktioniert Auto Capture</string>
-    <string name="auto_capture_tutorial_replay_subtitle">Sieh, wie du Bank-Apps wählst und den lauten Allgemein-Modus vermeidest.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">Sieh Capture-Tools, Bank-App-Auswahl und wie du den lauten Allgemein-Modus vermeidest.</string>
     <string name="auto_capture_tutorial_replay_hint">Du kannst dieses Tutorial jederzeit erneut ansehen unter Einstellungen → Auto-Capture → So funktioniert Auto Capture.</string>
     <string name="auto_capture_general_mode_warning">Der Allgemein-Modus ist aktiv. Bevorzuge Bestimmte Apps, damit nur Bank- und Wallet-Alerts zu Entwürfen werden.</string>
     <string name="auto_capture_notification_mode_general">Allgemein</string>

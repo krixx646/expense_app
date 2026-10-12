@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">यहां ट्रैक किए गए बैलेंस को अपडेट करें और Xpenze आपके पिछले लेनदेन को बरकरार रखेगा।</string>
     <string name="auto_capture_guide_button">स्वचालित कैप्चर कैसे काम करता है</string>
     <string name="auto_capture_tutorial_title">ऑटो कैप्चर सेट करें</string>
-    <string name="auto_capture_tutorial_subtitle">अपने बैंक या वॉलेट ऐप चुनें ताकि Xpenze केवल असली भुगतान अलर्ट के ड्राफ्ट बनाए।</string>
+    <string name="auto_capture_tutorial_subtitle">ड्राफ्ट इनबॉक्स के कैप्चर टूल जानें, फिर बैंक ऐप चुनें ताकि Xpenze केवल असली भुगतान अलर्ट के ड्राफ्ट बनाए।</string>
     <string name="auto_capture_tutorial_general_warning">जनरल मोड से बचें। यह कई संख्यात्मक नोटिफिकेशन पकड़ता है और ड्राफ्ट इनबॉक्स में शोर भर देता है। विशिष्ट ऐप्स चुनें।</string>
+    <string name="auto_capture_tutorial_page0_body">ड्राफ्ट इनबॉक्स में कैप्चर टूल से स्टेटमेंट CSV इंपोर्ट करें या स्क्रीनशॉट/रसीद स्कैन करें। सब पहले ड्राफ्ट में आता है, ताकि बैलेंस बदलने से पहले आप समीक्षा कर सकें।</string>
+    <string name="auto_capture_tutorial_page0_image_cd">इंपोर्ट और स्कैन वाले ड्राफ्ट इनबॉक्स कैप्चर टूल</string>
+    <string name="auto_capture_tutorial_callout_import_account">नए ड्राफ्ट किस खाते में जाएँ, चुनें</string>
+    <string name="auto_capture_tutorial_callout_import_csv">स्टेटमेंट CSV को ड्राफ्ट इनबॉक्स में इंपोर्ट करें</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">स्क्रीनशॉट या रसीद को ड्राफ्ट में स्कैन करें</string>
     <string name="auto_capture_tutorial_page1_body">ड्राफ्ट इनबॉक्स में विशिष्ट ऐप्स चुनें ताकि ऑटो कैप्चर केवल आपके चुने बैंक और वॉलेट ऐप्स देखे।</string>
     <string name="auto_capture_tutorial_page1_image_cd">विशिष्ट ऐप्स हाइलाइट वाला ड्राफ्ट इनबॉक्स</string>
     <string name="auto_capture_tutorial_page2_body">अपना बैंक या वॉलेट खोजें, चुनें, फिर सहेजें टैप करें। भुगतान अलर्ट के लिए उस ऐप में नोटिफिकेशन चालू रखें।</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">समझ गया</string>
     <string name="auto_capture_tutorial_choose_apps_cta">बैंक ऐप चुनें</string>
     <string name="auto_capture_tutorial_replay_label">ऑटो कैप्चर कैसे काम करता है</string>
-    <string name="auto_capture_tutorial_replay_subtitle">बैंक ऐप चुनना और जनरल मोड का शोर बचाना सीखें।</string>
+    <string name="auto_capture_tutorial_replay_subtitle">कैप्चर टूल, बैंक ऐप चुनना और जनरल मोड का शोर बचाना देखें।</string>
     <string name="auto_capture_tutorial_replay_hint">आप इसे कभी भी सेटिंग्स → ऑटो कैप्चर → ऑटो कैप्चर कैसे काम करता है में दोबारा देख सकते हैं।</string>
     <string name="auto_capture_general_mode_warning">जनरल मोड चालू है। विशिष्ट ऐप्स चुनें ताकि केवल बैंक और वॉलेट अलर्ट ड्राफ्ट बनें।</string>
     <string name="auto_capture_notification_mode_general">सामान्य</string>

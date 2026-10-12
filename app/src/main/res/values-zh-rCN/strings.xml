@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">在此处更新跟踪的余额，Xpenze 将保持您过去的交易完好无损。</string>
     <string name="auto_capture_guide_button">自动捕捉的工作原理</string>
     <string name="auto_capture_tutorial_title">设置自动捕捉</string>
-    <string name="auto_capture_tutorial_subtitle">选择银行或钱包应用，让 Xpenze 只把真实付款提醒做成草稿。</string>
+    <string name="auto_capture_tutorial_subtitle">先了解草稿收件箱的采集工具，再选择银行应用，让 Xpenze 只为真实付款通知生成草稿。</string>
     <string name="auto_capture_tutorial_general_warning">请避免通用模式。它会捕捉大量含数字的通知，把草稿收件箱塞满噪音。请优先使用特定应用。</string>
+    <string name="auto_capture_tutorial_page0_body">在草稿收件箱使用采集工具导入账单 CSV，或扫描截图/收据。所有内容会先进入草稿，方便你在影响余额前核对。</string>
+    <string name="auto_capture_tutorial_page0_image_cd">带有导入和扫描操作的草稿收件箱采集工具</string>
+    <string name="auto_capture_tutorial_callout_import_account">选择新草稿所属账户</string>
+    <string name="auto_capture_tutorial_callout_import_csv">将账单 CSV 导入草稿收件箱</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">扫描截图或收据生成草稿</string>
     <string name="auto_capture_tutorial_page1_body">在草稿收件箱中选择特定应用，让自动捕捉只监听你选中的银行和钱包应用。</string>
     <string name="auto_capture_tutorial_page1_image_cd">突出显示特定应用的草稿收件箱</string>
     <string name="auto_capture_tutorial_page2_body">搜索银行或钱包，选中后点保存。请在该应用中保持付款通知开启。</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">知道了</string>
     <string name="auto_capture_tutorial_choose_apps_cta">选择银行应用</string>
     <string name="auto_capture_tutorial_replay_label">自动捕捉如何工作</string>
-    <string name="auto_capture_tutorial_replay_subtitle">了解如何选择银行应用并避免通用模式噪音。</string>
+    <string name="auto_capture_tutorial_replay_subtitle">查看采集工具、如何选择银行应用，以及如何避免嘈杂的通用模式。</string>
     <string name="auto_capture_tutorial_replay_hint">可随时在 设置 → 自动捕捉 → 自动捕捉如何工作 中重新查看本教程。</string>
     <string name="auto_capture_general_mode_warning">通用模式已开启。请优先使用特定应用，只把银行和钱包提醒做成草稿。</string>
     <string name="auto_capture_notification_mode_general">一般的</string>

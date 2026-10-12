@@ -1393,8 +1393,13 @@ Izslēgt</string>
     <string name="auto_capture_guide_button">
 Kā darbojas automātiskā uztveršana</string>
     <string name="auto_capture_tutorial_title">Iestatīt Auto Capture</string>
-    <string name="auto_capture_tutorial_subtitle">Izvēlieties bankas vai maciņa lietotnes, lai Xpenze veidotu melnrakstus tikai no īstiem maksājumu brīdinājumiem.</string>
+    <string name="auto_capture_tutorial_subtitle">Iepazīsties ar melnrakstu iesūtnes tveršanas rīkiem un pēc tam izvēlies bankas lietotnes, lai Xpenze veidotu melnrakstus tikai no īstiem maksājumu paziņojumiem.</string>
     <string name="auto_capture_tutorial_general_warning">Izvairieties no Vispārīgā režīma. Tas uztver daudz ciparu paziņojumu un piepilda melnrakstu iesūtni ar troksni. Dodiet priekšroku Konkrētām lietotnēm.</string>
+    <string name="auto_capture_tutorial_page0_body">Izmanto tveršanas rīkus, lai importētu konta izraksta CSV vai skenētu ekrānuzņēmumu/čeks. Viss vispirms nonāk kā melnraksts pārskatīšanai, pirms ietekmē atlikumus.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">Melnrakstu iesūtnes tveršanas rīki ar importu un skenēšanu</string>
+    <string name="auto_capture_tutorial_callout_import_account">Izvēlies kontu jaunajiem melnrakstiem</string>
+    <string name="auto_capture_tutorial_callout_import_csv">Importē izraksta CSV uz melnrakstu iesūtni</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">Skenē ekrānuzņēmumu vai čeku kā melnrakstu</string>
     <string name="auto_capture_tutorial_page1_body">Melnrakstu iesūtnē izvēlieties Konkrētas lietotnes, lai Auto Capture uzraudzītu tikai jūsu izvēlētās bankas un maciņa lietotnes.</string>
     <string name="auto_capture_tutorial_page1_image_cd">Melnrakstu iesūtne ar izceltām Konkrētām lietotnēm</string>
     <string name="auto_capture_tutorial_page2_body">Meklējiet banku vai maciņu, atlasiet to un pieskarieties Saglabāt. Šajā lietotnē atstājiet ieslēgtus paziņojumus par maksājumiem.</string>
@@ -1409,7 +1414,7 @@ Kā darbojas automātiskā uztveršana</string>
     <string name="auto_capture_tutorial_got_it">Sapratu</string>
     <string name="auto_capture_tutorial_choose_apps_cta">Izvēlēties bankas lietotnes</string>
     <string name="auto_capture_tutorial_replay_label">Kā darbojas Auto Capture</string>
-    <string name="auto_capture_tutorial_replay_subtitle">Skatiet, kā izvēlēties bankas lietotnes un izvairīties no Vispārīgā režīma trokšņa.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">Skati tveršanas rīkus, bankas lietotņu izvēli un kā izvairīties no trokšņainā Vispārīgā režīma.</string>
     <string name="auto_capture_tutorial_replay_hint">Varat to jebkurā laikā atkārtot sadaļā Iestatījumi → Auto Capture → Kā darbojas Auto Capture.</string>
     <string name="auto_capture_general_mode_warning">Vispārīgais režīms ir ieslēgts. Dodiet priekšroku Konkrētām lietotnēm, lai tikai bankas un maciņa brīdinājumi kļūtu par melnrakstiem.</string>
     <string name="auto_capture_xiaomi_autostart_title">

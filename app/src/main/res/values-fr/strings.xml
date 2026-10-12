@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">Mettez à jour le solde suivi ici et Xpenze conservera vos transactions passées intactes.</string>
     <string name="auto_capture_guide_button">Comment fonctionne la capture automatique</string>
     <string name="auto_capture_tutorial_title">Configurer Auto Capture</string>
-    <string name="auto_capture_tutorial_subtitle">Choisissez vos apps bancaires ou de portefeuille pour que Xpenze ne crée que des brouillons d’alertes de paiement réelles.</string>
+    <string name="auto_capture_tutorial_subtitle">Découvrez les outils de capture de la boîte de brouillons, puis choisissez vos apps bancaires pour que Xpenze ne crée que des brouillons d’alertes de paiement réelles.</string>
     <string name="auto_capture_tutorial_general_warning">Évitez le mode Général. Il capture beaucoup de notifications numériques et remplit votre boîte de brouillons. Préférez Applications spécifiques.</string>
+    <string name="auto_capture_tutorial_page0_body">Utilisez les outils de capture pour importer un relevé CSV ou scanner une capture/reçu. Tout arrive d’abord en brouillon pour relecture avant d’affecter vos soldes.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">Outils de capture de la boîte de brouillons avec import et scan</string>
+    <string name="auto_capture_tutorial_callout_import_account">Choisissez le compte des nouveaux brouillons</string>
+    <string name="auto_capture_tutorial_callout_import_csv">Importez un relevé CSV dans la boîte de brouillons</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">Scannez une capture ou un reçu en brouillon</string>
     <string name="auto_capture_tutorial_page1_body">Dans la boîte de brouillons, choisissez Applications spécifiques pour qu’Auto Capture ne surveille que les apps bancaires et portefeuilles sélectionnées.</string>
     <string name="auto_capture_tutorial_page1_image_cd">Boîte de brouillons avec Applications spécifiques mises en évidence</string>
     <string name="auto_capture_tutorial_page2_body">Recherchez votre banque ou portefeuille, sélectionnez-le, puis appuyez sur Enregistrer. Gardez les notifications activées dans cette app pour les alertes de paiement.</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">Compris</string>
     <string name="auto_capture_tutorial_choose_apps_cta">Choisir les apps bancaires</string>
     <string name="auto_capture_tutorial_replay_label">Comment fonctionne Auto Capture</string>
-    <string name="auto_capture_tutorial_replay_subtitle">Voyez comment choisir les apps bancaires et éviter le bruit du mode Général.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">Voir les outils de capture, comment choisir les apps bancaires et éviter le mode Général bruyant.</string>
     <string name="auto_capture_tutorial_replay_hint">Vous pouvez revoir ce tutoriel à tout moment dans Paramètres → Capture automatique → Comment fonctionne Auto Capture.</string>
     <string name="auto_capture_general_mode_warning">Le mode Général est activé. Préférez Applications spécifiques pour que seules les alertes bancaires et portefeuilles deviennent des brouillons.</string>
     <string name="auto_capture_notification_mode_general">Général</string>

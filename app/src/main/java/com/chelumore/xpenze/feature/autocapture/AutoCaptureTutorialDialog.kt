@@ -59,6 +59,8 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
+private const val TutorialPageCount = 3
+
 private enum class ArrowDirection {
     Left,
     Right,
@@ -72,8 +74,10 @@ fun AutoCaptureTutorialDialog(
     onChooseBankApps: () -> Unit,
     canChooseBankApps: Boolean = true
 ) {
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    val pagerState = rememberPagerState(pageCount = { TutorialPageCount })
     val scope = rememberCoroutineScope()
+    val currentPage = pagerState.currentPage
+    val isLastPage = currentPage == TutorialPageCount - 1
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -110,8 +114,9 @@ fun AutoCaptureTutorialDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) { page ->
                     when (page) {
-                        0 -> TutorialPageOne()
-                        else -> TutorialPageTwo()
+                        0 -> TutorialPageCaptureTools()
+                        1 -> TutorialPageSpecificApps()
+                        else -> TutorialPageBankPicker()
                     }
                 }
 
@@ -121,13 +126,13 @@ fun AutoCaptureTutorialDialog(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    repeat(2) { index ->
+                    repeat(TutorialPageCount) { index ->
                         Box(
                             modifier = Modifier
                                 .padding(horizontal = 4.dp)
-                                .size(if (pagerState.currentPage == index) 9.dp else 7.dp)
+                                .size(if (currentPage == index) 9.dp else 7.dp)
                                 .background(
-                                    color = if (pagerState.currentPage == index) {
+                                    color = if (currentPage == index) {
                                         YellowPrimary
                                     } else {
                                         Color.Gray.copy(alpha = 0.45f)
@@ -139,10 +144,10 @@ fun AutoCaptureTutorialDialog(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (pagerState.currentPage == 0) {
+                if (!isLastPage) {
                     Button(
                         onClick = {
-                            scope.launch { pagerState.animateScrollToPage(1) }
+                            scope.launch { pagerState.animateScrollToPage(currentPage + 1) }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -158,14 +163,28 @@ fun AutoCaptureTutorialDialog(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = stringResource(R.string.auto_capture_tutorial_got_it),
-                            color = Color.Gray
-                        )
+                    if (currentPage > 0) {
+                        TextButton(
+                            onClick = {
+                                scope.launch { pagerState.animateScrollToPage(currentPage - 1) }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(R.string.auto_capture_tutorial_back),
+                                color = Color.Gray
+                            )
+                        }
+                    } else {
+                        TextButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(R.string.auto_capture_tutorial_got_it),
+                                color = Color.Gray
+                            )
+                        }
                     }
                 } else {
                     Text(
@@ -208,7 +227,7 @@ fun AutoCaptureTutorialDialog(
                     }
                     TextButton(
                         onClick = {
-                            scope.launch { pagerState.animateScrollToPage(0) }
+                            scope.launch { pagerState.animateScrollToPage(currentPage - 1) }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -224,7 +243,46 @@ fun AutoCaptureTutorialDialog(
 }
 
 @Composable
-private fun TutorialPageOne() {
+private fun TutorialPageCaptureTools() {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AnnotatedScreenshot(
+            imageRes = R.drawable.auto_capture_tutorial_capture_tools,
+            contentDescription = stringResource(R.string.auto_capture_tutorial_page0_image_cd),
+            callouts = listOf(
+                CalloutSpec(
+                    number = 1,
+                    caption = stringResource(R.string.auto_capture_tutorial_callout_import_account),
+                    xFraction = 0.90f,
+                    yFraction = 0.51f,
+                    arrowDirection = ArrowDirection.Left
+                ),
+                CalloutSpec(
+                    number = 2,
+                    caption = stringResource(R.string.auto_capture_tutorial_callout_import_csv),
+                    xFraction = 0.90f,
+                    yFraction = 0.61f,
+                    arrowDirection = ArrowDirection.Left
+                ),
+                CalloutSpec(
+                    number = 3,
+                    caption = stringResource(R.string.auto_capture_tutorial_callout_scan_receipt),
+                    xFraction = 0.90f,
+                    yFraction = 0.70f,
+                    arrowDirection = ArrowDirection.Left
+                )
+            )
+        )
+
+        Text(
+            text = stringResource(R.string.auto_capture_tutorial_page0_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+    }
+}
+
+@Composable
+private fun TutorialPageSpecificApps() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Box(
             modifier = Modifier
@@ -263,7 +321,7 @@ private fun TutorialPageOne() {
 }
 
 @Composable
-private fun TutorialPageTwo() {
+private fun TutorialPageBankPicker() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         AnnotatedScreenshot(
             imageRes = R.drawable.auto_capture_tutorial_app_picker,
@@ -371,7 +429,7 @@ private fun AnnotatedScreenshot(
                         text = callout.caption,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.padding(top = 1.dp)
                     )
                 }
             }
@@ -382,71 +440,59 @@ private fun AnnotatedScreenshot(
 private fun NumberedArrowCallout(
     number: Int,
     direction: ArrowDirection,
-    modifier: Modifier = Modifier,
-    badgeSize: Dp = 28.dp,
-    stemLength: Dp = 22.dp
+    modifier: Modifier = Modifier
 ) {
-    val arrowColor = YellowPrimary
-    Box(modifier = modifier) {
-        when (direction) {
-            ArrowDirection.Left -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    NumberBadge(number = number, size = badgeSize)
-                    ShortArrow(
-                        direction = direction,
-                        color = arrowColor,
-                        length = stemLength,
-                        modifier = Modifier.padding(start = 2.dp)
-                    )
-                }
+    when (direction) {
+        ArrowDirection.Left -> {
+            Row(
+                modifier = modifier,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NumberBadge(number = number)
+                Spacer(modifier = Modifier.width(4.dp))
+                ShortArrow(direction = direction, length = 28.dp)
             }
-            ArrowDirection.Right -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ShortArrow(
-                        direction = direction,
-                        color = arrowColor,
-                        length = stemLength,
-                        modifier = Modifier.padding(end = 2.dp)
-                    )
-                    NumberBadge(number = number, size = badgeSize)
-                }
+        }
+        ArrowDirection.Right -> {
+            Row(
+                modifier = modifier,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShortArrow(direction = direction, length = 28.dp)
+                Spacer(modifier = Modifier.width(4.dp))
+                NumberBadge(number = number)
             }
-            ArrowDirection.Up -> {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    ShortArrow(
-                        direction = direction,
-                        color = arrowColor,
-                        length = stemLength,
-                        modifier = Modifier.padding(bottom = 2.dp)
-                    )
-                    NumberBadge(number = number, size = badgeSize)
-                }
+        }
+        ArrowDirection.Up -> {
+            Column(
+                modifier = modifier,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                NumberBadge(number = number)
+                Spacer(modifier = Modifier.height(4.dp))
+                ShortArrow(direction = direction, length = 28.dp)
             }
-            ArrowDirection.Down -> {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    NumberBadge(number = number, size = badgeSize)
-                    ShortArrow(
-                        direction = direction,
-                        color = arrowColor,
-                        length = stemLength,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
+        }
+        ArrowDirection.Down -> {
+            Column(
+                modifier = modifier,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ShortArrow(direction = direction, length = 28.dp)
+                Spacer(modifier = Modifier.height(4.dp))
+                NumberBadge(number = number)
             }
         }
     }
 }
 
 @Composable
-private fun NumberBadge(
-    number: Int,
-    size: Dp
-) {
+private fun NumberBadge(number: Int) {
     Box(
         modifier = Modifier
-            .size(size)
+            .size(28.dp)
             .background(YellowPrimary, CircleShape)
-            .border(2.dp, BlackBackground, CircleShape),
+            .border(1.5.dp, BlackBackground.copy(alpha = 0.35f), CircleShape),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -461,53 +507,48 @@ private fun NumberBadge(
 @Composable
 private fun ShortArrow(
     direction: ArrowDirection,
-    color: Color,
     length: Dp,
-    modifier: Modifier = Modifier
+    color: Color = YellowPrimary,
+    strokeWidth: Dp = 3.dp
 ) {
-    val isHorizontal = direction == ArrowDirection.Left || direction == ArrowDirection.Right
-    Canvas(
-        modifier = modifier.then(
-            if (isHorizontal) {
-                Modifier
-                    .width(length)
-                    .height(14.dp)
-            } else {
-                Modifier
-                    .width(14.dp)
-                    .height(length)
-            }
-        )
-    ) {
-        val strokeWidth = 3.5.dp.toPx()
-        val head = 7.dp.toPx()
+    val width = when (direction) {
+        ArrowDirection.Left, ArrowDirection.Right -> length
+        ArrowDirection.Up, ArrowDirection.Down -> 18.dp
+    }
+    val height = when (direction) {
+        ArrowDirection.Left, ArrowDirection.Right -> 18.dp
+        ArrowDirection.Up, ArrowDirection.Down -> length
+    }
+    Canvas(modifier = Modifier.size(width = width, height = height)) {
+        val strokePx = strokeWidth.toPx()
+        val head = 8.dp.toPx()
         val (start, end) = when (direction) {
-            ArrowDirection.Left -> Offset(size.width, size.height / 2f) to Offset(0f, size.height / 2f)
-            ArrowDirection.Right -> Offset(0f, size.height / 2f) to Offset(size.width, size.height / 2f)
-            ArrowDirection.Up -> Offset(size.width / 2f, size.height) to Offset(size.width / 2f, 0f)
-            ArrowDirection.Down -> Offset(size.width / 2f, 0f) to Offset(size.width / 2f, size.height)
+            ArrowDirection.Left -> Offset(size.width, size.height / 2f) to Offset(head, size.height / 2f)
+            ArrowDirection.Right -> Offset(0f, size.height / 2f) to Offset(size.width - head, size.height / 2f)
+            ArrowDirection.Up -> Offset(size.width / 2f, size.height) to Offset(size.width / 2f, head)
+            ArrowDirection.Down -> Offset(size.width / 2f, 0f) to Offset(size.width / 2f, size.height - head)
         }
         drawLine(
             color = color,
             start = start,
             end = end,
-            strokeWidth = strokeWidth,
+            strokeWidth = strokePx,
             cap = StrokeCap.Round
         )
         val angle = atan2(end.y - start.y, end.x - start.x)
         val path = Path().apply {
             moveTo(end.x, end.y)
             lineTo(
-                end.x - head * cos(angle - 0.55f),
-                end.y - head * sin(angle - 0.55f)
+                end.x - head * cos(angle - Math.PI.toFloat() / 6f),
+                end.y - head * sin(angle - Math.PI.toFloat() / 6f)
             )
             lineTo(
-                end.x - head * cos(angle + 0.55f),
-                end.y - head * sin(angle + 0.55f)
+                end.x - head * cos(angle + Math.PI.toFloat() / 6f),
+                end.y - head * sin(angle + Math.PI.toFloat() / 6f)
             )
             close()
         }
         drawPath(path, color = color)
-        drawPath(path, color = color, style = Stroke(width = 1.dp.toPx()))
+        drawPath(path, color = color, style = Stroke(width = strokePx / 2f))
     }
 }

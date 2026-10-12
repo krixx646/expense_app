@@ -325,7 +325,9 @@ class SettingsViewModel @Inject constructor(
                 preferencesDataStore.updateLastSyncTime(0L)
                 // Clearing data is not signing out: a guest stays a guest rather than being
                 // bounced back to the Welcome wall on next launch.
-                if (wasGuest) preferencesDataStore.setGuestMode(true)
+                if (wasGuest) {
+                    runCatching { preferencesDataStore.enterGuestMode() }
+                }
 
                 eventsChannel.send(SettingsEvent.Message("All local data cleared."))
             } catch (e: Exception) {

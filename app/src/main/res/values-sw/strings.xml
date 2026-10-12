@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">Sasisha salio linalofuatiliwa hapa na Xpenze itaweka miamala yako ya awali.</string>
     <string name="auto_capture_guide_button">Jinsi kunasa kiotomatiki hufanya kazi</string>
     <string name="auto_capture_tutorial_title">Sanidi Auto Capture</string>
-    <string name="auto_capture_tutorial_subtitle">Chagua programu za benki au pochi ili Xpenze iunde rasimu za arifa za malipo halisi tu.</string>
+    <string name="auto_capture_tutorial_subtitle">Jifunze zana za kukamata katika Kisanduku cha rasimu, kisha chagua programu za benki ili Xpenze iunde rasimu za arifa za malipo halisi tu.</string>
     <string name="auto_capture_tutorial_general_warning">Epuka hali ya Jumla. Hunasa arifa nyingi zenye nambari na hujaza Kisanduku cha rasimu kwa kelele. Pendekeza Programu mahususi.</string>
+    <string name="auto_capture_tutorial_page0_body">Tumia zana za kukamata kuingiza CSV ya taarifa au kuchanganua skrini/risiti. Kila kitu huja kwanza kama rasimu ili ukague kabla ya kuathiri salio.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">Zana za kukamata za Kisanduku cha rasimu zenye kuingiza na kuchanganua</string>
+    <string name="auto_capture_tutorial_callout_import_account">Chagua akaunti ya rasimu mpya</string>
+    <string name="auto_capture_tutorial_callout_import_csv">Ingiza CSV ya taarifa kwenye Kisanduku cha rasimu</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">Changanua skrini au risiti kuwa rasimu</string>
     <string name="auto_capture_tutorial_page1_body">Katika Kisanduku cha rasimu, chagua Programu mahususi ili Auto Capture ione tu programu za benki na pochi unazochagua.</string>
     <string name="auto_capture_tutorial_page1_image_cd">Kisanduku cha rasimu kikionyesha Programu mahususi</string>
     <string name="auto_capture_tutorial_page2_body">Tafuta benki au pochi yako, ichague, kisha gusa Hifadhi. Weka arifa zikiwa zimewashwa katika programu hiyo kwa tahadhari za malipo.</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">Nimeelewa</string>
     <string name="auto_capture_tutorial_choose_apps_cta">Chagua programu za benki</string>
     <string name="auto_capture_tutorial_replay_label">Jinsi Auto Capture inavyofanya kazi</string>
-    <string name="auto_capture_tutorial_replay_subtitle">Angalia jinsi ya kuchagua programu za benki na kuepuka kelele za hali ya Jumla.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">Angalia zana za kukamata, jinsi ya kuchagua programu za benki, na kuepuka kelele za hali ya Jumla.</string>
     <string name="auto_capture_tutorial_replay_hint">Unaweza kuiona tena wakati wowote katika Mipangilio → Auto-capture → Jinsi Auto Capture inavyofanya kazi.</string>
     <string name="auto_capture_general_mode_warning">Hali ya Jumla imewashwa. Pendekeza Programu mahususi ili arifa za benki na pochi tu ziwe rasimu.</string>
     <string name="auto_capture_notification_mode_general">Mkuu</string>

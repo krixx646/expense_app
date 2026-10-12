@@ -775,8 +775,13 @@
     <string name="auto_capture_exclude_button">Exclude</string>
     <string name="auto_capture_guide_button">How automatic capture works</string>
     <string name="auto_capture_tutorial_title">Set up Auto Capture</string>
-    <string name="auto_capture_tutorial_subtitle">Pick your bank or wallet apps so Xpenze only drafts real payment alerts.</string>
+    <string name="auto_capture_tutorial_subtitle">Learn Draft Inbox capture tools, then pick bank apps so Xpenze only drafts real payment alerts.</string>
     <string name="auto_capture_tutorial_general_warning">Avoid General mode. It captures many numeric notifications and fills your Draft Inbox with noise. Prefer Specific apps.</string>
+    <string name="auto_capture_tutorial_page0_body">Use Capture tools in Draft Inbox to import a bank statement CSV or scan a screenshot/receipt. Everything lands as a draft first, so you can review it before it affects your balances.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">Draft Inbox capture tools with import and scan actions</string>
+    <string name="auto_capture_tutorial_callout_import_account">Choose which account new drafts belong to</string>
+    <string name="auto_capture_tutorial_callout_import_csv">Import a statement CSV into Draft Inbox</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">Scan a screenshot or receipt into a draft</string>
     <string name="auto_capture_tutorial_page1_body">In Draft Inbox, choose Specific apps so Auto Capture watches only the banking and wallet apps you select.</string>
     <string name="auto_capture_tutorial_page1_image_cd">Draft Inbox with Specific apps highlighted</string>
     <string name="auto_capture_tutorial_page2_body">Search for your bank or wallet, select it, then tap Save. Keep notifications enabled in that app for payment alerts.</string>
@@ -791,7 +796,7 @@
     <string name="auto_capture_tutorial_got_it">Got it</string>
     <string name="auto_capture_tutorial_choose_apps_cta">Choose bank apps</string>
     <string name="auto_capture_tutorial_replay_label">How Auto Capture works</string>
-    <string name="auto_capture_tutorial_replay_subtitle">See how to pick bank apps and avoid noisy General mode.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">See capture tools, how to pick bank apps, and how to avoid noisy General mode.</string>
     <string name="auto_capture_tutorial_replay_hint">You can replay this anytime in Settings → Auto-capture → How Auto Capture works.</string>
     <string name="auto_capture_general_mode_warning">General mode is on. Prefer Specific apps so only your bank and wallet alerts become drafts.</string>
     <string name="auto_capture_xiaomi_autostart_title">Turn on Auto start on Xiaomi</string>

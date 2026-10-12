@@ -49,7 +49,7 @@ googleid = "1.1.1"
 playServicesAds = "23.5.0"
 
 # Play Billing
-playBilling = "8.0.0"
+playBilling = "9.1.0"
 playReview = "2.0.2"
 
 # Networking

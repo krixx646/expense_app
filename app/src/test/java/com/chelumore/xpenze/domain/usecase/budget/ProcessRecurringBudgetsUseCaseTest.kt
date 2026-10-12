@@ -276,6 +276,16 @@ private class FakeUserRepository(
         prefs.value = prefs.value.copy(isGuestMode = enabled)
     }
 
+    override suspend fun enterGuestMode() {
+        prefs.value = prefs.value.copy(
+            isGuestMode = true,
+            isPremium = false,
+            trialStartedAt = 0L,
+            trialExpiresAt = 0L,
+            trialConsumed = false
+        )
+    }
+
     override suspend fun promoteGuestToUser(
         userId: String,
         email: String?,

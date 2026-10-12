@@ -135,9 +135,11 @@ class SplashViewModel @Inject constructor(
                             if (!prefs.isOnboardingComplete && localAccounts.isEmpty()) {
                                 // Incomplete guest session: never auto-resume onboarding.
                                 // Require an explicit "Continue without account" choice again.
-                                userRepository.setGuestMode(false)
-                                userRepository.clearTrialState()
-                                userRepository.setPremium(false)
+                                runCatching {
+                                    userRepository.setGuestMode(false)
+                                    userRepository.clearTrialState()
+                                    userRepository.setPremium(false)
+                                }
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,

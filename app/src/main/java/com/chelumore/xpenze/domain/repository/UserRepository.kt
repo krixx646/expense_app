@@ -25,6 +25,8 @@ interface UserRepository {
     suspend fun setHasRatedOnPlayStore(rated: Boolean)
     suspend fun updateLastSyncTime(time: Long)
     suspend fun setGuestMode(enabled: Boolean)
+    /** Atomically enable guest mode and clear trial/premium/auto-capture leftovers. */
+    suspend fun enterGuestMode()
     suspend fun promoteGuestToUser(userId: String, email: String?, name: String?, photoUrl: String?)
     suspend fun setUserInfo(userId: String?, email: String?, name: String?, photoUrl: String?)
     suspend fun setAiCoachCtaSeen(seen: Boolean)

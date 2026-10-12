@@ -687,8 +687,13 @@
     <string name="account_editor_balance_edit_hint">Atualize o saldo rastreado aqui e o Xpenze manterá intactas suas transações anteriores.</string>
     <string name="auto_capture_guide_button">Como funciona a captura automática</string>
     <string name="auto_capture_tutorial_title">Configurar Auto Capture</string>
-    <string name="auto_capture_tutorial_subtitle">Escolha seus apps de banco ou carteira para que o Xpenze só crie rascunhos de alertas de pagamento reais.</string>
+    <string name="auto_capture_tutorial_subtitle">Conheça as ferramentas de captura da Caixa de rascunhos e depois escolha apps bancários para o Xpenze criar rascunhos só de alertas reais de pagamento.</string>
     <string name="auto_capture_tutorial_general_warning">Evite o modo Geral. Ele captura muitas notificações numéricas e enche a Caixa de rascunhos com ruído. Prefira Apps específicos.</string>
+    <string name="auto_capture_tutorial_page0_body">Use as ferramentas de captura para importar um CSV de extrato ou digitalizar um print/recibo. Tudo chega primeiro como rascunho para revisão antes de afetar os saldos.</string>
+    <string name="auto_capture_tutorial_page0_image_cd">Ferramentas de captura da Caixa de rascunhos com importar e digitalizar</string>
+    <string name="auto_capture_tutorial_callout_import_account">Escolha a conta dos novos rascunhos</string>
+    <string name="auto_capture_tutorial_callout_import_csv">Importe um CSV de extrato para a Caixa de rascunhos</string>
+    <string name="auto_capture_tutorial_callout_scan_receipt">Digitalize um print ou recibo para um rascunho</string>
     <string name="auto_capture_tutorial_page1_body">Na Caixa de rascunhos, escolha Apps específicos para que o Auto Capture observe só os apps de banco e carteira que você selecionar.</string>
     <string name="auto_capture_tutorial_page1_image_cd">Caixa de rascunhos com Apps específicos destacados</string>
     <string name="auto_capture_tutorial_page2_body">Pesquise seu banco ou carteira, selecione e toque em Salvar. Mantenha as notificações ativas nesse app para alertas de pagamento.</string>
@@ -703,7 +708,7 @@
     <string name="auto_capture_tutorial_got_it">Entendi</string>
     <string name="auto_capture_tutorial_choose_apps_cta">Escolher apps de banco</string>
     <string name="auto_capture_tutorial_replay_label">Como o Auto Capture funciona</string>
-    <string name="auto_capture_tutorial_replay_subtitle">Veja como escolher apps de banco e evitar o ruído do modo Geral.</string>
+    <string name="auto_capture_tutorial_replay_subtitle">Veja as ferramentas de captura, como escolher apps bancários e evitar o modo Geral barulhento.</string>
     <string name="auto_capture_tutorial_replay_hint">Pode rever isto a qualquer momento em Definições → Captura automática → Como o Auto Capture funciona.</string>
     <string name="auto_capture_general_mode_warning">O modo Geral está ativo. Prefira Apps específicos para que só alertas de banco e carteira virem rascunhos.</string>
     <string name="auto_capture_notification_mode_general">Em geral</string>

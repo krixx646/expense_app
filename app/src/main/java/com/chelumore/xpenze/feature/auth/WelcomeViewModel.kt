@@ -43,19 +43,21 @@ class WelcomeViewModel @Inject constructor(
         _uiState.value = WelcomeUiState(isStartingGuestSession = true)
         growthAnalyticsTracker.logWelcomeChoice(GrowthAnalyticsTracker.WELCOME_CHOICE_GUEST)
         viewModelScope.launch {
-            // Entering guest mode strips any leftover Premium/trial entitlement.
-            userRepository.clearTrialState()
-            userRepository.setPremium(false)
-            userRepository.setGuestMode(true)
-            val prefs = userRepository.userPreferences.first()
-            _uiState.value = WelcomeUiState(
-                isStartingGuestSession = false,
-                guestSessionDestination = if (prefs.isOnboardingComplete) {
-                    GuestSessionDestination.Main
-                } else {
-                    GuestSessionDestination.Onboarding
-                }
-            )
+            try {
+                // Single atomic write: guest flag + strip trial/premium/auto-capture leftovers.
+                userRepository.enterGuestMode()
+                val prefs = userRepository.userPreferences.first()
+                _uiState.value = WelcomeUiState(
+                    isStartingGuestSession = false,
+                    guestSessionDestination = if (prefs.isOnboardingComplete) {
+                        GuestSessionDestination.Main
+                    } else {
+                        GuestSessionDestination.Onboarding
+                    }
+                )
+            } catch (_: Exception) {
+                _uiState.value = WelcomeUiState(isStartingGuestSession = false)
+            }
         }
     }
 
